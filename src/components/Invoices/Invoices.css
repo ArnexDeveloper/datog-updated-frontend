@@ -1,0 +1,15 @@
+.invoices-page { padding: 16px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.list-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 12px; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+.actions { display: flex; gap: 8px; align-items: center; }
+.primary { background: #2563eb; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; }
+.modal { background: #fff; border-radius: 8px; padding: 16px; width: 420px; max-width: 95vw; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.modal-close { background: transparent; border: none; font-size: 18px; cursor: pointer; }
+.form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.error-banner { background: #fff2f2; color: #991b1b; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #fecaca; }
+.loading { padding: 16px; }

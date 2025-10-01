@@ -1,0 +1,17 @@
+
+> frontend@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Failed to compile.
+
+TS2339: Property 'quantity' does not exist on type 'never'.
+  [0m [90m 42 |[39m
+   [90m 43 |[39m   [36mconst[39m totalInventoryValue [33m=[39m useMemo(() [33m=>[39m {
+  [31m[1m>[22m[39m[90m 44 |[39m     [36mreturn[39m fabrics[33m.[39mreduce((sum[33m,[39m f) [33m=>[39m sum [33m+[39m ([33mNumber[39m(f[33m.[39mquantity) [33m*[39m [33mNumber[39m(f[33m.[39mpricePerUnit [33m||[39m [35m0[39m))[33m,[39m [35m0[39m)[33m;[39m
+   [90m    |[39m                                                       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 45 |[39m   }[33m,[39m [fabrics])[33m;[39m
+   [90m 46 |[39m
+   [90m 47 |[39m   [36mconst[39m handleCreate [33m=[39m [36masync[39m (e) [33m=>[39m {[0m
+
+
