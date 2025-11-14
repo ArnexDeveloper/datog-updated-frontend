@@ -20,6 +20,10 @@ interface Order {
     quantity: number;
     price: number;
     specialInstructions?: string;
+    category?: string;
+    fabricName?: string;
+    fit?: string;
+    style?: string;
   }>;
   deliveryDate: string;
   urgency: string;
@@ -330,21 +334,59 @@ const OrderEdit: React.FC = () => {
             />
           </div>
 
-          {/* Garments Summary (Read-only) */}
+          {/* Products & Accessories Summary (Read-only) */}
           <div className="border-t pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Garments Summary</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Products & Accessories Summary</h3>
             <div className="space-y-3">
               {order.garments.map((garment, index) => (
-                <div key={garment._id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                  <div>
-                    <span className="font-medium">{garment.name}</span>
-                    <span className="text-gray-600 ml-2 capitalize">({garment.type})</span>
+                <div key={garment._id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{garment.name}</span>
+                        {garment.category && (
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            garment.category === 'accessory'
+                              ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                              : 'bg-blue-100 text-blue-800 border border-blue-200'
+                          }`}>
+                            {garment.category.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 capitalize">{garment.type.replace('-', ' ')}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-medium">
+                        {garment.quantity} × {formatCurrency(garment.price)} = {formatCurrency(garment.quantity * garment.price)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="font-medium">
-                      {garment.quantity} × {formatCurrency(garment.price)} = {formatCurrency(garment.quantity * garment.price)}
-                    </span>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600">
+                    {garment.fit && (
+                      <div>
+                        <span className="font-medium">Fit:</span> <span className="capitalize">{garment.fit}</span>
+                      </div>
+                    )}
+                    {garment.fabricName && (
+                      <div>
+                        <span className="font-medium">Fabric:</span> <span>{garment.fabricName}</span>
+                      </div>
+                    )}
+                    {garment.style && (
+                      <div>
+                        <span className="font-medium">Style:</span> <span>{garment.style}</span>
+                      </div>
+                    )}
                   </div>
+
+                  {garment.specialInstructions && (
+                    <div className="mt-2 p-2 bg-white rounded text-sm">
+                      <span className="font-medium text-gray-700">Instructions:</span>
+                      <p className="text-gray-600">{garment.specialInstructions}</p>
+                    </div>
+                  )}
                 </div>
               ))}
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded font-medium">

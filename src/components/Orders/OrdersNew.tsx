@@ -264,6 +264,12 @@ const OrdersNew = () => {
                         Edit
                       </button>
                       <button
+                        onClick={() => navigate(`/orders/${order._id}/documents`)}
+                        className="text-orange-600 hover:text-orange-900 mr-3 font-medium"
+                      >
+                        🖨️ Print
+                      </button>
+                      <button
                         onClick={() => handleGenerateJobCards(order._id)}
                         className="text-purple-600 hover:text-purple-900 font-medium"
                       >

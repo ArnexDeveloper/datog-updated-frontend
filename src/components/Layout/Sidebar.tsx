@@ -95,7 +95,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
           <span className="logo-icon">✂️</span>
           {!isCollapsed && (
             <div className="logo-text">
-              <h3>Designer Lounge</h3>
+              <h3>Datog</h3>
               <span>Management System</span>
             </div>
           )}

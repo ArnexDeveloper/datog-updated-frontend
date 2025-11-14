@@ -22,12 +22,14 @@ interface Garment {
   name: string;
   quantity: number;
   fabric?: Fabric;
+  fabricName?: string;
   fabricUsed?: number;
   fit: string;
   style?: string;
   specialInstructions?: string;
   price: number;
   status: string;
+  category?: string;
 }
 
 interface Order {
@@ -208,16 +210,29 @@ const OrderDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Garments */}
+          {/* Products & Accessories */}
           <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Garments ({order.garments.length})</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Products & Accessories ({order.garments.length})
+            </h3>
             <div className="space-y-4">
               {order.garments.map((garment, index) => (
                 <div key={garment._id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h4 className="font-medium text-gray-900">{garment.name}</h4>
-                      <p className="text-sm text-gray-600 capitalize">{garment.type}</p>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-gray-900">{garment.name}</h4>
+                        {garment.category && (
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            garment.category === 'accessory'
+                              ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                              : 'bg-blue-100 text-blue-800 border border-blue-200'
+                          }`}>
+                            {garment.category.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 capitalize">{garment.type.replace('-', ' ')}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">
@@ -240,15 +255,18 @@ const OrderDetail: React.FC = () => {
                         <span className="ml-2 text-gray-900">{garment.style}</span>
                       </div>
                     )}
-                    {garment.fabric && (
+                    {(garment.fabric || garment.fabricName) && (
                       <div>
                         <span className="font-medium text-gray-700">Fabric:</span>
                         <span className="ml-2 text-gray-900">
-                          {garment.fabric.name} - {garment.fabric.type} ({garment.fabric.color})
+                          {garment.fabric
+                            ? `${garment.fabric.name} - ${garment.fabric.type} (${garment.fabric.color})`
+                            : garment.fabricName
+                          }
                         </span>
                       </div>
                     )}
-                    {garment.fabricUsed && (
+                    {garment.fabricUsed && garment.fabricUsed > 0 && (
                       <div>
                         <span className="font-medium text-gray-700">Fabric Used:</span>
                         <span className="ml-2 text-gray-900">{garment.fabricUsed} meters</span>

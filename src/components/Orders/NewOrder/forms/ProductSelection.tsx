@@ -6,7 +6,16 @@ interface Product {
   price: number;
   category: string[];
   quantity?: number;
+  fabricSource?: 'customer' | 'lounge';
   fabric?: string;
+  fabricUsed?: number;
+  customerFabricDetails?: {
+    description?: string;
+    type?: string;
+    color?: string;
+    quantity?: number;
+    notes?: string;
+  };
   fit?: string;
   style?: string;
   specialInstructions?: string;
@@ -179,19 +188,144 @@ export default function ProductSelection({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                  <div>
-                    <label className="block text-sm font-medium text-amber-800 mb-1">Fabric</label>
-                    <select
-                      value={product.fabric}
-                      onChange={(e) => handleProductDetailChange(product.id, 'fabric', e.target.value)}
-                      className="w-full px-3 py-2 border border-amber-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
-                    >
-                      <option value="">Select Fabric</option>
-                      {fabrics.map(fabric => (
-                        <option key={fabric._id} value={fabric.name}>{fabric.name}</option>
-                      ))}
-                    </select>
+                  {/* NEW: Fabric Source Selection */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-amber-800 mb-2">Fabric Source *</label>
+                    <div className="flex space-x-4">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`fabricSource-${product.id}`}
+                          value="lounge"
+                          checked={product.fabricSource === 'lounge'}
+                          onChange={(e) => handleProductDetailChange(product.id, 'fabricSource', e.target.value)}
+                          className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                        />
+                        <span className="text-amber-900">Lounge Fabric (From our inventory)</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`fabricSource-${product.id}`}
+                          value="customer"
+                          checked={product.fabricSource === 'customer'}
+                          onChange={(e) => handleProductDetailChange(product.id, 'fabricSource', e.target.value)}
+                          className="w-4 h-4 text-amber-600 focus:ring-amber-500"
+                        />
+                        <span className="text-amber-900">Customer's Fabric</span>
+                      </label>
+                    </div>
                   </div>
+
+                  {/* Show lounge fabric selection only if fabricSource is 'lounge' */}
+                  {product.fabricSource === 'lounge' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-amber-800 mb-1">Select Fabric *</label>
+                        <select
+                          value={product.fabric}
+                          onChange={(e) => handleProductDetailChange(product.id, 'fabric', e.target.value)}
+                          className="w-full px-3 py-2 border border-amber-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                        >
+                          <option value="">Select Fabric</option>
+                          {fabrics.map(fabric => (
+                            <option key={fabric._id} value={fabric.name}>{fabric.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-amber-800 mb-1">Fabric Used (meters) *</label>
+                        <input
+                          type="number"
+                          value={product.fabricUsed || ''}
+                          onChange={(e) => handleProductDetailChange(product.id, 'fabricUsed', e.target.value)}
+                          className="w-full px-3 py-2 border border-amber-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+                          placeholder="e.g., 2.5"
+                          step="0.1"
+                          min="0"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Show customer fabric details only if fabricSource is 'customer' */}
+                  {product.fabricSource === 'customer' && (
+                    <>
+                      <div className="md:col-span-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm text-blue-800 mb-3 font-medium">Customer's Fabric Details</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-blue-800 mb-1">Fabric Description</label>
+                            <input
+                              type="text"
+                              value={product.customerFabricDetails?.description || ''}
+                              onChange={(e) => {
+                                const newDetails = { ...product.customerFabricDetails, description: e.target.value };
+                                handleProductDetailChange(product.id, 'customerFabricDetails', JSON.stringify(newDetails));
+                              }}
+                              className="w-full px-2 py-1.5 border border-blue-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                              placeholder="e.g., Red silk fabric"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-blue-800 mb-1">Fabric Type</label>
+                            <input
+                              type="text"
+                              value={product.customerFabricDetails?.type || ''}
+                              onChange={(e) => {
+                                const newDetails = { ...product.customerFabricDetails, type: e.target.value };
+                                handleProductDetailChange(product.id, 'customerFabricDetails', JSON.stringify(newDetails));
+                              }}
+                              className="w-full px-2 py-1.5 border border-blue-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                              placeholder="e.g., Silk, Cotton, Wool"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-blue-800 mb-1">Color</label>
+                            <input
+                              type="text"
+                              value={product.customerFabricDetails?.color || ''}
+                              onChange={(e) => {
+                                const newDetails = { ...product.customerFabricDetails, color: e.target.value };
+                                handleProductDetailChange(product.id, 'customerFabricDetails', JSON.stringify(newDetails));
+                              }}
+                              className="w-full px-2 py-1.5 border border-blue-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                              placeholder="e.g., Red, Blue"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-blue-800 mb-1">Quantity (meters)</label>
+                            <input
+                              type="number"
+                              value={product.customerFabricDetails?.quantity || ''}
+                              onChange={(e) => {
+                                const newDetails = { ...product.customerFabricDetails, quantity: parseFloat(e.target.value) };
+                                handleProductDetailChange(product.id, 'customerFabricDetails', JSON.stringify(newDetails));
+                              }}
+                              className="w-full px-2 py-1.5 border border-blue-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                              placeholder="e.g., 3"
+                              step="0.1"
+                              min="0"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-medium text-blue-800 mb-1">Notes</label>
+                            <textarea
+                              value={product.customerFabricDetails?.notes || ''}
+                              onChange={(e) => {
+                                const newDetails = { ...product.customerFabricDetails, notes: e.target.value };
+                                handleProductDetailChange(product.id, 'customerFabricDetails', JSON.stringify(newDetails));
+                              }}
+                              rows={2}
+                              className="w-full px-2 py-1.5 border border-blue-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 bg-white"
+                              placeholder="Any additional notes about the fabric"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   <div>
                     <label className="block text-sm font-medium text-amber-800 mb-1">Fit</label>
                     <select

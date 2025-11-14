@@ -11,6 +11,7 @@ import SimpleCreateOrder from './components/Orders/SimpleCreateOrder';
 import EnhancedCreateOrder from './components/Orders/EnhancedCreateOrder';
 import OrderDetail from './components/Orders/OrderDetail';
 import OrderEdit from './components/Orders/OrderEdit';
+import OrderDocuments from './components/Orders/OrderDocuments';
 import Measurements from './components/Measurements/Measurements';
 import Employees from './components/Employees/Employees';
 import Sidebar from './components/Layout/Sidebar';
@@ -95,6 +96,7 @@ function App() {
                             <Route path="/orders/new-stepper" element={<NewOrder />} />
                             <Route path="/orders/:id" element={<OrderDetail />} />
                             <Route path="/orders/:id/edit" element={<OrderEdit />} />
+                            <Route path="/orders/:orderId/documents" element={<OrderDocuments />} />
                             <Route path="/measurements" element={<Measurements />} />
                             <Route path="/employees" element={<Employees />} />
                             <Route path="/job-cards" element={<JobCards />} />

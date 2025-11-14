@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -12,6 +13,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import './Orders.css';
 
 const Orders = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [fabrics, setFabrics] = useState([]);
@@ -528,6 +530,16 @@ const Orders = () => {
                         variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
+                          navigate(`/orders/${order._id}/documents`);
+                        }}
+                      >
+                        🖨️ Print
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleEditOrder(order);
                         }}
                       >
@@ -677,6 +689,14 @@ const Orders = () => {
             </div>
 
             <div className="order-detail-actions">
+              <Button
+                onClick={() => {
+                  navigate(`/orders/${selectedOrder._id}/documents`);
+                  setShowOrderDetail(false);
+                }}
+              >
+                🖨️ Print Documents
+              </Button>
               <Button
                 onClick={() => {
                   setShowOrderDetail(false);

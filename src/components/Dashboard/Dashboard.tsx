@@ -78,7 +78,7 @@ const Dashboard = () => {
     <div className="dashboard">
       <div className="dashboard-header">
         <h1>Dashboard</h1>
-        <p>Welcome to Elite Designer Lounge Management System</p>
+        <p>Welcome to Datog Designer Lounge Management System</p>
       </div>
 
       {/* Stats Cards */}

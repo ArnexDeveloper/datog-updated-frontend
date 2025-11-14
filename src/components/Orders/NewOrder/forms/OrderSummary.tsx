@@ -61,12 +61,54 @@ export default function OrderSummary({
         <h3 className="text-lg font-semibold text-amber-900 mb-4">Products</h3>
         <div className="space-y-3">
           {formData.products.map((product: any) => (
-            <div key={product.id} className="py-2 border-b border-amber-200 last:border-0">
-              <div className="flex justify-between mb-1">
+            <div key={product.id} className="py-3 border-b border-amber-200 last:border-0">
+              <div className="flex justify-between mb-2">
                 <span className="text-amber-900 font-medium">{product.name} × {product.quantity}</span>
                 <span className="font-medium text-amber-900">₹{product.price * product.quantity}</span>
               </div>
-              {product.fabric && <p className="text-sm text-amber-700">Fabric: {product.fabric}</p>}
+
+              {/* NEW: Fabric Source Badge */}
+              <div className="mb-2">
+                {product.fabricSource === 'lounge' ? (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Lounge Fabric
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Customer's Fabric
+                  </span>
+                )}
+              </div>
+
+              {/* Show lounge fabric details */}
+              {product.fabricSource === 'lounge' && (
+                <>
+                  {product.fabric && <p className="text-sm text-amber-700">Fabric: {product.fabric}</p>}
+                  {product.fabricUsed && <p className="text-sm text-amber-700">Fabric Used: {product.fabricUsed} meters</p>}
+                </>
+              )}
+
+              {/* Show customer fabric details */}
+              {product.fabricSource === 'customer' && product.customerFabricDetails && (
+                <div className="text-sm text-amber-700 mt-1 space-y-1">
+                  {product.customerFabricDetails.description && (
+                    <p>Fabric: {product.customerFabricDetails.description}</p>
+                  )}
+                  {product.customerFabricDetails.type && (
+                    <p>Type: {product.customerFabricDetails.type}</p>
+                  )}
+                  {product.customerFabricDetails.color && (
+                    <p>Color: {product.customerFabricDetails.color}</p>
+                  )}
+                  {product.customerFabricDetails.quantity > 0 && (
+                    <p>Quantity: {product.customerFabricDetails.quantity} meters</p>
+                  )}
+                  {product.customerFabricDetails.notes && (
+                    <p className="italic">Notes: {product.customerFabricDetails.notes}</p>
+                  )}
+                </div>
+              )}
+
               {product.fit && <p className="text-sm text-amber-700">Fit: {product.fit}</p>}
               {product.style && <p className="text-sm text-amber-700">Style: {product.style}</p>}
               {product.specialInstructions && <p className="text-sm text-amber-700">Instructions: {product.specialInstructions}</p>}

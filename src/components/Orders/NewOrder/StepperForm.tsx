@@ -6,6 +6,23 @@ import { CustomerDetails, Measurements, ProductSelection, OrderSummary } from '.
 const baseURL =
   process.env.REACT_APP_BASE_URL || "http://localhost:5000/api";
 
+// Product accessories configuration
+const PRODUCT_ACCESSORIES: { [key: string]: string[] } = {
+  'trousers': ['Two Pocket', 'One Pocket', 'Belt Loops', 'Side Pocket', 'Back Pocket'],
+  'pajamas': ['Elastic Waist', 'Drawstring', 'Side Pocket'],
+  'shalwars': ['Elastic Waist', 'Drawstring', 'Churidar Style'],
+  'skirts': ['A-Line', 'Pencil', 'Pleated', 'Side Zip'],
+  'shirt': ['Full Sleeve', 'Half Sleeve', 'Collar Style', 'Button Type', 'Pocket'],
+  'kurta': ['Full Sleeve', 'Half Sleeve', 'Collar Style', 'Side Slits'],
+  'kurti': ['Full Sleeve', 'Half Sleeve', 'Collar Style', 'Side Slits'],
+  'blazer': ['One Button', 'Two Button', 'Three Button', 'Peak Lapel', 'Notch Lapel'],
+  'west-coat': ['V-Neck', 'High Neck', 'Button Style'],
+  'sherwani': ['High Neck', 'Band Collar', 'Button Style', 'Churidar Bottom'],
+  'blouse': ['Sleeveless', 'Short Sleeve', 'Back Design', 'Neckline Style'],
+  'jacket-upper': ['Single Breasted', 'Double Breasted', 'Zip Front', 'Button Front'],
+  'jacket-formal': ['Single Breasted', 'Double Breasted', 'Zip Front', 'Button Front']
+};
+
 export default function StepperForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
@@ -173,10 +190,20 @@ export default function StepperForm() {
       products: [...prev.products, {
         ...product,
         quantity: 1,
+        fabricSource: 'lounge', // Default to lounge fabric
         fabric: '',
+        fabricUsed: 0,
+        customerFabricDetails: {
+          description: '',
+          type: '',
+          color: '',
+          quantity: 0,
+          notes: ''
+        },
         fit: 'regular',
         style: '',
         specialInstructions: '',
+        accessories: [],
         measurements: JSON.stringify(formData.measurements)
       }]
     }));
@@ -195,9 +222,35 @@ export default function StepperForm() {
   const handleProductDetailChange = (id: string, field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      products: prev.products.map((p: any) =>
-        p.id === id ? { ...p, [field]: value } : p
-      )
+      products: prev.products.map((p: any) => {
+        if (p.id === id) {
+          // Handle customerFabricDetails as special case
+          if (field === 'customerFabricDetails') {
+            return { ...p, customerFabricDetails: JSON.parse(value) };
+          }
+          // Convert fabricUsed to number if it's that field
+          if (field === 'fabricUsed') {
+            return { ...p, [field]: parseFloat(value) || 0 };
+          }
+          return { ...p, [field]: value };
+        }
+        return p;
+      })
+    }));
+  };
+
+  const handleAccessoryChange = (productId: string, accessory: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      products: prev.products.map((p: any) => {
+        if (p.id === productId) {
+          const accessories = checked
+            ? [...p.accessories, accessory]
+            : p.accessories.filter((a: string) => a !== accessory);
+          return { ...p, accessories };
+        }
+        return p;
+      })
     }));
   };
 
@@ -234,33 +287,119 @@ export default function StepperForm() {
   };
 
   const formatOrderData = () => {
-    const garments = formData.products.map((product: any) => ({
-      type: product.type,
-      name: product.name,
-      quantity: product.quantity,
-      fabric: product.fabric,
-      fabricUsed: 0,
-      measurements: product.measurements,
-      fit: product.fit,
-      style: product.style,
-      specialInstructions: product.specialInstructions,
-      price: product.price * product.quantity,
-      status: 'pending'
-    }));
+    const productTypeMapping: { [key: string]: string } = {
+      // Frontend product ID to backend garment type mapping
+      'trousers': 'trousers',
+      'pajamas': 'pajama',
+      'shalwars': 'salwar',
+      'dhoti': 'dhoti',
+      'arhems': 'churidar',
+      'paticoats': 'paticoats',
+      'skirts': 'skirt',
+      'garara': 'garara',
+      'sharara': 'sharara',
+      'shirt': 'shirt',
+      'kurta': 'kurta',
+      'kurti': 'kurti',
+      'kamize': 'kamize',
+      'pathni': 'pathni',
+      'jubba': 'jubba',
+      'blouse': 'blouse',
+      'shrags': 'shrags',
+      'gowne': 'gowne',
+      'kaftan': 'kaftan',
+      'jacket-upper': 'jacket',
+      'froog': 'froog',
+      'one-pec': 'one-pec',
+      'west-coat': 'west-coat',
+      'nehru': 'nehru',
+      'shrug': 'shrug',
+      'blazer': 'blazer',
+      'jothpuri': 'jothpuri',
+      'sherwani': 'sherwani',
+      'over-coat': 'over-coat',
+      'trench-coat': 'trench-coat',
+      'jacket-formal': 'jacket',
+      'dupatta': 'dupatta',
+      'shawl': 'shawl',
+      'tuxedo-belt': 'tuxedo-belt',
+      'shoes': 'shoes',
+      'sleepers': 'sleepers',
+      'sandals': 'sandals',
+      'jutis': 'jutis',
+      'safa': 'safa',
+      'katar': 'katar',
+      'knife': 'knife',
+      'perfume': 'perfume',
+      'brooches': 'brooches',
+      'tie': 'tie',
+      'bow': 'bow',
+      'muffler': 'muffler',
+      'scarf': 'scarf',
+      'watch': 'watch',
+      'buttons': 'buttons',
+      'cufflinks': 'cufflinks',
+      'mala': 'mala',
+      'belts': 'belts',
+      'wallets': 'wallets',
+      'bags': 'bags',
+      'clutches': 'clutches',
+      'purses': 'purses',
+      'rings': 'rings',
+      'earrings': 'earrings',
+      'necklace': 'necklace',
+      'bangles': 'bangles'
+    };
+
+    const garments = formData.products.map((product: any) => {
+      // Base garment object
+      const garment: any = {
+        type: productTypeMapping[product.id] || product.id,
+        name: product.name,
+        quantity: product.quantity,
+        fabricSource: product.fabricSource || 'lounge',
+        measurements: typeof product.measurements === 'string' ? product.measurements : JSON.stringify(product.measurements || {}),
+        fit: product.fit || 'regular',
+        style: product.style || '',
+        specialInstructions: product.specialInstructions || '',
+        price: product.price * product.quantity,
+        status: 'pending'
+      };
+
+      // Add lounge fabric details if fabricSource is 'lounge'
+      if (product.fabricSource === 'lounge') {
+        const selectedFabric = fabrics.find((f: any) => f.name === product.fabric);
+        garment.fabric = selectedFabric?._id || undefined;
+        garment.fabricName = product.fabric || '';
+        garment.fabricUsed = product.fabricUsed || 0;
+      }
+      // Add customer fabric details if fabricSource is 'customer'
+      else if (product.fabricSource === 'customer') {
+        garment.customerFabricDetails = product.customerFabricDetails || {
+          description: '',
+          type: '',
+          color: '',
+          quantity: 0,
+          notes: ''
+        };
+      }
+
+      return garment;
+    });
 
     return {
       customer: formData.id,
       garments,
       orderDate: new Date().toISOString(),
-      trialDate: formData.trialDate,
-      deliveryDate: formData.deliveryDate,
+      trialDate: formData.trialDate ? new Date(formData.trialDate).toISOString() : undefined,
+      deliveryDate: new Date(formData.deliveryDate).toISOString(),
       urgency: formData.urgency,
       images: [],
       referenceImages: [],
       notes: formData.notes,
       payment: {
         total: calculateTotal(),
-        advance: formData.advancePayment
+        advance: formData.advancePayment || 0
       },
       assignedTo: '',
       status: 'pending'
