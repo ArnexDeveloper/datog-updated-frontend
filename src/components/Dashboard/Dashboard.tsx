@@ -77,7 +77,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h1>Dashboard</h1>
+        <h1>Dashboard Overview</h1>
         <p>Welcome to Datog Designer Lounge Management System</p>
       </div>
 
