@@ -46,74 +46,53 @@ export default function OrderSummary({
       </div>
 
       <div className="bg-amber-50 p-6 rounded-xl border border-amber-200">
-        <h3 className="text-lg font-semibold text-amber-900 mb-4">Measurements</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Object.entries(formData.measurements).map(([key, value]) => (
-            <div key={key} className="bg-amber-100/50 p-3 rounded-lg">
-              <p className="text-sm text-amber-700 capitalize">{key}</p>
-              <p className="font-medium text-amber-900">{String(value ?? '')}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-amber-50 p-6 rounded-xl border border-amber-200">
-        <h3 className="text-lg font-semibold text-amber-900 mb-4">Products</h3>
-        <div className="space-y-3">
-          {formData.products.map((product: any) => (
-            <div key={product.id} className="py-3 border-b border-amber-200 last:border-0">
+        <h3 className="text-lg font-semibold text-amber-900 mb-4">Products & Measurements</h3>
+        <div className="space-y-4">
+          {/* Individual items */}
+          {formData.products.filter((p: any) => p.type === 'individual' || (!p.type && p.id)).map((product: any, i: number) => (
+            <div key={product.uid || product.id || i} className="bg-white p-4 rounded-lg border border-amber-200">
               <div className="flex justify-between mb-2">
-                <span className="text-amber-900 font-medium">{product.name} × {product.quantity}</span>
-                <span className="font-medium text-amber-900">₹{product.price * product.quantity}</span>
+                <span className="text-amber-900 font-semibold">{product.productName || product.name} × {product.quantity}</span>
+                <span className="font-semibold text-amber-900">₹{(product.price || 0) * (product.quantity || 1)}</span>
               </div>
-
-              {/* NEW: Fabric Source Badge */}
-              <div className="mb-2">
-                {product.fabricSource === 'lounge' ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Lounge Fabric
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Customer's Fabric
-                  </span>
-                )}
-              </div>
-
-              {/* Show lounge fabric details */}
-              {product.fabricSource === 'lounge' && (
-                <>
-                  {product.fabric && <p className="text-sm text-amber-700">Fabric: {product.fabric}</p>}
-                  {product.fabricUsed && <p className="text-sm text-amber-700">Fabric Used: {product.fabricUsed} meters</p>}
-                </>
-              )}
-
-              {/* Show customer fabric details */}
-              {product.fabricSource === 'customer' && product.customerFabricDetails && (
-                <div className="text-sm text-amber-700 mt-1 space-y-1">
-                  {product.customerFabricDetails.description && (
-                    <p>Fabric: {product.customerFabricDetails.description}</p>
-                  )}
-                  {product.customerFabricDetails.type && (
-                    <p>Type: {product.customerFabricDetails.type}</p>
-                  )}
-                  {product.customerFabricDetails.color && (
-                    <p>Color: {product.customerFabricDetails.color}</p>
-                  )}
-                  {product.customerFabricDetails.quantity > 0 && (
-                    <p>Quantity: {product.customerFabricDetails.quantity} meters</p>
-                  )}
-                  {product.customerFabricDetails.notes && (
-                    <p className="italic">Notes: {product.customerFabricDetails.notes}</p>
-                  )}
-                </div>
-              )}
-
-              {product.fit && <p className="text-sm text-amber-700">Fit: {product.fit}</p>}
-              {product.style && <p className="text-sm text-amber-700">Style: {product.style}</p>}
-              {product.specialInstructions && <p className="text-sm text-amber-700">Instructions: {product.specialInstructions}</p>}
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${product.fabricSource === 'lounge' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                {product.fabricSource === 'lounge' ? 'Lounge Fabric' : "Customer's Fabric"}
+              </span>
+              {product.fabricName && <p className="text-xs text-amber-700 mt-1">Fabric: {product.fabricName}</p>}
+              {product.accessories?.length > 0 && <p className="text-xs text-amber-700 mt-1">Accessories: {product.accessories.join(', ')}</p>}
+              {product.notes && <p className="text-xs text-amber-600 mt-1 italic">{product.notes}</p>}
             </div>
           ))}
+
+          {/* Package items */}
+          {formData.products.filter((p: any) => p.type === 'package').map((pkg: any) => (
+            <div key={pkg.pkgId} className="bg-white rounded-lg border-2 overflow-hidden" style={{ borderColor: '#f59e0b' }}>
+              <div className="flex justify-between items-center px-4 py-3" style={{ background: '#fffbeb' }}>
+                <div className="flex items-center gap-2">
+                  <span>📦</span>
+                  <span className="font-semibold text-sm" style={{ color: '#92400e' }}>
+                    {pkg.garments.map((g: any) => g.productName).join(' + ')}
+                  </span>
+                  <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ background: '#f59e0b', color: '#1a0f00' }}>PKG</span>
+                </div>
+                <span className="font-semibold text-amber-900">₹{(pkg.packagePrice || 0) * (pkg.quantity || 1)}</span>
+              </div>
+              <div className="px-4 py-3 space-y-2">
+                {pkg.garments.map((g: any, gi: number) => (
+                  <div key={g.gid || gi} className="flex items-start gap-2 text-sm text-amber-800">
+                    <span className="text-xs bg-amber-100 rounded px-1.5 py-0.5 mt-0.5 flex-shrink-0">{gi + 1}</span>
+                    <div>
+                      <span className="font-medium">{g.productName}</span>
+                      {g.fabricName && <span className="text-xs text-amber-600 ml-2">· {g.fabricSource === 'lounge' ? 'Lounge' : 'Customer'} fabric: {g.fabricName}</span>}
+                      {g.accessories?.length > 0 && <span className="text-xs text-amber-600 ml-2">· {g.accessories.join(', ')}</span>}
+                    </div>
+                  </div>
+                ))}
+                <div className="text-xs text-amber-600 pt-1">Qty: {pkg.quantity} · Combined price: ₹{pkg.packagePrice}</div>
+              </div>
+            </div>
+          ))}
+
           <div className="border-t border-amber-300 pt-3 mt-3 font-semibold flex justify-between text-amber-900">
             <span>Total</span>
             <span>₹{total}</span>

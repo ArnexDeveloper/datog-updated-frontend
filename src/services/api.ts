@@ -52,6 +52,8 @@ export const apiService = {
   searchCustomers: (query) => api.get(`/customers/search?q=${encodeURIComponent(query)}`),
   getCustomerStats: () => api.get('/customers/stats'),
   getCustomerOrders: (id) => api.get(`/customers/${id}/orders`),
+  getCustomerCredit: (id) => api.get(`/customers/${id}/credit`),
+  addManualCredit: (id, payload) => api.post(`/customers/${id}/credit/add`, payload),
 
   // Order endpoints
   getOrders: (params) => api.get('/orders', { params }),
@@ -92,6 +94,7 @@ export const apiService = {
   getJobCards: (params) => api.get('/jobcards', { params }),
   getJobCard: (id) => api.get(`/jobcards/${id}`),
   createJobCard: (jobCard) => api.post('/jobcards', jobCard),
+  updateJobCard: (id, data) => api.put(`/jobcards/${id}`, data),
   updateJobCardStatus: (id, status) => api.patch(`/jobcards/${id}/status`, { status }),
   addJobCardProgress: (id, progress) => api.post(`/jobcards/${id}/progress`, progress),
   uploadJobCardImage: (id, payload) => api.post(`/jobcards/${id}/images`, payload),

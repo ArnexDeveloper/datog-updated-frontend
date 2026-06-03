@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Stepper from './Stepper';
 import { CustomerDetails, Measurements, ProductSelection, OrderSummary } from './forms';
+import type { OrderItem } from './forms/ProductSelection';
 
 const baseURL =
   process.env.REACT_APP_BASE_URL || "http://localhost:5000/api";
@@ -204,7 +205,7 @@ export default function StepperForm() {
         style: '',
         specialInstructions: '',
         accessories: [],
-        measurements: JSON.stringify(formData.measurements)
+        measurements: {}
       }]
     }));
   };
@@ -280,14 +281,21 @@ export default function StepperForm() {
     }
   };
 
+  const handleProductsChange = (products: OrderItem[]) => {
+    setFormData(prev => ({ ...prev, products }));
+  };
+
   const calculateTotal = () => {
-    return formData.products.reduce((total: number, product: any) => {
-      return total + (product.price * product.quantity);
+    return formData.products.reduce((total: number, item: any) => {
+      if (item.type === 'package') {
+        return total + ((item.packagePrice || 0) * (item.quantity || 1));
+      }
+      return total + ((item.price || 0) * (item.quantity || 1));
     }, 0);
   };
 
   const formatOrderData = () => {
-    const productTypeMapping: { [key: string]: string } = {
+    const productTypeMapping: { [key: string]: string } = { // maps product IDs → backend garment type values
       // Frontend product ID to backend garment type mapping
       'trousers': 'trousers',
       'pajamas': 'pajama',
@@ -351,45 +359,50 @@ export default function StepperForm() {
       'bangles': 'bangles'
     };
 
-    const garments = formData.products.map((product: any) => {
-      // Base garment object
-      const garment: any = {
-        type: productTypeMapping[product.id] || product.id,
-        name: product.name,
-        quantity: product.quantity,
-        fabricSource: product.fabricSource || 'lounge',
-        measurements: typeof product.measurements === 'string' ? product.measurements : JSON.stringify(product.measurements || {}),
-        fit: product.fit || 'regular',
-        style: product.style || '',
-        specialInstructions: product.specialInstructions || '',
-        price: product.price * product.quantity,
-        status: 'pending'
+    const buildGarmentObj = (productId: string, productName: string, item: any) => {
+      const g: any = {
+        type: productTypeMapping[productId] || productId,
+        name: productName,
+        quantity: item.quantity || 1,
+        fabricSource: item.fabricSource || 'lounge',
+        accessories: item.accessories || [],
+        specialInstructions: item.notes || item.specialInstructions || '',
+        status: 'pending',
       };
-
-      // Add lounge fabric details if fabricSource is 'lounge'
-      if (product.fabricSource === 'lounge') {
-        const selectedFabric = fabrics.find((f: any) => f.name === product.fabric);
-        garment.fabric = selectedFabric?._id || undefined;
-        garment.fabricName = product.fabric || '';
-        garment.fabricUsed = product.fabricUsed || 0;
+      if (item.fabricSource === 'lounge') {
+        const fab = fabrics.find((f: any) => f.name === item.fabricName || f.name === item.fabric);
+        g.fabric = fab?._id || undefined;
+        g.fabricName = item.fabricName || item.fabric || '';
+        g.fabricUsed = item.fabricUsed || 0;
+      } else {
+        g.customerFabricDetails = item.customerFabricDetails || {};
       }
-      // Add customer fabric details if fabricSource is 'customer'
-      else if (product.fabricSource === 'customer') {
-        garment.customerFabricDetails = product.customerFabricDetails || {
-          description: '',
-          type: '',
-          color: '',
-          quantity: 0,
-          notes: ''
-        };
-      }
+      return g;
+    };
 
-      return garment;
-    });
+    const individualGarments = formData.products
+      .filter((item: any) => item.type !== 'package')
+      .map((item: any) => {
+        const g = buildGarmentObj(item.productId || item.id, item.productName || item.name, item);
+        g.price = (item.price || 0) * (item.quantity || 1);
+        return g;
+      });
+
+    const packages = formData.products
+      .filter((item: any) => item.type === 'package')
+      .map((pkg: any) => ({
+        packageId: pkg.pkgId,
+        packagePrice: pkg.packagePrice || 0,
+        quantity: pkg.quantity || 1,
+        garments: pkg.garments.map((g: any) =>
+          buildGarmentObj(g.productId, g.productName, { ...g, quantity: pkg.quantity })
+        ),
+      }));
 
     return {
       customer: formData.id,
-      garments,
+      garments: individualGarments,
+      packages,
       orderDate: new Date().toISOString(),
       trialDate: formData.trialDate ? new Date(formData.trialDate).toISOString() : undefined,
       deliveryDate: new Date(formData.deliveryDate).toISOString(),
@@ -505,12 +518,8 @@ export default function StepperForm() {
         return (
           <ProductSelection
             formData={formData}
-            products={products}
-            handleProductSelect={handleProductSelect}
-            handleQuantityChange={handleQuantityChange}
-            handleProductDetailChange={handleProductDetailChange}
-            handleRemoveProduct={handleRemoveProduct}
             fabrics={fabrics}
+            onProductsChange={handleProductsChange}
             onNext={() => setCurrentStep(2)}
           />
         );
