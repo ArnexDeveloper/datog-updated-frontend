@@ -53,6 +53,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onSuccess, onCanc
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<'account' | 'permissions'>('account');
 
   const { actions } = useNotifications();
   const showNotification = (message, type) => {
@@ -161,133 +162,143 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onSuccess, onCanc
 
   return (
     <form onSubmit={handleSubmit} className="employee-form">
-      <div className="form-grid">
-        <div className="form-group">
-          <Label htmlFor="name">Full Name *</Label>
-          <Input
-            id="name"
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder="Enter employee's full name"
-            className={errors.name ? 'error' : ''}
-          />
-          {errors.name && <span className="error-text">{errors.name}</span>}
-        </div>
+      <div className="emp-form-tabs">
+        <button type="button" className={`emp-form-tab ${activeTab === 'account' ? 'active' : ''}`} onClick={() => setActiveTab('account')}>
+          Account Info
+        </button>
+        <button type="button" className={`emp-form-tab ${activeTab === 'permissions' ? 'active' : ''}`} onClick={() => setActiveTab('permissions')}>
+          Permissions
+        </button>
+      </div>
 
-        <div className="form-group">
-          <Label htmlFor="email">Email Address *</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            placeholder="Enter email address"
-            className={errors.email ? 'error' : ''}
-          />
-          {errors.email && <span className="error-text">{errors.email}</span>}
-        </div>
-
-        <div className="form-group">
-          <Label htmlFor="phone">Phone Number *</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-            placeholder="Enter phone number"
-            className={errors.phone ? 'error' : ''}
-          />
-          {errors.phone && <span className="error-text">{errors.phone}</span>}
-        </div>
-
-        <div className="form-group">
-          <Label htmlFor="password">
-            Password {employee ? '(leave blank to keep current)' : '*'}
-          </Label>
-          <Input
-            id="password"
-            type="password"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            placeholder={employee ? 'Enter new password (optional)' : 'Enter password'}
-            className={errors.password ? 'error' : ''}
-          />
-          {errors.password && <span className="error-text">{errors.password}</span>}
-        </div>
-
-        {employee && (
+      {activeTab === 'account' && (
+        <div className="form-grid">
           <div className="form-group">
-            <Label htmlFor="status">Status</Label>
-            <CustomSelect
-              value={formData.isActive ? 'active' : 'inactive'}
-              onValueChange={(value) => handleInputChange('isActive', value === 'active')}
-              options={[
-                { value: 'active', label: 'Active' },
-                { value: 'inactive', label: 'Inactive' }
-              ]}
-              placeholder="Select status"
+            <Label htmlFor="name">Full Name *</Label>
+            <Input
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              placeholder="Enter employee's full name"
+              className={errors.name ? 'error' : ''}
             />
+            {errors.name && <span className="error-text">{errors.name}</span>}
           </div>
-        )}
-      </div>
 
-      <div className="permissions-section">
-        <Label>Permissions *</Label>
-        <p className="text-sm text-muted-foreground mb-4">
-          Select the modules this employee can access
-        </p>
+          <div className="form-group">
+            <Label htmlFor="email">Email Address *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="Enter email address"
+              className={errors.email ? 'error' : ''}
+            />
+            {errors.email && <span className="error-text">{errors.email}</span>}
+          </div>
 
-        <Card>
-          <CardContent className="pt-4">
-            <div className="permissions-grid">
-              {availablePermissions.map((permission) => (
-                <div
-                  key={permission.value}
-                  className={`permission-item ${
-                    formData.permissions.includes(permission.value) ? 'selected' : ''
-                  }`}
-                  onClick={() => togglePermission(permission.value)}
-                >
-                  <div className="permission-header">
-                    <input
-                      type="checkbox"
-                      checked={formData.permissions.includes(permission.value)}
-                      onChange={() => togglePermission(permission.value)}
-                      className="permission-checkbox"
-                    />
-                    <span className="permission-label">{permission.label}</span>
-                  </div>
-                  <p className="permission-description">{permission.description}</p>
+          <div className="form-group">
+            <Label htmlFor="phone">Phone Number *</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              placeholder="Enter phone number"
+              className={errors.phone ? 'error' : ''}
+            />
+            {errors.phone && <span className="error-text">{errors.phone}</span>}
+          </div>
+
+          <div className="form-group">
+            <Label htmlFor="password">
+              Password {employee ? '(leave blank to keep current)' : '*'}
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              placeholder={employee ? 'Enter new password (optional)' : 'Enter password'}
+              className={errors.password ? 'error' : ''}
+            />
+            {errors.password && <span className="error-text">{errors.password}</span>}
+          </div>
+
+          {employee && (
+            <div className="form-group emp-form-full">
+              <Label htmlFor="status">Status</Label>
+              <CustomSelect
+                value={formData.isActive ? 'active' : 'inactive'}
+                onValueChange={(value) => handleInputChange('isActive', value === 'active')}
+                options={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' }
+                ]}
+                placeholder="Select status"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'permissions' && (
+        <div className="permissions-section">
+          <div className="permissions-grid">
+            {availablePermissions.map((permission) => (
+              <div
+                key={permission.value}
+                className={`permission-item ${formData.permissions.includes(permission.value) ? 'selected' : ''}`}
+                onClick={() => togglePermission(permission.value)}
+              >
+                <div className="permission-header">
+                  <input
+                    type="checkbox"
+                    checked={formData.permissions.includes(permission.value)}
+                    onChange={() => togglePermission(permission.value)}
+                    className="permission-checkbox"
+                  />
+                  <span className="permission-label">{permission.label}</span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {errors.permissions && <span className="error-text">{errors.permissions}</span>}
-
-        {formData.permissions.length > 0 && (
-          <div className="selected-permissions">
-            <p className="text-sm font-medium">Selected Permissions:</p>
-            <div className="permissions-badges">
-              {formData.permissions.map((permission) => {
-                const permissionData = availablePermissions.find(p => p.value === permission);
-                return (
-                  <Badge key={permission} variant="default">
-                    {permissionData?.label || permission}
-                  </Badge>
-                );
-              })}
-            </div>
+                <p className="permission-description">{permission.description}</p>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+          {errors.permissions && <span className="error-text">{errors.permissions}</span>}
+          {formData.permissions.length > 0 && (
+            <div className="selected-permissions">
+              <p className="text-sm font-medium">Selected ({formData.permissions.length}):</p>
+              <div className="permissions-badges">
+                {formData.permissions.map((permission) => {
+                  const permissionData = availablePermissions.find(p => p.value === permission);
+                  return (
+                    <Badge key={permission} variant="default">
+                      {permissionData?.label || permission}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="form-actions">
         <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
+        {activeTab === 'account' && (
+          <Button type="button" variant="outline" onClick={() => setActiveTab('permissions')}>
+            Next →
+          </Button>
+        )}
+        {activeTab === 'permissions' && (
+          <Button type="button" variant="outline" onClick={() => setActiveTab('account')}>
+            ← Prev
+          </Button>
+        )}
         <Button type="submit" disabled={loading}>
           {loading ? (
             <>

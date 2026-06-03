@@ -101,14 +101,14 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
           <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
             <div className="flex items-center gap-2">
               <span className="font-bold">Booking Date:</span>
-              <span className="border-b border-black flex-1 px-1">
-                {new Date(jobCardData.bookingDate).toLocaleDateString()}
+              <span className="border-b border-black flex-1 px-1 min-h-[1.5rem]">
+                {/* Empty - to be filled manually */}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-bold">Delivery Date:</span>
-              <span className="border-b border-black flex-1 px-1">
-                {new Date(jobCardData.deliveryDate).toLocaleDateString()}
+              <span className="border-b border-black flex-1 px-1 min-h-[1.5rem]">
+                {/* Empty - to be filled manually */}
               </span>
             </div>
           </div>

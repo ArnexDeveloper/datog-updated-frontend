@@ -27,8 +27,8 @@
   padding: 24px;
   max-width: 500px;
   width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
+  max-height: 85vh;
+  overflow: hidden;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
@@ -89,3 +89,308 @@
 .modal-actions button:last-child:hover {
   background: #2563eb;
 }
+
+/* Expand button */
+.jc-expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  color: #9ca3af;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.jc-expand-btn:hover { background: #f3f4f6; color: #374151; }
+
+/* Row states */
+.jc-row-expanded td { background: #f8faff; }
+
+/* Sub-text under garment name */
+.jc-sub { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+/* Measurement badge on garment cell */
+.jc-meas-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  padding: 1px 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 10px;
+  border: 1px solid #fcd34d;
+}
+
+/* Detail row */
+.jc-detail-row td { padding: 0; border-bottom: 2px solid #e5e7eb; }
+.jc-detail-panel {
+  background: #f9fafb;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+}
+.jc-detail-sections {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 20px;
+}
+@media (max-width: 768px) {
+  .jc-detail-sections { grid-template-columns: 1fr; }
+}
+
+.jc-detail-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.jc-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Garment info grid */
+.jc-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.jc-info-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.jc-info-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 0.04em;
+}
+.jc-instructions { margin-top: 10px; }
+.jc-instructions p { margin: 4px 0 0 0; font-size: 12px; color: #374151; }
+
+/* Measurements panel */
+.jc-meas-section { border-color: #fcd34d; }
+.jc-meas-section .jc-section-title { color: #92400e; }
+
+.jc-no-meas { font-size: 12px; color: #6b7280; font-style: italic; margin: 0; }
+
+.jc-meas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+.jc-meas-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: #fffbeb;
+  border: 1px solid #fef08a;
+  border-radius: 6px;
+}
+.jc-meas-label { font-size: 10px; text-transform: uppercase; color: #92400e; letter-spacing: 0.04em; }
+.jc-meas-value { font-size: 14px; font-weight: 600; color: #1f2937; }
+.jc-meas-unit { font-size: 10px; color: #6b7280; font-weight: 400; }
+
+.jc-meas-notes { margin: 10px 0 0 0; font-size: 12px; color: #374151; }
+.jc-meas-custom { margin-top: 8px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.jc-meas-custom-item {
+  padding: 2px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  color: #374151;
+}
+
+/* ── Action buttons ─────────────────────────────── */
+.jc-action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.jc-btn-edit {
+  padding: 5px 10px; font-size: 12px; border: 1px solid #3b82f6;
+  background: #eff6ff; color: #1d4ed8; border-radius: 5px; cursor: pointer;
+  white-space: nowrap; transition: background 0.15s;
+}
+.jc-btn-edit:hover { background: #dbeafe; }
+.jc-btn-print {
+  padding: 5px 10px; font-size: 12px; border: 1px solid #6b7280;
+  background: #f9fafb; color: #374151; border-radius: 5px; cursor: pointer;
+  white-space: nowrap; transition: background 0.15s;
+}
+.jc-btn-print:hover { background: #f3f4f6; }
+.jc-job-num { font-weight: 600; font-size: 13px; white-space: nowrap; }
+
+/* Priority color chips */
+.jc-priority-urgent { color: #dc2626; font-weight: 700; }
+.jc-priority-high   { color: #ea580c; font-weight: 600; }
+.jc-priority-medium { color: #d97706; }
+.jc-priority-low    { color: #6b7280; }
+
+/* ── Edit modal ─────────────────────────────────── */
+.jc-edit-modal {
+  background: white;
+  border-radius: 10px;
+  padding: 0;
+  width: min(640px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+.jc-edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+.jc-edit-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; color: #111827; }
+.jc-close-btn {
+  background: none; border: none; font-size: 18px; cursor: pointer;
+  color: #9ca3af; padding: 4px 8px; border-radius: 4px; line-height: 1;
+}
+.jc-close-btn:hover { background: #f3f4f6; color: #374151; }
+.jc-edit-error {
+  margin: 12px 20px 0; padding: 10px 14px;
+  background: #fef2f2; border: 1px solid #fecaca;
+  border-radius: 6px; color: #991b1b; font-size: 13px;
+}
+.jc-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 500px) { .jc-form-row { grid-template-columns: 1fr; } }
+.jc-form-group { display: flex; flex-direction: column; gap: 5px; }
+.jc-form-group label { font-size: 12px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.04em; }
+.jc-form-group input,
+.jc-form-group select,
+.jc-form-group textarea {
+  padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+  font-size: 14px; color: #111827; background: #fff;
+  transition: border 0.15s;
+}
+.jc-form-group input:focus,
+.jc-form-group select:focus,
+.jc-form-group textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
+.jc-form-full { grid-column: 1 / -1; }
+.jc-optional { font-size: 11px; color: #9ca3af; font-weight: 400; text-transform: none; }
+.jc-edit-footer {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding: 14px 20px; border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  position: sticky; bottom: 0;
+}
+.jc-btn-cancel {
+  padding: 8px 18px; border: 1px solid #d1d5db; background: white;
+  color: #374151; border-radius: 6px; cursor: pointer; font-weight: 500;
+}
+.jc-btn-cancel:hover { background: #f9fafb; }
+.jc-btn-save {
+  padding: 8px 18px; border: 1px solid #2563eb; background: #2563eb;
+  color: white; border-radius: 6px; cursor: pointer; font-weight: 600;
+  transition: background 0.15s;
+}
+.jc-btn-save:hover  { background: #1d4ed8; }
+.jc-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Tab bar ─────────────────────────────────────── */
+.jc-edit-subtitle {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+  font-weight: 400;
+}
+.jc-tabs {
+  display: flex;
+  border-bottom: 2px solid #e5e7eb;
+  background: #f9fafb;
+}
+.jc-tab {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.jc-tab:hover { color: #374151; background: #f3f4f6; }
+.jc-tab--active {
+  color: #1d4ed8;
+  border-bottom-color: #2563eb;
+  background: #fff;
+}
+.jc-tab-chip {
+  font-size: 10px;
+  padding: 1px 7px;
+  background: #fde68a;
+  color: #92400e;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+/* ── Tab body ────────────────────────────────────── */
+.jc-tab-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 280px;
+}
+
+/* ── Measurement inputs inside tab ───────────────── */
+.jc-meas-edit-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 0;
+}
+.jc-meas-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+.jc-meas-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.jc-meas-input-wrap input {
+  padding-right: 28px !important;
+  width: 100%;
+}
+.jc-meas-unit-tag {
+  position: absolute;
+  right: 8px;
+  font-size: 10px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* ── Print modal ────────────────────────────────── */
+.jc-print-modal {
+  background: white;
+  border-radius: 10px;
+  width: min(780px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+}
+.jc-print-preview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: #f3f4f6;
+}
+.jc-print-card { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }

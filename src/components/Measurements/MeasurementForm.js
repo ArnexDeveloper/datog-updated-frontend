@@ -4,6 +4,7 @@ import { apiService } from '../../services/api';
 const MeasurementForm = ({ measurement, customers, onClose, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('basic');
 
   const [formData, setFormData] = useState({
     customer: '',
@@ -255,186 +256,135 @@ const MeasurementForm = ({ measurement, customers, onClose, onSave }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="measurement-form">
-          {error && (
-            <div className="alert alert-error">
-              {error}
+          {error && <div className="alert alert-error">{error}</div>}
+
+          <div className="meas-tabs">
+            <button type="button" className={`meas-tab ${activeTab === 'basic' ? 'active' : ''}`} onClick={() => setActiveTab('basic')}>
+              Basic Info
+            </button>
+            <button type="button" className={`meas-tab ${activeTab === 'measurements' ? 'active' : ''}`} onClick={() => setActiveTab('measurements')}>
+              Measurements
+            </button>
+            <button type="button" className={`meas-tab ${activeTab === 'notes' ? 'active' : ''}`} onClick={() => setActiveTab('notes')}>
+              Notes & Custom
+            </button>
+          </div>
+
+          {activeTab === 'basic' && (
+            <div className="meas-tab-panel">
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="customer">Customer *</label>
+                  <select id="customer" name="customer" value={formData.customer} onChange={handleInputChange} required>
+                    <option value="">Select Customer</option>
+                    {customers.map(customer => (
+                      <option key={customer._id} value={customer._id}>{customer.name} - {customer.phone}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="garmentType">Garment Type *</label>
+                  <select id="garmentType" name="garmentType" value={formData.garmentType} onChange={handleInputChange} required>
+                    {garmentTypes.map(type => (
+                      <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="unit">Unit</label>
+                  <select id="unit" name="unit" value={formData.unit} onChange={handleInputChange}>
+                    {units.map(unit => (<option key={unit} value={unit}>{unit}</option>))}
+                  </select>
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="form-section">
-            <h3>Basic Information</h3>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="customer">Customer *</label>
-                <select
-                  id="customer"
-                  name="customer"
-                  value={formData.customer}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select Customer</option>
-                  {customers.map(customer => (
-                    <option key={customer._id} value={customer._id}>
-                      {customer.name} - {customer.phone}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="garmentType">Garment Type *</label>
-                <select
-                  id="garmentType"
-                  name="garmentType"
-                  value={formData.garmentType}
-                  onChange={handleInputChange}
-                  required
-                >
-                  {garmentTypes.map(type => (
-                    <option key={type} value={type}>
-                      {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="unit">Unit</label>
-                <select
-                  id="unit"
-                  name="unit"
-                  value={formData.unit}
-                  onChange={handleInputChange}
-                >
-                  {units.map(unit => (
-                    <option key={unit} value={unit}>{unit}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <h3>Measurements ({formData.unit})</h3>
-            <div className="measurements-grid">
-              {getMeasurementFields().map(field => (
-                <div key={field.name} className="form-group">
-                  <label htmlFor={field.name}>{field.label}</label>
-                  <input
-                    type="number"
-                    step="0.25"
-                    id={field.name}
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Additional Measurements */}
-          <div className="form-section">
-            <h3>Additional Information</h3>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="height">Height ({formData.unit})</label>
-                <input
-                  type="number"
-                  step="0.25"
-                  id="height"
-                  name="height"
-                  value={formData.height}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="weight">Weight (kg)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  id="weight"
-                  name="weight"
-                  value={formData.weight}
-                  onChange={handleInputChange}
-                  placeholder="0.0"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Custom Measurements */}
-          <div className="form-section">
-            <h3>Custom Measurements</h3>
-            <div className="custom-measurements-section">
-              <div className="custom-measurement-input">
-                <input
-                  type="text"
-                  placeholder="Measurement name"
-                  value={customMeasurement.name}
-                  onChange={(e) => setCustomMeasurement(prev => ({ ...prev, name: e.target.value }))}
-                />
-                <input
-                  type="number"
-                  step="0.25"
-                  placeholder="Value"
-                  value={customMeasurement.value}
-                  onChange={(e) => setCustomMeasurement(prev => ({ ...prev, value: e.target.value }))}
-                />
-                <select
-                  value={customMeasurement.unit}
-                  onChange={(e) => setCustomMeasurement(prev => ({ ...prev, unit: e.target.value }))}
-                >
-                  {units.map(unit => (
-                    <option key={unit} value={unit}>{unit}</option>
-                  ))}
-                </select>
-                <button type="button" onClick={addCustomMeasurement} className="btn btn-sm btn-secondary">
-                  Add
-                </button>
-              </div>
-
-              {formData.customMeasurements.length > 0 && (
-                <div className="custom-measurements-list">
-                  {formData.customMeasurements.map((custom, index) => (
-                    <div key={index} className="custom-measurement-item">
-                      <span>{custom.name}: {custom.value} {custom.unit}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeCustomMeasurement(index)}
-                        className="btn btn-sm btn-danger"
-                      >
-                        Remove
-                      </button>
+          {activeTab === 'measurements' && (
+            <div className="meas-tab-panel">
+              <div className="form-section">
+                <h3>Measurements ({formData.unit})</h3>
+                <div className="measurements-grid">
+                  {getMeasurementFields().map(field => (
+                    <div key={field.name} className="form-group">
+                      <label htmlFor={field.name}>{field.label}</label>
+                      <input
+                        type="number"
+                        step="0.25"
+                        id={field.name}
+                        name={field.name}
+                        value={formData[field.name]}
+                        onChange={handleInputChange}
+                        placeholder="0.00"
+                      />
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Notes */}
-          <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="notes">Notes</label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="Any special notes or requirements..."
-              />
+          {activeTab === 'notes' && (
+            <div className="meas-tab-panel">
+              <div className="form-row-2">
+                <div className="form-group">
+                  <label htmlFor="height">Height ({formData.unit})</label>
+                  <input type="number" step="0.25" id="height" name="height" value={formData.height} onChange={handleInputChange} placeholder="0.00" />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="weight">Weight (kg)</label>
+                  <input type="number" step="0.1" id="weight" name="weight" value={formData.weight} onChange={handleInputChange} placeholder="0.0" />
+                </div>
+              </div>
+              <div className="form-section">
+                <h3>Custom Measurements</h3>
+                <div className="custom-measurements-section">
+                  <div className="custom-measurement-input">
+                    <input
+                      type="text"
+                      placeholder="Measurement name"
+                      value={customMeasurement.name}
+                      onChange={(e) => setCustomMeasurement(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                    <input
+                      type="number"
+                      step="0.25"
+                      placeholder="Value"
+                      value={customMeasurement.value}
+                      onChange={(e) => setCustomMeasurement(prev => ({ ...prev, value: e.target.value }))}
+                    />
+                    <select value={customMeasurement.unit} onChange={(e) => setCustomMeasurement(prev => ({ ...prev, unit: e.target.value }))}>
+                      {units.map(unit => (<option key={unit} value={unit}>{unit}</option>))}
+                    </select>
+                    <button type="button" onClick={addCustomMeasurement} className="btn btn-sm btn-secondary">Add</button>
+                  </div>
+                  {formData.customMeasurements.length > 0 && (
+                    <div className="custom-measurements-list">
+                      {formData.customMeasurements.map((custom, index) => (
+                        <div key={index} className="custom-measurement-item">
+                          <span>{custom.name}: {custom.value} {custom.unit}</span>
+                          <button type="button" onClick={() => removeCustomMeasurement(index)} className="btn btn-sm btn-danger">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="notes">Notes</label>
+                <textarea id="notes" name="notes" value={formData.notes} onChange={handleInputChange} rows="2" placeholder="Any special notes or requirements..." />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            {activeTab !== 'basic' && (
+              <button type="button" className="btn btn-secondary" onClick={() => setActiveTab(activeTab === 'notes' ? 'measurements' : 'basic')}>← Prev</button>
+            )}
+            {activeTab !== 'notes' && (
+              <button type="button" className="btn btn-secondary" onClick={() => setActiveTab(activeTab === 'basic' ? 'measurements' : 'notes')}>Next →</button>
+            )}
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? 'Saving...' : (measurement ? 'Update Measurement' : 'Save Measurement')}
             </button>

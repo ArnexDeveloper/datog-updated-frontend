@@ -34,6 +34,7 @@ export default function CustomerDetails({ onNext, onCreateCustomer }: CustomerDe
     email: "",
     gender: "",
     address: "",
+    anniversary: "",
   };
   const [createForm, setCreateForm] = useState(initialCreateForm);
 
@@ -284,6 +285,15 @@ export default function CustomerDetails({ onNext, onCreateCustomer }: CustomerDe
                 onChange={handleCreateInputChange}
                 className="w-full px-3 py-2 border rounded-lg"
                 placeholder="123 Main St"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Anniversary</label>
+              <Input
+                type="date"
+                name="anniversary"
+                value={createForm.anniversary}
+                onChange={handleCreateInputChange}
               />
             </div>
             <Button onClick={handleCreateCustomer} disabled={loading}>

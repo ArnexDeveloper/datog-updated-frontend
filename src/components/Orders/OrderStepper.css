@@ -2,8 +2,8 @@
 .order-stepper {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  max-height: 80vh;
+  gap: 1rem;
+  max-height: calc(85vh - 90px);
   overflow: hidden;
 }
 

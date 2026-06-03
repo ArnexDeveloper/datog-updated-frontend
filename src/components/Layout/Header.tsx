@@ -74,21 +74,31 @@ const Header = ({ user, onLogout }) => {
   useEffect(() => {
     const fetchSearchData = async () => {
       try {
+        setIsLoadingSearch(true);
         const [customersRes, ordersRes, invoicesRes, fabricsRes] = await Promise.all([
-          apiService.getCustomers({ limit: 10 }),
-          apiService.getOrders({ limit: 10 }),
-          apiService.getInvoices({ limit: 10 }),
-          apiService.getFabrics({ limit: 10 })
+          apiService.getCustomers({ limit: 100 }).catch(() => ({ data: { data: { customers: [] } } })),
+          apiService.getOrders({ limit: 100 }).catch(() => ({ data: { data: { orders: [] } } })),
+          apiService.getInvoices({ limit: 100 }).catch(() => ({ data: { data: { invoices: [] } } })),
+          apiService.getFabrics({ limit: 100 }).catch(() => ({ data: { data: { fabrics: [] } } }))
         ]);
 
         setSearchData({
-          customers: customersRes.data?.data?.customers || [],
-          orders: ordersRes.data?.data?.orders || [],
-          invoices: invoicesRes.data?.data?.invoices || [],
-          fabrics: fabricsRes.data?.data?.fabrics || []
+          customers: customersRes.data?.data?.customers || customersRes.data?.data || [],
+          orders: ordersRes.data?.data?.orders || ordersRes.data?.data || [],
+          invoices: invoicesRes.data?.data?.invoices || invoicesRes.data?.data || [],
+          fabrics: fabricsRes.data?.data?.fabrics || fabricsRes.data?.data || []
         });
       } catch (error) {
         console.error('Error fetching search data:', error);
+        // Set empty arrays on error to prevent undefined issues
+        setSearchData({
+          customers: [],
+          orders: [],
+          invoices: [],
+          fabrics: []
+        });
+      } finally {
+        setIsLoadingSearch(false);
       }
     };
 
@@ -98,7 +108,9 @@ const Header = ({ user, onLogout }) => {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    setShowSearchResults(value.length > 0);
+    // Always show results when there's input or when focused
+    setShowSearchResults(true);
+    console.log('Search query:', value, 'Show results:', true);
   };
 
   const handleSearchSubmit = (e) => {
@@ -207,33 +219,46 @@ const Header = ({ user, onLogout }) => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4" style={{ position: 'relative', zIndex: 1000, overflow: 'visible' }}>
+      <div className="flex items-center justify-between gap-4" style={{ overflow: 'visible' }}>
+        {/* Left: Logo/Title */}
+        <div className="flex items-center space-x-4 flex-shrink-0">
           <h1 className="text-xl font-semibold text-gray-900">Datog Designer Lounge</h1>
         </div>
 
-        <div className="flex-1 max-w-lg mx-8" ref={searchRef}>
+        {/* Center: Search */}
+        <div className="flex-1 max-w-lg relative" ref={searchRef}>
           <form onSubmit={handleSearchSubmit}>
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search customers, orders, invoices..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder={isLoadingSearch ? "Loading search data..." : "Search customers, orders, invoices..."}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => setShowSearchResults(true)}
+                disabled={isLoadingSearch}
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                {isLoadingSearch ? (
+                  <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                )}
               </div>
             </div>
           </form>
 
           {showSearchResults && (
-            <div className="search-dropdown">
+            <div className="search-dropdown" style={{ display: 'block', backgroundColor: 'white', border: '2px solid red' }}>
+              <div style={{ padding: '10px', background: 'yellow' }}>
+                DEBUG: Dropdown is rendering! Query: "{searchQuery}"
+              </div>
               <div className="search-results">
                 {(() => {
                   const results = getSearchResults();
@@ -425,9 +450,9 @@ const Header = ({ user, onLogout }) => {
             </div>
           )}
         </div>
-      </div>
 
-      <div className="flex items-center space-x-4">
+        {/* Right: Notifications & User Menu */}
+        <div className="flex items-center space-x-4 flex-shrink-0">
           <NotificationBell />
 
           <div className="relative" ref={dropdownRef}>
@@ -510,7 +535,7 @@ const Header = ({ user, onLogout }) => {
             )}
           </div>
         </div>
-      
+      </div>
     </header>
   );
 };

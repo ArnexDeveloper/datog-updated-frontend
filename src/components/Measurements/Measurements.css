@@ -168,53 +168,52 @@
 /* Quick Actions */
 .quick-actions {
   display: flex;
-  flex-direction: column;
-  /* grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); */
-  gap: var(--space-lg);
-  margin-bottom: var(--space-2xl);
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .action-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-lg);
+  border-radius: 20px;
+  padding: 6px 14px 6px 10px;
   cursor: pointer;
   transition: var(--transition-normal);
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  box-shadow: var(--shadow-light);
+  gap: 6px;
+  box-shadow: none;
 }
 
 .action-card:hover {
   border-color: var(--color-gold);
-  box-shadow: var(--shadow-gold);
-  transform: translateY(-2px);
+  background: rgba(255, 215, 0, 0.06);
+  transform: translateY(-1px);
 }
 
 .action-icon {
-  font-size: var(--font-size-3xl);
-  width: 60px;
-  height: 60px;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-full);
-  display: flex;
+  font-size: 1rem;
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 0;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--color-gold);
 }
 
 .action-content h3 {
-  margin: 0 0 var(--space-xs) 0;
+  margin: 0;
   color: var(--text-primary);
-  font-weight: var(--font-weight-semibold);
+  font-weight: 500;
+  font-size: 0.8125rem;
 }
 
 .action-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  display: none;
 }
 
 /* Measurements Content */
@@ -416,27 +415,31 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  max-width: 800px;
+  max-width: 820px;
   width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-large {
-  max-width: 1000px;
+  max-width: min(92vw, 1100px);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 25px;
+  padding: 12px 20px;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
   margin: 0;
   color: #1f2937;
+  font-size: 1.1rem;
 }
 
 .modal-close {
@@ -459,48 +462,101 @@
 
 /* Form Styles */
 .measurement-form {
-  padding: 25px;
+  padding: 0 20px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Measurement form tabs */
+.meas-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 10px;
+  padding-top: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.meas-tab {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease;
+}
+
+.meas-tab:hover { color: #374151; }
+
+.meas-tab.active {
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+  font-weight: 600;
+}
+
+.meas-tab-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
 }
 
 .form-section {
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 }
 
 .form-section h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 8px 0;
   color: #374151;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 10px;
+  padding-bottom: 6px;
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 15px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 8px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   color: #374151;
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 10px 12px;
+  padding: 7px 10px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
+  height: 36px;
   box-sizing: border-box;
 }
 
@@ -513,14 +569,30 @@
 }
 
 .form-group textarea {
-  resize: vertical;
-  min-height: 80px;
+  resize: none;
+  height: 60px;
 }
 
+/* Measurements grid - 4 columns for compact layout */
 .measurements-grid {
   display: grid;
-  /* grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); */
-  gap: 15px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.measurements-grid .form-group {
+  margin-bottom: 0;
+}
+
+.measurements-grid .form-group label {
+  font-size: 0.75rem;
+  margin-bottom: 2px;
+}
+
+.measurements-grid .form-group input {
+  padding: 5px 8px;
+  height: 32px;
+  font-size: 12px;
 }
 
 /* Custom Measurements */
@@ -532,10 +604,20 @@
 
 .custom-measurement-input {
   display: grid;
-  grid-template-columns: 1fr 120px 80px auto;
-  gap: 10px;
+  grid-template-columns: 1fr 90px 70px auto;
+  gap: 8px;
   align-items: end;
-  margin-bottom: 15px;
+  margin-bottom: 8px;
+}
+
+.custom-measurement-input input,
+.custom-measurement-input select {
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  height: 34px;
+  box-sizing: border-box;
 }
 
 .custom-measurements-list {
@@ -557,42 +639,50 @@
 
 .form-actions {
   display: flex;
-  gap: 15px;
+  gap: 10px;
   justify-content: flex-end;
-  padding-top: 20px;
+  padding-top: 10px;
   border-top: 1px solid #e5e7eb;
-  margin-top: 30px;
+  margin-top: 8px;
+  flex-shrink: 0;
 }
 
 /* Templates Styles */
 .templates-content {
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  min-height: 500px;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .templates-sidebar {
+  width: 200px;
+  flex-shrink: 0;
   background: #f9fafb;
-  padding: 20px;
+  padding: 16px;
   border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
 }
 
 .templates-sidebar h3 {
-  margin: 0 0 15px 0;
+  margin: 0 0 12px 0;
   color: #374151;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .garment-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .garment-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
+  gap: 8px;
+  padding: 8px 10px;
   border: none;
   background: transparent;
   border-radius: 6px;
@@ -600,6 +690,7 @@
   transition: background-color 0.2s;
   text-align: left;
   width: 100%;
+  font-size: 0.875rem;
 }
 
 .garment-item:hover {
@@ -612,7 +703,7 @@
 }
 
 .garment-icon {
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 .garment-name {
@@ -620,42 +711,57 @@
 }
 
 .templates-main {
-  padding: 20px;
+  flex: 1;
+  padding: 20px 24px;
+  overflow-y: auto;
 }
 
 .template-header {
-  margin-bottom: 25px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
 .template-header h3 {
-  margin: 0 0 5px 0;
+  margin: 0;
   color: #1f2937;
+  font-size: 1.1rem;
+}
+
+.template-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.8rem;
 }
 
 .measurements-checklist {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 30px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.measurement-item {
+.measurements-checklist .measurement-item {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
+  padding: 0;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .measurement-info {
   background: #f9fafb;
-  padding: 15px;
+  padding: 10px 12px;
 }
 
 .measurement-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
   font-weight: 500;
+  font-size: 0.875rem;
 }
 
 .measurement-label input[type="checkbox"] {
@@ -666,8 +772,9 @@
 }
 
 .checkmark {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
   border: 2px solid #d1d5db;
   border-radius: 4px;
   position: relative;
@@ -683,7 +790,7 @@
   content: '✓';
   position: absolute;
   color: white;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   top: 50%;
   left: 50%;
@@ -692,14 +799,15 @@
 
 .required {
   color: #dc2626;
-  margin-left: 5px;
+  margin-left: 3px;
 }
 
 .measurement-guide {
-  padding: 15px;
+  padding: 8px 12px;
   background: white;
   color: #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
   border-top: 1px solid #e5e7eb;
 }
 
@@ -707,22 +815,28 @@
   background: #f0f9ff;
   border: 1px solid #bae6fd;
   border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
 }
 
 .template-tips h4 {
-  margin: 0 0 15px 0;
+  margin: 0 0 10px 0;
   color: #0c4a6e;
+  font-size: 0.9rem;
 }
 
 .template-tips ul {
   margin: 0;
+  padding-left: 18px;
   color: #0c4a6e;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 16px;
 }
 
 .template-tips li {
-  margin-bottom: 5px;
+  margin-bottom: 3px;
+  font-size: 0.8rem;
 }
 
 .template-actions {
@@ -810,7 +924,13 @@
   }
 
   .templates-content {
-    grid-template-columns: 280px 1fr;
+    /* sidebar stays; already using flex */
+  }
+  .templates-sidebar {
+    width: 180px;
+  }
+  .measurements-checklist {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -942,24 +1062,34 @@
   }
 
   .templates-content {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .templates-sidebar {
+    width: 100%;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
-    padding: 16px;
+    padding: 12px 16px;
   }
 
   .garment-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 6px;
   }
 
   .garment-item {
-    padding: 8px 12px;
-    min-height: 44px;
+    padding: 8px 10px;
+    min-height: 40px;
+    justify-content: center;
+  }
+
+  .measurements-checklist {
+    grid-template-columns: 1fr;
+  }
+
+  .template-tips ul {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1155,7 +1285,7 @@
   .measurement-form {
     padding: 16px;
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
   .form-section h3 {
@@ -1222,62 +1352,73 @@
 
   /* Templates Mobile Styles */
   .templates-sidebar {
-    padding: 12px;
+    padding: 10px 12px;
   }
 
   .templates-sidebar h3 {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
   }
 
   .garment-list {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 5px;
   }
 
   .garment-item {
-    padding: 8px;
+    padding: 6px 8px;
     font-size: 0.75rem;
-    min-height: 40px;
+    min-height: 36px;
   }
 
   .garment-icon {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .templates-main {
-    padding: 12px;
+    padding: 12px 14px;
+  }
+
+  .template-header {
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
   }
 
   .template-header h3 {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .measurements-checklist {
-    gap: 10px;
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .measurement-info {
-    padding: 12px;
+    padding: 10px 12px;
   }
 
   .measurement-guide {
-    padding: 12px;
-    font-size: 0.8rem;
+    padding: 8px 12px;
+    font-size: 0.78rem;
   }
 
   .template-tips {
-    padding: 12px;
-    margin-bottom: 16px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
   }
 
   .template-tips h4 {
-    font-size: 0.9rem;
-    margin-bottom: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+  }
+
+  .template-tips ul {
+    grid-template-columns: 1fr;
   }
 
   .template-tips li {
-    font-size: 0.8rem;
-    margin-bottom: 4px;
+    font-size: 0.78rem;
   }
 }
 

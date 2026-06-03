@@ -43,7 +43,7 @@ const NotificationBell = () => {
       </button>
 
       {isOpen && (
-        <div ref={dropdownRef}>
+        <div ref={dropdownRef} className="notifications-dropdown">
           <NotificationDropdown onClose={() => setIsOpen(false)} />
         </div>
       )}

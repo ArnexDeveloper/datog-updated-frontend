@@ -83,9 +83,9 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onClose }) 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg border border-gray-200 w-80 max-h-96 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-80 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
         <div className="flex items-center">
           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-lg">
             🔔
@@ -125,7 +125,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ onClose }) 
       </div>
 
       {/* Recent Notifications - Scrollable Section */}
-      <div className="max-h-64 overflow-y-auto">
+      <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {loading ? (
           <div className="flex items-center justify-center p-4 text-sm text-gray-500">
             <span>Loading notifications...</span>

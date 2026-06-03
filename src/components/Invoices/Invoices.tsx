@@ -155,21 +155,23 @@ const Invoices = () => {
             </div>
             <form onSubmit={createInvoice}>
               <div className="form-row">
-                <label>Order</label>
-                <select value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} required>
-                  <option value="">{orders.length ? 'Select Order' : 'No eligible orders found'}</option>
-                  {orders.map(o => (
-                    <option key={o._id} value={o._id}>{o.orderNumber} - {o.customer?.name}</option>
-                  ))}
-                </select>
+                <div>
+                  <label>Order</label>
+                  <select value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} required>
+                    <option value="">{orders.length ? 'Select Order' : 'No eligible orders found'}</option>
+                    {orders.map(o => (
+                      <option key={o._id} value={o._id}>{o.orderNumber} - {o.customer?.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label>Due Date</label>
+                  <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+                </div>
               </div>
-              <div className="form-row">
-                <label>Due Date</label>
-                <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
-              </div>
-              <div className="form-row">
+              <div className="form-row-single">
                 <label>Notes</label>
-                <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
+                <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
               </div>
               <div className="form-actions">
                 <button type="button" onClick={() => setShowForm(false)}>Cancel</button>
