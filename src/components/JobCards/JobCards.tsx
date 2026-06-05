@@ -153,162 +153,204 @@ const MeasurementPanel = ({ measurements }: { measurements: any }) => {
 
 // ── Printable job card ─────────────────────────────────────────────────────────
 
-const GARMENT_TYPES_ROW1 = ['Jodhpuri', 'Double Brass', 'Formal', 'American'];
-const GARMENT_TYPES_ROW2 = ['Kurta', 'Shirt', 'Waist Coat', 'Nehru Jacket'];
 const PRINT_LABELS = ['Length','Chest','Shape','Tummy','Hips','Neck','Shoulder','Sleeves','Biceps','Forearms'];
+
+type Lang = 'en' | 'hi';
+
+const T = {
+  en: {
+    shopName:     "DA TOG'S DESIGNER LOUNGE",
+    jobCard:      '*** JOB CARD ***',
+    jobNo:        'Job #',
+    order:        'Order',
+    garment:      'Garment',
+    qty:          'Qty',
+    fit:          'Fit',
+    tailor:       'Tailor',
+    delivery:     'Delivery',
+    trial:        'Trial',
+    measurements: 'MEASUREMENTS',
+    measurement:  'Measurement',
+    value:        'Value',
+    notes:        'Notes for Tailor',
+    noMeas:       'No measurements recorded',
+    thankYou:     'Thank You',
+    labels: {
+      Length: 'Length', Chest: 'Chest', Shape: 'Shape', Tummy: 'Tummy',
+      Hips: 'Hips', Neck: 'Neck', Shoulder: 'Shoulder', Sleeves: 'Sleeves',
+      Biceps: 'Biceps', Forearms: 'Forearms',
+    } as Record<string, string>,
+  },
+  hi: {
+    shopName:     'दा टोग्स डिज़ाइनर लाउंज',
+    jobCard:      '*** जॉब कार्ड ***',
+    jobNo:        'जॉब नं.',
+    order:        'ऑर्डर',
+    garment:      'कपड़ा',
+    qty:          'मात्रा',
+    fit:          'फिट',
+    tailor:       'दर्जी',
+    delivery:     'डिलीवरी',
+    trial:        'ट्रायल',
+    measurements: 'माप',
+    measurement:  'माप',
+    value:        'मूल्य',
+    notes:        'दर्जी के लिए नोट्स',
+    noMeas:       'कोई माप दर्ज नहीं है',
+    thankYou:     'धन्यवाद',
+    labels: {
+      Length: 'लंबाई', Chest: 'छाती', Shape: 'आकार', Tummy: 'पेट',
+      Hips: 'कूल्हे', Neck: 'गर्दन', Shoulder: 'कंधा', Sleeves: 'आस्तीन',
+      Biceps: 'बाइसेप्स', Forearms: 'अग्रभुज',
+    } as Record<string, string>,
+  },
+};
 
 interface PrintableCardProps {
   job: any;
+  lang?: Lang;
 }
-const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ job }, ref) => {
-  const garmentTypes: string[] = job.garment?.type ? [job.garment.type] : [];
+const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ job, lang = 'en' }, ref) => {
+  const t = T[lang];
   const measurements = buildPrintMeasurements(job.garment?.measurements);
-  const isSelected = (t: string) =>
-    garmentTypes.some(g => g.toLowerCase().includes(t.toLowerCase()));
+  const unit = job.garment?.measurements?.unit || 'inch';
+  const filledRows = PRINT_LABELS.filter(label => measurements[label] != null);
+  const customMeasurements = (job.garment?.measurements?.customMeasurements || [])
+    .filter((c: any) => c.value > 0);
 
   return (
-    <div ref={ref} className="jc-print-card bg-white p-6" style={{ width: '210mm', minHeight: '148mm' }}>
-      <div className="border-4 border-black p-4">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-4 pb-3 border-b-2 border-black">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 border-2 border-black" />
-            <div>
-              <h1 className="text-3xl font-bold tracking-wider leading-none">DA TOG'S</h1>
-              <p className="text-xs tracking-widest">DESIGNER LOUNGE</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <h2 className="text-2xl font-bold tracking-wide">JOB CARD</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm font-semibold">Sr. No.:</span>
-              <span className="border-b border-black px-2 text-sm">{job.jobNumber}</span>
-            </div>
-          </div>
-        </div>
+    <div ref={ref} className="jc-print-card job-card-print-area">
+      {/* Business header */}
+      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}>
+        {t.shopName}
+      </div>
+      <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4px' }}>
+        {t.jobCard}
+      </div>
+      <div style={{ borderTop: '1px dashed #000', margin: '3px 0' }} />
 
-        {/* Customer & Order info */}
-        <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-          <div>
-            <span className="font-bold">Customer: </span>
-            <span>{job.customer?.name}</span>
-            {job.customer?.phone && <span className="ml-2 text-gray-600">({job.customer.phone})</span>}
-          </div>
-          <div>
-            <span className="font-bold">Order No: </span>
-            <span>{job.order?.orderNumber || '-'}</span>
-          </div>
-        </div>
+      {/* Job info */}
+      <div style={{ fontSize: '11px', lineHeight: '1.6' }}>
+        <div><strong>{t.jobNo}:</strong> {job.jobNumber}</div>
+        <div><strong>{t.order}:</strong> {job.order?.orderNumber || '—'}</div>
+        <div><strong>{t.garment}:</strong> {job.garment?.name} ({job.garment?.type})</div>
+        <div><strong>{t.qty}:</strong> {job.garment?.quantity} &nbsp; <strong>{t.fit}:</strong> {job.garment?.fit || '—'}</div>
+        <div><strong>{t.tailor}:</strong> {job.assignedTo?.name || '—'}</div>
+        <div><strong>{t.delivery}:</strong> {job.deliveryDate ? new Date(job.deliveryDate).toLocaleDateString('en-IN') : '—'}</div>
+        {job.trialDate && (
+          <div><strong>{t.trial}:</strong> {new Date(job.trialDate).toLocaleDateString('en-IN')}</div>
+        )}
+      </div>
 
-        {/* Garment Type Checkboxes */}
-        <div className="mb-3 text-sm border-b border-black pb-3">
-          <div className="flex items-center gap-6 mb-2">
-            {GARMENT_TYPES_ROW1.map((type, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <span className="border-2 border-black w-4 h-4 inline-block text-center text-xs leading-none">
-                  {isSelected(type) ? '✓' : ''}
-                </span>
-                <span className="font-semibold">{type}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-6">
-            {GARMENT_TYPES_ROW2.map((type, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <span className="border-2 border-black w-4 h-4 inline-block text-center text-xs leading-none">
-                  {isSelected(type) ? '✓' : ''}
-                </span>
-                <span className="font-semibold">{type}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
 
-        {/* Dates */}
-        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-bold">Booking Date:</span>
-            <span className="border-b border-black flex-1 px-1 min-h-[1.5rem]">
-              {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : ''}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-bold">Delivery Date:</span>
-            <span className="border-b border-black flex-1 px-1 min-h-[1.5rem]">
-              {job.deliveryDate ? new Date(job.deliveryDate).toLocaleDateString() : ''}
-            </span>
-          </div>
-          {job.trialDate && (
-            <div className="flex items-center gap-2">
-              <span className="font-bold">Trial Date:</span>
-              <span className="border-b border-black flex-1 px-1 min-h-[1.5rem]">
-                {new Date(job.trialDate).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <span className="font-bold">Tailor:</span>
-            <span className="border-b border-black flex-1 px-1 min-h-[1.5rem]">
-              {job.assignedTo?.name || ''}
-            </span>
-          </div>
-        </div>
-
-        {/* Garment details + Measurements table */}
-        <table className="w-full border-collapse border-2 border-black">
+      {/* Measurements table */}
+      <div style={{ fontSize: '11px', fontWeight: 'bold', marginBottom: '2px' }}>
+        {t.measurements} ({unit})
+      </div>
+      {filledRows.length > 0 || customMeasurements.length > 0 ? (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
           <thead>
             <tr>
-              <th className="border-2 border-black bg-white px-3 py-2 text-left text-lg font-bold w-1/2">
-                Measurements
+              <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold' }}>
+                {t.measurement}
               </th>
-              <th className="border-2 border-black bg-white px-3 py-2 text-left text-lg font-bold w-1/2">
-                Description / Instructions
+              <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold' }}>
+                {t.value}
               </th>
             </tr>
           </thead>
           <tbody>
-            {PRINT_LABELS.map((label, idx) => (
-              <tr key={idx}>
-                <td className="border-2 border-black px-3 py-2 text-base font-semibold">{label}</td>
-                <td className="border-2 border-black px-3 py-2">
-                  {measurements[label] != null ? `${measurements[label]} ${job.garment?.measurements?.unit || 'inch'}` : ''}
+            {filledRows.map(label => (
+              <tr key={label}>
+                <td style={{ border: '1px solid #000', padding: '2px 4px' }}>
+                  {lang === 'hi' ? `${t.labels[label] || label} (${label})` : label}
                 </td>
+                <td style={{ border: '1px solid #000', padding: '2px 4px' }}>{measurements[label]} {unit}</td>
               </tr>
             ))}
-            {/* Special instructions row */}
-            <tr>
-              <td className="border-2 border-black px-3 py-2 text-base font-semibold">Fit / Style</td>
-              <td className="border-2 border-black px-3 py-2">
-                {[job.garment?.fit, job.garment?.style].filter(Boolean).join(' / ') || ''}
-              </td>
-            </tr>
-            <tr>
-              <td className="border-2 border-black px-3 py-2 text-base font-semibold" colSpan={2}>
-                <span className="font-bold">Special Instructions: </span>
-                {job.garment?.specialInstructions || ''}
-              </td>
-            </tr>
+            {customMeasurements.map((c: any, i: number) => (
+              <tr key={`custom-${i}`}>
+                <td style={{ border: '1px solid #000', padding: '2px 4px' }}>{c.name}</td>
+                <td style={{ border: '1px solid #000', padding: '2px 4px' }}>{c.value} {c.unit || unit}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
+      ) : (
+        <div style={{ fontSize: '10px' }}>{t.noMeas}</div>
+      )}
 
-        {/* Priority badge */}
-        {job.priority && job.priority !== 'medium' && (
-          <div className="mt-3 text-sm font-bold">
-            Priority: <span className={job.priority === 'urgent' ? 'text-red-700' : 'text-orange-600'}>
-              {job.priority.toUpperCase()}
-            </span>
+      {/* Notes */}
+      {(job.garment?.specialInstructions || job.notes || job.garment?.measurements?.notes) && (
+        <>
+          <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
+          <div style={{ fontSize: '11px' }}>
+            <strong>{t.notes}:</strong>
+            {job.garment?.measurements?.notes && (
+              <div style={{ marginTop: '2px' }}>{job.garment.measurements.notes}</div>
+            )}
+            {job.garment?.specialInstructions && (
+              <div style={{ marginTop: '2px' }}>{job.garment.specialInstructions}</div>
+            )}
+            {job.notes && (
+              <div style={{ marginTop: '2px' }}>{job.notes}</div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
+
+      <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
+      <div style={{ textAlign: 'center', fontSize: '10px' }}>{t.thankYou}</div>
 
       <style>{`
+        .jc-print-card {
+          font-family: 'Courier New', Courier, monospace;
+          width: 76mm;
+          padding: 2mm;
+          background: #fff;
+          color: #000;
+        }
         @media print {
-          body * { visibility: hidden; }
-          .jc-print-card, .jc-print-card * { visibility: visible; }
-          .jc-print-card {
-            position: absolute; left: 0; top: 0; width: 100%; padding: 5mm;
+          @page {
+            size: 80mm auto;
+            margin: 2mm;
           }
-          @page { size: A5 landscape; margin: 5mm; }
+
+          body * {
+            visibility: hidden;
+          }
+
+          .job-card-print-area, .job-card-print-area * {
+            visibility: visible;
+          }
+
+          .job-card-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 76mm;
+            font-size: 11px;
+            font-family: monospace;
+          }
+
+          .job-card-print-area table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+          }
+
+          .job-card-print-area td, .job-card-print-area th {
+            border: 1px solid #000;
+            padding: 2px 4px;
+            word-wrap: break-word;
+          }
+
+          * {
+            page-break-inside: avoid !important;
+            page-break-before: avoid !important;
+            page-break-after: avoid !important;
+          }
         }
       `}</style>
     </div>
@@ -613,6 +655,7 @@ interface PrintModalProps {
 
 const PrintModal: React.FC<PrintModalProps> = ({ job, onClose }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const [lang, setLang] = useState<Lang>('en');
   const handlePrint = useReactToPrint({ contentRef: printRef });
 
   return (
@@ -622,8 +665,34 @@ const PrintModal: React.FC<PrintModalProps> = ({ job, onClose }) => {
           <h3>Print Job Card — {job.jobNumber}</h3>
           <button className="jc-close-btn" onClick={onClose}>✕</button>
         </div>
+
+        {/* Language toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderBottom: '1px solid #e5e7eb' }}>
+          <span style={{ fontSize: '13px', color: '#6b7280' }}>Language / भाषा:</span>
+          <button
+            onClick={() => setLang('en')}
+            style={{
+              padding: '4px 14px', borderRadius: '9999px', fontSize: '13px', cursor: 'pointer', border: '1px solid',
+              background: lang === 'en' ? '#1d4ed8' : '#fff',
+              color: lang === 'en' ? '#fff' : '#374151',
+              borderColor: lang === 'en' ? '#1d4ed8' : '#d1d5db',
+              fontWeight: lang === 'en' ? 600 : 400,
+            }}
+          >English</button>
+          <button
+            onClick={() => setLang('hi')}
+            style={{
+              padding: '4px 14px', borderRadius: '9999px', fontSize: '13px', cursor: 'pointer', border: '1px solid',
+              background: lang === 'hi' ? '#1d4ed8' : '#fff',
+              color: lang === 'hi' ? '#fff' : '#374151',
+              borderColor: lang === 'hi' ? '#1d4ed8' : '#d1d5db',
+              fontWeight: lang === 'hi' ? 600 : 400,
+            }}
+          >हिन्दी</button>
+        </div>
+
         <div className="jc-print-preview">
-          <PrintableCard ref={printRef} job={job} />
+          <PrintableCard ref={printRef} job={job} lang={lang} />
         </div>
         <div className="jc-edit-footer">
           <button type="button" className="jc-btn-cancel" onClick={onClose}>Close</button>
