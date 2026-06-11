@@ -630,7 +630,7 @@ const OrderDetail: React.FC = () => {
 
       {/* Job Card Print Modal */}
       {showJobCardModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto pt-10 pb-10">
+        <div className="fixed inset-0 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto pt-10 pb-10" style={{ zIndex: 10000 }}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4">
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h3 className="text-lg font-semibold text-gray-900">🖨 Print Job Card</h3>
@@ -677,7 +677,7 @@ const OrderDetail: React.FC = () => {
 
       {/* Order Summary Print Modal */}
       {showSummaryModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto pt-10 pb-10">
+        <div className="fixed inset-0 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto pt-10 pb-10" style={{ zIndex: 10000 }}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4">
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h3 className="text-lg font-semibold text-gray-900">🖨 Print Order Summary</h3>
