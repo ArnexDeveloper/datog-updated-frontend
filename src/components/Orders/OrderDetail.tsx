@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
+import JobCardPrint from '../JobCards/JobCardPrint';
+import OrderSummaryPrint from './OrderSummaryPrint';
 
 interface Customer {
   _id: string;
@@ -91,6 +93,9 @@ const OrderDetail: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [showJobCardModal, setShowJobCardModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [selectedGarmentIndex, setSelectedGarmentIndex] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -192,7 +197,19 @@ const OrderDetail: React.FC = () => {
             Order #{order.orderNumber}
           </p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowJobCardModal(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+          >
+            🖨 Print Job Card
+          </button>
+          <button
+            onClick={() => setShowSummaryModal(true)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+          >
+            🖨 Print Order Summary
+          </button>
           <button
             onClick={() => navigate(`/orders/${order._id}/edit`)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -203,7 +220,7 @@ const OrderDetail: React.FC = () => {
             onClick={() => navigate('/orders')}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
           >
-            Back to Orders
+            Back
           </button>
         </div>
       </div>
@@ -610,6 +627,85 @@ const OrderDetail: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Job Card Print Modal */}
+      {showJobCardModal && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto pt-10 pb-10">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4">
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">🖨 Print Job Card</h3>
+              <button onClick={() => setShowJobCardModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+
+            {/* Garment selector */}
+            {order.garments.length > 1 && (
+              <div className="px-5 pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Garment</label>
+                <select
+                  value={selectedGarmentIndex}
+                  onChange={e => setSelectedGarmentIndex(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {order.garments.map((g, i) => (
+                    <option key={i} value={i}>{g.name} ({g.type})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="px-5 py-4">
+              {(() => {
+                const g = order.garments[selectedGarmentIndex];
+                if (!g) return <p className="text-sm text-gray-500">No garment found.</p>;
+                const jobCardData = {
+                  serialNumber: `${order.orderNumber}-${selectedGarmentIndex + 1}`,
+                  garmentTypes: [g.name, g.type],
+                  bookingDate: order.orderDate,
+                  deliveryDate: order.deliveryDate,
+                  trialDate: order.trialDate,
+                  measurements: g.measurements || {},
+                  description: g.specialInstructions || '',
+                  fit: g.fit,
+                  tailor: order.assignedTo?.name,
+                };
+                return <JobCardPrint jobCardData={jobCardData} />;
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Summary Print Modal */}
+      {showSummaryModal && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto pt-10 pb-10">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4">
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">🖨 Print Order Summary</h3>
+              <button onClick={() => setShowSummaryModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            <div className="px-5 py-4">
+              <OrderSummaryPrint orderData={{
+                orderNumber: order.orderNumber,
+                customerName: order.customer.name,
+                customerPhone: order.customer.phone,
+                bookingDate: order.orderDate,
+                trialDate: order.trialDate,
+                deliveryDate: order.deliveryDate,
+                totalAmount: order.payment.total,
+                advance: order.payment.advance,
+                balance: order.payment.balance,
+                garments: order.garments.map(g => ({
+                  name: g.name,
+                  type: g.type,
+                  measurements: g.measurements || {},
+                  fit: g.fit,
+                })),
+                notes: order.notes,
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
