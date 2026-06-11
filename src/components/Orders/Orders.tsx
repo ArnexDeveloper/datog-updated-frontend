@@ -525,16 +525,7 @@ const Orders = () => {
                     </div>
 
                     <div className="order-card-actions">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/orders/${order._id}/documents`);
-                        }}
-                      >
-                        🖨️ Print
-                      </Button>
+
                       <Button
                         size="sm"
                         variant="outline"
@@ -689,14 +680,7 @@ const Orders = () => {
             </div>
 
             <div className="order-detail-actions">
-              <Button
-                onClick={() => {
-                  navigate(`/orders/${selectedOrder._id}/documents`);
-                  setShowOrderDetail(false);
-                }}
-              >
-                🖨️ Print Documents
-              </Button>
+
               <Button
                 onClick={() => {
                   setShowOrderDetail(false);
