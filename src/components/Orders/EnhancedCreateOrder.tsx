@@ -73,24 +73,23 @@ const PRODUCT_ACCESSORIES: Record<string, string[]> = {
   'Gown': ['Sleeveless', 'Embroidery', 'Train'],
 };
 
-const MEASUREMENT_FIELDS: Record<string, string[]> = {
-  'Shirt': ['Chest', 'Waist', 'Shoulder', 'Length', 'Sleeve'],
-  'Kurta and Kurti': ['Chest', 'Waist', 'Shoulder', 'Length', 'Sleeve'],
-  'Trousers': ['Waist', 'Hip', 'Length', 'Inseam', 'Thigh'],
-  'Pajamas': ['Waist', 'Hip', 'Length'],
-  'Shalwars': ['Waist', 'Hip', 'Length'],
-  'Blazer': ['Chest', 'Waist', 'Shoulder', 'Length', 'Sleeve'],
-  'Sherwani': ['Chest', 'Waist', 'Shoulder', 'Length', 'Sleeve'],
-  'West Coat': ['Chest', 'Waist', 'Shoulder', 'Length'],
-  'Gown': ['Bust', 'Waist', 'Hip', 'Shoulder', 'Length'],
-  'Skirts': ['Waist', 'Hip', 'Length'],
-  'Jothpuri': ['Chest', 'Shoulder', 'Sleeve', 'Length'],
-  'Nehru': ['Chest', 'Shoulder', 'Length'],
-  'Kamize': ['Chest', 'Waist', 'Length', 'Sleeve'],
-  'Over Coat': ['Chest', 'Shoulder', 'Sleeve', 'Length'],
-  'Jackets': ['Chest', 'Shoulder', 'Sleeve', 'Length'],
-  'Blouse': ['Chest', 'Waist', 'Shoulder', 'Length'],
+// Garment types the backend Measurement model actually accepts (see Measurement.js enum)
+const MEASUREMENT_SCHEMA_TYPES = [
+  'shirt', 'pant', 'suit', 'blazer', 'kurta', 'pajama', 'sherwani',
+  'lehenga', 'saree_blouse', 'dress', 'skirt', 'top', 'jacket',
+  'coat', 'waistcoat', 'dhoti', 'churidar', 'salwar', 'dupatta', 'other',
+];
+
+// MeasurementGrid row key -> Measurement schema field (mirrors the mapping order.controller.js
+// applies to inline measurementData so profiles saved here line up with measurements saved via orders)
+const GRID_TO_SCHEMA_FIELD: Record<string, string> = {
+  chest: 'chest', shoulder: 'shoulder', sleeve: 'armLength', upperLength: 'shirtLength',
+  neck: 'neck', waist: 'waist', hip: 'hip', thigh: 'thigh', inseam: 'inseam',
+  lowerLength: 'outseam', bottomOpening: 'ankle', rise: 'rise', notes: 'notes',
 };
+const SCHEMA_TO_GRID_FIELD: Record<string, string> = Object.fromEntries(
+  Object.entries(GRID_TO_SCHEMA_FIELD).map(([rowKey, field]) => [field, rowKey])
+);
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -278,9 +277,6 @@ const EnhancedCreateOrder: React.FC = () => {
   const toggleAccessory = (id: string, acc: string) =>
     setProducts(products.map(p => p.id === id ? { ...p, accessories: p.accessories.includes(acc) ? p.accessories.filter(a => a !== acc) : [...p.accessories, acc] } : p));
 
-  const updateMeasurement = (id: string, field: string, value: number) =>
-    setProducts(products.map(p => p.id === id ? { ...p, measurements: { ...p.measurements, [field]: value } } : p));
-
   const handleImageUpload = (id: string, file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => updateProduct(id, 'imageUrl', reader.result as string);
@@ -354,12 +350,6 @@ const EnhancedCreateOrder: React.FC = () => {
       garments: p.garments.map(g => g.id !== garmentId ? g : {
         ...g, accessories: g.accessories.includes(acc) ? g.accessories.filter(a => a !== acc) : [...g.accessories, acc]
       })
-    }));
-
-  const updateGarmentMeasurement = (pkgId: string, garmentId: string, field: string, value: number) =>
-    setPackages(prev => prev.map(p => p.id !== pkgId ? p : {
-      ...p,
-      garments: p.garments.map(g => g.id !== garmentId ? g : { ...g, measurements: { ...g.measurements, [field]: value } })
     }));
 
   // ── Totals / validation ──
@@ -444,6 +434,89 @@ const EnhancedCreateOrder: React.FC = () => {
     return map[name] || 'other';
   };
 
+  // ── Measurement profile (save / load per customer) ──
+
+  const handleSaveProfile = async () => {
+    if (!customer) { setError('Select a customer before saving a measurement profile'); return; }
+    try {
+      setLoading(true);
+      setError('');
+      let savedCount = 0;
+      for (const col of gridColumns) {
+        const garmentType = mapToGarmentType(col.garmentName);
+        if (!MEASUREMENT_SCHEMA_TYPES.includes(garmentType)) continue;
+
+        const gridMeas = measurementGrid[col.id] || {};
+        const payload: Record<string, any> = {
+          customer: customer._id,
+          garmentType,
+          unit: measurementUnit === 'cm' ? 'cm' : 'inch',
+        };
+        let hasValue = false;
+        Object.entries(gridMeas).forEach(([rowKey, value]) => {
+          if (value === '' || value === undefined) return;
+          const field = GRID_TO_SCHEMA_FIELD[rowKey];
+          if (!field) return;
+          if (field === 'notes') { payload.notes = value; hasValue = true; return; }
+          const num = parseFloat(value);
+          if (!isNaN(num)) { payload[field] = num; hasValue = true; }
+        });
+        if (!hasValue) continue;
+
+        await apiService.createMeasurement(payload);
+        savedCount++;
+      }
+      setSuccess(savedCount > 0
+        ? `Saved measurement profile for ${savedCount} garment${savedCount > 1 ? 's' : ''}`
+        : 'No measurements entered yet to save');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to save measurement profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoadProfile = async () => {
+    if (!customer) { setError('Select a customer before loading a measurement profile'); return; }
+    try {
+      setLoading(true);
+      setError('');
+      const r = await apiService.getCustomerMeasurements(customer._id);
+      const measurements = r.data?.data?.measurements || [];
+      if (!measurements.length) { setError('No saved measurement profile found for this customer'); return; }
+
+      const byType: Record<string, any> = {};
+      measurements.forEach((m: any) => { byType[m.garmentType] = m; });
+
+      const matchedCols = gridColumns.filter(col => byType[mapToGarmentType(col.garmentName)]);
+      if (matchedCols.length === 0) {
+        setError('No matching saved measurements found for the garments in this order');
+        return;
+      }
+
+      setMeasurementGrid(prev => {
+        const next = { ...prev };
+        matchedCols.forEach(col => {
+          const m = byType[mapToGarmentType(col.garmentName)];
+          const colGrid: Record<string, string> = { ...(next[col.id] || {}) };
+          Object.entries(SCHEMA_TO_GRID_FIELD).forEach(([schemaField, rowKey]) => {
+            const val = m[schemaField];
+            if (val === undefined || val === null || val === '') return;
+            colGrid[rowKey] = String(val);
+          });
+          next[col.id] = colGrid;
+        });
+        return next;
+      });
+
+      setSuccess(`Loaded saved measurements for ${matchedCols.length} garment${matchedCols.length > 1 ? 's' : ''}`);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to load measurement profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!deliveryDate) { setError('Please select a delivery date'); return; }
     try {
@@ -512,7 +585,7 @@ const EnhancedCreateOrder: React.FC = () => {
   ) => (
     <div className="p-3 rounded-lg" style={{ background: '#fefce8', border: '1px solid #fef9c3' }}>
       <label className="block text-xs font-semibold mb-2" style={{ color: '#92400e' }}>
-        Fabric Source <span className="text-red-500">*</span>
+        Fabric Source
       </label>
       <div className="grid grid-cols-2 gap-2 mb-2">
         {(['lounge', 'customer'] as const).map(src => (
@@ -527,7 +600,7 @@ const EnhancedCreateOrder: React.FC = () => {
       {fabricSource === 'lounge' ? (
         <div className="grid grid-cols-2 gap-2 p-2 bg-white rounded-lg border border-gray-100">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Fabric *</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Fabric</label>
             <select value={fabric} onChange={e => onFabric(e.target.value)}
               className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg">
               <option value="">Select...</option>
@@ -535,7 +608,7 @@ const EnhancedCreateOrder: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Used (m) *</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Used (m)</label>
             <input type="number" min="0" step="0.1" value={fabricUsed || ''}
               onChange={e => onFabricUsed(parseFloat(e.target.value) || 0)}
               className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg" placeholder="2.5" />
@@ -888,7 +961,7 @@ const EnhancedCreateOrder: React.FC = () => {
                       {/* Garment sub-tabs */}
                       <div className="flex overflow-x-auto" style={{ background: '#f9fafb', borderBottom: '1.5px solid #e5e7eb' }}>
                         {pkg.garments.map(g => {
-                          const filled = !!(g.fabric || g.customerFabricDetails.description) && (g.accessories.length > 0 || Object.values(g.measurements).some(v => v));
+                          const filled = g.accessories.length > 0 || Object.values(g.measurements).some(v => v);
                           const isAct = activeGarmentId === g.id;
                           return (
                             <button key={g.id} type="button"
@@ -914,7 +987,7 @@ const EnhancedCreateOrder: React.FC = () => {
                         {/* Info notice */}
                         <div className="flex items-center gap-2 px-3 py-2 rounded-md text-xs mb-4"
                           style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e' }}>
-                          ℹ️ Price is set once for the whole package above. Fill fabric, accessories and measurements for each garment tab.
+                          ℹ️ Price is set once for the whole package above. Fill fabric and accessories for each garment tab.
                         </div>
                         <div className="space-y-4">
                           {/* Fabric */}
@@ -938,23 +1011,6 @@ const EnhancedCreateOrder: React.FC = () => {
                                       onChange={() => toggleGarmentAcc(pkg.id, garment.id, acc)} />
                                     <span className="text-xs font-medium">{acc}</span>
                                   </label>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {/* Measurements */}
-                          {gDef && gDef.meas.length > 0 && (
-                            <div>
-                              <label className="block text-xs font-semibold text-gray-700 mb-2">Measurements (inches)</label>
-                              <div className="grid grid-cols-5 gap-2">
-                                {gDef.meas.map(field => (
-                                  <div key={field}>
-                                    <label className="block text-xs text-gray-600 mb-1">{field}</label>
-                                    <input type="number" step="0.1" min="0" placeholder="—"
-                                      value={garment.measurements[field] || ''}
-                                      onChange={e => updateGarmentMeasurement(pkg.id, garment.id, field, parseFloat(e.target.value) || 0)}
-                                      className="w-full px-2 py-1.5 text-xs border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-right" />
-                                  </div>
                                 ))}
                               </div>
                             </div>
@@ -1079,22 +1135,6 @@ const EnhancedCreateOrder: React.FC = () => {
                               </div>
                             </div>
                           )}
-                          {/* Measurements */}
-                          {MEASUREMENT_FIELDS[product.name] && (
-                            <div>
-                              <label className="block text-xs font-semibold text-gray-700 mb-2">Measurements (inches)</label>
-                              <div className="grid grid-cols-5 gap-2">
-                                {MEASUREMENT_FIELDS[product.name].map(field => (
-                                  <div key={field}>
-                                    <label className="block text-xs text-gray-600 mb-1">{field}</label>
-                                    <input type="number" step="0.1" min="0" value={product.measurements[field] || ''} placeholder="0.0"
-                                      onChange={e => updateMeasurement(product.id, field, parseFloat(e.target.value) || 0)}
-                                      className="w-full px-2 py-1.5 text-xs border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                           {/* Instructions */}
                           <div>
                             <label className="block text-xs font-semibold text-gray-700 mb-1">Special Instructions</label>
@@ -1157,8 +1197,8 @@ const EnhancedCreateOrder: React.FC = () => {
                 customerName={customer?.name || ''}
                 onGridChange={handleGridChange}
                 onUnitChange={setMeasurementUnit}
-                onLoadProfile={() => {/* Future: load from API */}}
-                onSaveProfile={() => {/* Future: save to API */}}
+                onLoadProfile={handleLoadProfile}
+                onSaveProfile={handleSaveProfile}
                 onBack={() => setMainTab('products')}
                 onContinue={() => setMainTab('finalize')}
               />

@@ -51,7 +51,7 @@ export const apiService = {
   deleteCustomer: (id) => api.delete(`/customers/${id}`),
   searchCustomers: (query) => api.get(`/customers/search?q=${encodeURIComponent(query)}`),
   getCustomerStats: () => api.get('/customers/stats'),
-  getCustomerOrders: (id) => api.get(`/customers/${id}/orders`),
+  getCustomerOrders: (id, params?) => api.get(`/customers/${id}/orders`, { params }),
   getCustomerCredit: (id) => api.get(`/customers/${id}/credit`),
   addManualCredit: (id, payload) => api.post(`/customers/${id}/credit/add`, payload),
 
@@ -89,6 +89,7 @@ export const apiService = {
   createMeasurement: (measurement) => api.post('/measurements', measurement),
   updateMeasurement: (id, measurement) => api.put(`/measurements/${id}`, measurement),
   deleteMeasurement: (id) => api.delete(`/measurements/${id}`),
+  getCustomerMeasurements: (customerId, params?) => api.get(`/measurements/customer/${customerId}`, { params }),
 
   // Job Card endpoints
   getJobCards: (params) => api.get('/jobcards', { params }),
@@ -123,6 +124,7 @@ export const apiService = {
 
   // Admin notification broadcasting
   sendBroadcastNotification: (notificationData) => api.post('/notifications/broadcast', notificationData),
+  sendCustomerNotification: (customerId, payload) => api.post(`/notifications/customer/${customerId}/send`, payload),
   getNotificationTemplates: () => api.get('/notifications/templates'),
   createNotificationTemplate: (template) => api.post('/notifications/templates', template),
   updateNotificationTemplate: (id, template) => api.put(`/notifications/templates/${id}`, template),

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationItem from './NotificationItem';
 import AdminNotificationComposer from './AdminNotificationComposer';
+import CustomerNotificationComposer from './CustomerNotificationComposer';
 
 const NotificationsPage = () => {
   const {
@@ -19,6 +20,7 @@ const NotificationsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [loadingAction, setLoadingAction] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const [showCustomerComposer, setShowCustomerComposer] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   // Get user data to check if admin
@@ -150,6 +152,17 @@ const NotificationsPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
                 Send Notification
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => setShowCustomerComposer(true)}
+                className="inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 rounded-lg shadow-sm text-sm font-medium hover:bg-blue-50 focus:ring-2 focus:ring-blue-500"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Notify Customer
               </button>
             )}
             <button
@@ -400,6 +413,15 @@ const NotificationsPage = () => {
         <AdminNotificationComposer
           isOpen={showComposer}
           onClose={() => setShowComposer(false)}
+          onSuccess={handleComposerSuccess}
+        />
+      )}
+
+      {/* Customer Notification Composer */}
+      {isAdmin && (
+        <CustomerNotificationComposer
+          isOpen={showCustomerComposer}
+          onClose={() => setShowCustomerComposer(false)}
           onSuccess={handleComposerSuccess}
         />
       )}

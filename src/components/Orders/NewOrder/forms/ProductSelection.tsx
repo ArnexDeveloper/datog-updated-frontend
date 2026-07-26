@@ -147,7 +147,7 @@ function makeGarment(productId: string): GarmentData {
 }
 
 function isGarmentFilled(g: GarmentData): boolean {
-  return !!(g.fabricName && (g.accessories.length > 0 || Object.values(g.measurements).some(v => v)));
+  return !!(g.accessories.length > 0 || Object.values(g.measurements).some(v => v));
 }
 
 // ─── Fabric sub-form ─────────────────────────────────────────────────────
@@ -171,7 +171,7 @@ function FabricForm({
   return (
     <div className="mb-3 p-3 rounded-lg" style={{ background: '#fefce8', border: '1px solid #fef9c3' }}>
       <div className="text-xs font-medium text-gray-600 mb-2">
-        Fabric source <span className="text-red-500">*</span>
+        Fabric source
       </div>
       <div className="flex mb-3">
         {(['lounge', 'customer'] as const).map(src => (
@@ -194,7 +194,7 @@ function FabricForm({
       {fabricSource === 'lounge' ? (
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Fabric <span className="text-red-500">*</span></label>
+            <label className="block text-xs text-gray-500 mb-1">Fabric</label>
             <select
               value={fabricName}
               onChange={e => onFabricNameChange(e.target.value)}
@@ -205,7 +205,7 @@ function FabricForm({
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Used (m) <span className="text-red-500">*</span></label>
+            <label className="block text-xs text-gray-500 mb-1">Used (m)</label>
             <input
               type="number" step="0.1" min="0"
               value={fabricUsed || ''}
@@ -458,23 +458,6 @@ export default function ProductSelection({ formData, fabrics = [], onProductsCha
             </div>
           </div>
         )}
-        {/* Measurements */}
-        {prod.meas.length > 0 && (
-          <div className="mb-3">
-            <div className="text-xs font-medium text-gray-500 mb-2">Measurements (inches)</div>
-            <div className="grid grid-cols-5 gap-2">
-              {prod.meas.map(m => (
-                <div key={m}>
-                  <label className="block text-xs text-gray-400 mb-1">{m}</label>
-                  <input type="number" step="0.5" placeholder="—"
-                    value={garment.measurements[m] || ''}
-                    onChange={e => updateGarment(pkg.pkgId, garment.gid, 'measurements', { ...garment.measurements, [m]: e.target.value })}
-                    className="w-full px-2 py-1.5 border border-gray-200 rounded-md text-xs text-right bg-white" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         {/* Notes */}
         <div className="mb-3">
           <div className="text-xs font-medium text-gray-500 mb-1">Special instructions</div>
@@ -694,23 +677,6 @@ export default function ProductSelection({ formData, fabrics = [], onProductsCha
                       }} />
                     {acc}
                   </label>
-                ))}
-              </div>
-            </div>
-          )}
-          {/* Measurements */}
-          {prod.meas.length > 0 && (
-            <div className="mb-4">
-              <div className="text-xs font-medium text-gray-500 mb-2">Measurements (inches)</div>
-              <div className="grid grid-cols-5 gap-2">
-                {prod.meas.map(m => (
-                  <div key={m}>
-                    <label className="block text-xs text-gray-400 mb-1">{m}</label>
-                    <input type="number" step="0.5" placeholder="—"
-                      value={activeIndiv.measurements[m] || ''}
-                      onChange={e => updateIndiv(activeIndiv.uid, 'measurements', { ...activeIndiv.measurements, [m]: e.target.value })}
-                      className="w-full px-2 py-1.5 border border-gray-200 rounded-md text-xs text-right bg-white" />
-                  </div>
                 ))}
               </div>
             </div>

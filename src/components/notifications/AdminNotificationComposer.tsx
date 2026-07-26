@@ -11,6 +11,8 @@ interface FormData {
   title: string;
   message: string;
   recipients: string;
+  sendEmail: boolean;
+  sendWhatsapp: boolean;
 }
 
 interface Errors {
@@ -24,6 +26,8 @@ const AdminNotificationComposer: React.FC<AdminNotificationComposerProps> = ({ i
     title: "",
     message: "",
     recipients: "all",
+    sendEmail: true,
+    sendWhatsapp: true,
   });
 
   const [loading, setLoading] = useState(false);
@@ -79,11 +83,17 @@ const AdminNotificationComposer: React.FC<AdminNotificationComposerProps> = ({ i
 
     setLoading(true);
     try {
+      const channels = ["in_app"];
+      if (formData.sendEmail) channels.push("email");
+      if (formData.sendWhatsapp) channels.push("whatsapp");
+
       const notificationData = {
-        ...formData,
+        title: formData.title,
+        message: formData.message,
+        recipients: formData.recipients,
         priority: "medium",
         type: "announcement",
-        channels: ["in_app"],
+        channels,
       };
 
       const response = await apiService.sendBroadcastNotification(notificationData);
@@ -91,7 +101,7 @@ const AdminNotificationComposer: React.FC<AdminNotificationComposerProps> = ({ i
       if (response.data.success) {
         onSuccess("Message sent successfully!");
         onClose();
-        setFormData({ title: "", message: "", recipients: "all" });
+        setFormData({ title: "", message: "", recipients: "all", sendEmail: true, sendWhatsapp: true });
       }
     } catch (error) {
       setErrors({ submit: error.response?.data?.message || "Failed to send message" });
@@ -176,6 +186,31 @@ const AdminNotificationComposer: React.FC<AdminNotificationComposerProps> = ({ i
                   {recipient.label}
                 </label>
               ))}
+            </div>
+          </div>
+
+          {/* Channels */}
+          <div>
+            <label className="block text-xs font-medium mb-2 text-gray-600">Deliver via</label>
+            <div className="space-y-1">
+              <label className="flex items-center text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.sendEmail}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sendEmail: e.target.checked }))}
+                  className="mr-2 h-3 w-3 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                Email
+              </label>
+              <label className="flex items-center text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={formData.sendWhatsapp}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sendWhatsapp: e.target.checked }))}
+                  className="mr-2 h-3 w-3 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                WhatsApp
+              </label>
             </div>
           </div>
 
