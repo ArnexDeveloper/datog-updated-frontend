@@ -1,52 +1,41 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import NotificationDropdown from './NotificationDropdown';
+import NotificationDrawer from './NotificationDrawer';
 
 const NotificationBell = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [bumping, setBumping] = useState(false);
   const buttonRef = useRef(null);
-  const { counts, loading } = useNotifications();
+  const { counts, loading, bumpTick, drawerOpen, toggleDrawer, closeDrawer } = useNotifications() as any;
 
-  // Close dropdown when clicking outside
+  // Bump the badge briefly whenever a genuinely new notification arrives
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        !buttonRef.current.contains(event.target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleBellClick = () => setIsOpen(!isOpen);
+    if (!bumpTick) return;
+    setBumping(true);
+    const t = setTimeout(() => setBumping(false), 300);
+    return () => clearTimeout(t);
+  }, [bumpTick]);
 
   return (
     <div className="notifications">
       <button
         ref={buttonRef}
-        onClick={handleBellClick}
+        onClick={toggleDrawer}
         className="notification-btn"
         disabled={loading}
         title="Notifications"
       >
         🔔
         {counts.totalUnread > 0 && (
-          <span className="notification-badge">
+          <span
+            className="notification-badge"
+            style={{ transform: bumping ? 'scale(1.4)' : 'scale(1)', transition: 'transform 0.2s ease' }}
+          >
             {counts.totalUnread > 99 ? '99+' : counts.totalUnread}
           </span>
         )}
       </button>
 
-      {isOpen && (
-        <div ref={dropdownRef} className="notifications-dropdown">
-          <NotificationDropdown onClose={() => setIsOpen(false)} />
-        </div>
-      )}
+      <NotificationDrawer isOpen={drawerOpen} onClose={closeDrawer} />
     </div>
   );
 };

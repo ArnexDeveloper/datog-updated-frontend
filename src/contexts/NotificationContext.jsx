@@ -1,5 +1,33 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, useMemo, useRef } from 'react';
 import { apiService } from '../services/api';
+import useToasts from '../hooks/useToasts';
+
+// Buckets every notification type into a drawer filter tab
+export const TYPE_GROUPS = {
+  order_created: 'orders',
+  order_status_updated: 'orders',
+  order_delivery_due: 'orders',
+  delivery_today: 'orders',
+  delivery_overdue: 'orders',
+  trial_reminder: 'orders',
+  payment_pending: 'orders',
+  payment_received: 'orders',
+  invoice_created: 'orders',
+  invoice_overdue: 'alerts',
+  low_stock_alert: 'alerts',
+  new_customer: 'customers',
+  employee_created: 'customers',
+  credit_points_update: 'customers',
+  birthday_wish: 'customers',
+  anniversary_wish: 'customers',
+  job_card_assigned: 'orders',
+  system_alert: 'alerts',
+  announcement: 'alerts',
+  maintenance: 'alerts',
+  feature_update: 'alerts',
+  promotion: 'alerts'
+};
+const ALERT_TYPES = new Set(['delivery_overdue', 'trial_reminder', 'invoice_overdue', 'low_stock_alert']);
 
 // Initial state
 const initialState = {
@@ -120,6 +148,14 @@ export const useNotifications = () => {
 // Provider component
 export const NotificationProvider = ({ children }) => {
   const [state, dispatch] = useReducer(notificationReducer, initialState);
+  const [filter, setFilter] = useState('all');
+  const [bumpTick, setBumpTick] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const openDrawer = () => setDrawerOpen(true);
+  const closeDrawer = () => setDrawerOpen(false);
+  const toggleDrawer = () => setDrawerOpen(prev => !prev);
+  const { toasts, addToast, removeToast } = useToasts();
+  const seenIdsRef = useRef(new Set());
 
   // Fetch notifications
   const fetchNotifications = async (params = {}) => {
@@ -132,6 +168,21 @@ export const NotificationProvider = ({ children }) => {
       });
 
       if (response.data.success) {
+        const fetched = response.data.data.notifications || [];
+        const isFirstLoad = seenIdsRef.current.size === 0;
+        let hasNewArrival = false;
+
+        fetched.forEach(n => {
+          if (!n._id) return;
+          if (!isFirstLoad && !seenIdsRef.current.has(n._id)) {
+            addToast(n);
+            hasNewArrival = true;
+          }
+          seenIdsRef.current.add(n._id);
+        });
+
+        if (hasNewArrival) setBumpTick(t => t + 1);
+
         dispatch({
           type: NOTIFICATION_ACTIONS.SET_NOTIFICATIONS,
           payload: response.data.data
@@ -205,13 +256,50 @@ export const NotificationProvider = ({ children }) => {
     dispatch({ type: NOTIFICATION_ACTIONS.CLEAR_ERROR });
   };
 
+  // Delete all read notifications (keeps unread), then refresh the list
+  const clearRead = async () => {
+    try {
+      await apiService.clearReadNotifications();
+      await fetchNotifications();
+    } catch (error) {
+      console.error('Error clearing read notifications:', error);
+      dispatch({
+        type: NOTIFICATION_ACTIONS.SET_ERROR,
+        payload: 'Failed to clear read notifications'
+      });
+    }
+  };
+
+  // Drawer-facing: only real persisted notifications (ephemeral `alerts` lack
+  // _id/isRead/referenceType so they can't be marked read or navigated to)
+  const drawerNotifications = useMemo(() => {
+    const items = state.notifications || [];
+    if (filter === 'all') return items;
+    if (filter === 'alerts') return items.filter(n => ALERT_TYPES.has(n.type));
+    return items.filter(n => (TYPE_GROUPS[n.type] || 'orders') === filter);
+  }, [state.notifications, filter]);
+
+  const drawerTabCounts = useMemo(() => {
+    const items = state.notifications || [];
+    const counts = { all: items.length, orders: 0, customers: 0, alerts: 0 };
+    items.forEach(n => {
+      if (ALERT_TYPES.has(n.type)) counts.alerts++;
+      const group = TYPE_GROUPS[n.type] || 'orders';
+      if (group === 'orders') counts.orders++;
+      if (group === 'customers') counts.customers++;
+    });
+    return counts;
+  }, [state.notifications]);
+
   // Auto-fetch notifications and counts on mount
   useEffect(() => {
     fetchNotifications();
     fetchNotificationCounts();
 
-    // Set up periodic refresh (every 30 seconds)
+    // Set up periodic refresh (every 30 seconds) — full list so the drawer
+    // and toast-arrival detection both stay live, not just the badge count
     const interval = setInterval(() => {
+      fetchNotifications();
       fetchNotificationCounts();
     }, 30000);
 
@@ -221,13 +309,25 @@ export const NotificationProvider = ({ children }) => {
   // Context value
   const value = {
     ...state,
+    filter,
+    setFilter,
+    drawerNotifications,
+    drawerTabCounts,
+    toasts,
+    removeToast,
+    bumpTick,
+    drawerOpen,
+    openDrawer,
+    closeDrawer,
+    toggleDrawer,
     actions: {
       fetchNotifications,
       fetchNotificationCounts,
       markAsRead,
       markAllAsRead,
       addNotification,
-      clearError
+      clearError,
+      clearRead
     }
   };
 

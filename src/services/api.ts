@@ -121,6 +121,7 @@ export const apiService = {
   markAllNotificationsAsRead: () => api.patch('/notifications/mark-all-read'),
   sendTestNotification: () => api.post('/notifications/test'),
   cleanupOldNotifications: (days) => api.delete('/notifications/cleanup', { params: { days } }),
+  clearReadNotifications: () => api.delete('/notifications/clear'),
 
   // Admin notification broadcasting
   sendBroadcastNotification: (notificationData) => api.post('/notifications/broadcast', notificationData),
