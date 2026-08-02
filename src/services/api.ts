@@ -110,6 +110,7 @@ export const apiService = {
   createInvoice: (invoice) => api.post('/invoices', invoice),
   updateInvoice: (id, invoice) => api.put(`/invoices/${id}`, invoice),
   updateInvoicePayment: (id, payment) => api.post(`/invoices/${id}/payment`, payment),
+  updateInvoiceStatus: (id, payload) => api.patch(`/invoices/${id}/status`, payload),
   generateInvoiceFromOrder: (orderId, payload) => api.post(`/invoices/generate/${orderId}`, payload),
   getInvoicePDF: (id) => api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }),
 

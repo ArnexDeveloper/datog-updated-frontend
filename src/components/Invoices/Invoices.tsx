@@ -1,8 +1,29 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import './Invoices.css';
 
+const STATUS_STYLE: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  paid: { bg: '#f0fdf4', text: '#15803d', border: '#22c55e', label: 'Paid' },
+  partial: { bg: '#fffbeb', text: '#92400e', border: '#f59e0b', label: 'Partial' },
+  pending: { bg: '#fff1f2', text: '#dc2626', border: '#fca5a5', label: 'Unpaid' },
+  overdue: { bg: '#fff1f2', text: '#dc2626', border: '#fca5a5', label: 'Overdue' },
+};
+
+const StatusBadge: React.FC<{ status?: string }> = ({ status }) => {
+  const s = STATUS_STYLE[status || 'pending'] || STATUS_STYLE.pending;
+  return (
+    <span style={{
+      display: 'inline-block', borderRadius: 20, fontSize: 11, fontWeight: 600,
+      padding: '2px 10px', background: s.bg, color: s.text, border: `1px solid ${s.border}`
+    }}>
+      {s.label}
+    </span>
+  );
+};
+
 const Invoices = () => {
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -107,9 +128,10 @@ const Invoices = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>#</th>
+                <th>Invoice #</th>
                 <th>Order</th>
                 <th>Customer</th>
+                <th>Date</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -120,11 +142,14 @@ const Invoices = () => {
                 <tr key={inv._id}>
                   <td>{inv.invoiceNumber || inv._id?.slice(-6)}</td>
                   <td>{inv.order?.orderNumber}</td>
-                  <td>{inv.order?.customer?.name}</td>
-                  <td>₹{inv.total || inv.order?.payment?.total || 0}</td>
-                  <td>{inv.payment?.status || (inv.order?.payment?.status || 'pending')}</td>
+                  <td>{inv.customer?.name}</td>
+                  <td>{inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('en-IN') : ''}</td>
+                  <td>₹{(inv.charges?.total ?? inv.order?.payment?.total ?? 0).toLocaleString('en-IN')}</td>
+                  <td><StatusBadge status={inv.payment?.status} /></td>
                   <td>
                     <div className="actions">
+                      <button onClick={() => navigate(`/invoices/${inv._id}`)}>View</button>
+                      <button onClick={() => navigate(`/invoices/${inv._id}?print=1`)}>Print</button>
                       <button onClick={async () => {
                         try {
                           const res = await apiService.getInvoicePDF(inv._id);

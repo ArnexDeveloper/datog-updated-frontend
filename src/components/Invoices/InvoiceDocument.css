@@ -1,0 +1,64 @@
+.invoice-page-bg {
+  background: #c8c8c8;
+  padding: 20px 16px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.invoice-paper {
+  width: 100%;
+  max-width: 740px;
+  background: #ffffff;
+  border-radius: 2px;
+  position: relative;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.10),
+    0 4px 12px rgba(0, 0, 0, 0.10),
+    0 16px 40px rgba(0, 0, 0, 0.09);
+}
+
+.invoice-paper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.06), transparent);
+}
+
+@media print {
+  .sidebar,
+  header,
+  .invoice-toolbar,
+  .app-nav {
+    display: none !important;
+  }
+
+  .invoice-page-bg {
+    background: none;
+    padding: 0;
+  }
+
+  .invoice-paper {
+    box-shadow: none;
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .invoice-paper::before {
+    display: none;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  @page {
+    margin: 10mm;
+    size: A4 portrait;
+  }
+}
