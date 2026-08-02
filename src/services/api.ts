@@ -114,6 +114,16 @@ export const apiService = {
   generateInvoiceFromOrder: (orderId, payload) => api.post(`/invoices/generate/${orderId}`, payload),
   getInvoicePDF: (id) => api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }),
 
+  // Analytics endpoints
+  getAnalyticsKpis: (params) => api.get('/analytics/kpis', { params }),
+  getAnalyticsSalesChart: (params) => api.get('/analytics/sales-chart', { params }),
+  getAnalyticsOrderStatus: () => api.get('/analytics/order-status'),
+  getAnalyticsEmployees: (params) => api.get('/analytics/employees', { params }),
+  getAnalyticsTopProducts: (params) => api.get('/analytics/top-products', { params }),
+  getAnalyticsRecentOrders: () => api.get('/analytics/recent-orders'),
+  getAnalyticsRevenueTrend: () => api.get('/analytics/revenue-trend'),
+  getAnalyticsQuickMetrics: () => api.get('/analytics/quick-metrics'),
+
   // Notification endpoints
   getNotifications: (params) => api.get('/notifications', { params }),
   getNotificationCounts: () => api.get('/notifications/counts'),

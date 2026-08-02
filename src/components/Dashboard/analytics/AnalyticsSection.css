@@ -1,0 +1,92 @@
+.analytics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--card-border, #e5e7eb);
+}
+
+.analytics-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analytics-period-toggle {
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  overflow: hidden;
+  display: flex;
+}
+
+.analytics-period-toggle button {
+  padding: 5px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: #fff;
+  color: #64748b;
+}
+
+.analytics-period-toggle button.active {
+  background: #0f172a;
+  color: #fff;
+}
+
+.analytics-date-input {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 5px 8px;
+  font-size: 10px;
+  color: #374151;
+}
+
+.analytics-export-btn {
+  background: #c9900a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 11px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.analytics-row-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.analytics-row-2-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 10px;
+}
+
+.analytics-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.analytics-skeleton {
+  background: #f1f5f9;
+  animation: analytics-pulse 1.5s infinite;
+}
+
+@keyframes analytics-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@media (max-width: 900px) {
+  .analytics-row-4, .analytics-row-2-1, .analytics-row-3 {
+    grid-template-columns: 1fr;
+  }
+}

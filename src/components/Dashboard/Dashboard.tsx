@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import { apiService } from '../../services/api';
 import DashboardToasts, { ToastNotification } from './DashboardToasts';
+import AnalyticsSection from './analytics/AnalyticsSection';
 import './Dashboard.css';
 
 /* ── helpers ─────────────────────────────────────────────────── */
@@ -195,7 +196,6 @@ const TodayModal: React.FC<TodayModalProps> = ({ type, trials, deliveries, onClo
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const [overview,         setOverview]         = useState<any>({});
   const [revenue,          setRevenue]          = useState({ total: 0, monthly: 0, paid: 0, pending: 0 });
   const [recentOrders,     setRecentOrders]     = useState<any[]>([]);
   const [monthlyTrends,    setMonthlyTrends]    = useState<any[]>([]);
@@ -216,7 +216,6 @@ const Dashboard = () => {
       if (!res.data.success) return;
       const d = res.data.data;
 
-      setOverview(d.overview || {});
       setRevenue(d.revenue  || { total: 0, monthly: 0, paid: 0, pending: 0 });
       setTopCustomers((d.topCustomers  || []).slice(0, 5));
       setTrialsDueToday(d.trialsDueToday   || []);
@@ -288,50 +287,6 @@ const Dashboard = () => {
         onClose={() => setActiveModal(null)}
       />
 
-      {/* Header */}
-      <div className="dashboard-header">
-        <h1>Dashboard Overview</h1>
-        <p>Welcome to Datog Designer Lounge Management System</p>
-      </div>
-
-      {/* ── Stat Cards ───────────────────────────────────────── */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon orders">📋</div>
-          <div className="stat-content">
-            <h3>{overview.totalOrders ?? 0}</h3>
-            <p>Total Orders</p>
-            <span className="stat-sub">This month: {overview.ordersThisMonth ?? 0}</span>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon invoices">💰</div>
-          <div className="stat-content">
-            <h3>{fmtShort(revenue.total)}</h3>
-            <p>Total Revenue</p>
-            <span className="stat-sub">Monthly: {fmtShort(revenue.monthly)}</span>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon customers">⏳</div>
-          <div className="stat-content">
-            <h3>{overview.pendingOrders ?? 0}</h3>
-            <p>Pending Orders</p>
-            <span className="stat-sub stat-sub--warn">
-              {overview.urgentJobs ?? 0} urgent job{(overview.urgentJobs ?? 0) !== 1 ? 's' : ''}
-            </span>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon users">👥</div>
-          <div className="stat-content">
-            <h3>{overview.totalCustomers ?? 0}</h3>
-            <p>Customers</p>
-            <span className="stat-sub">{overview.totalEmployees ?? 0} active employees</span>
-          </div>
-        </div>
-      </div>
-
       {/* ── Today's Activity Cards ───────────────────────────── */}
       <div className="today-cards">
         {/* Trials today */}
@@ -370,6 +325,9 @@ const Dashboard = () => {
           <div className="today-card__cta">View details →</div>
         </button>
       </div>
+
+      {/* ── Analytics Dashboard (new) ─────────────────────────── */}
+      <AnalyticsSection />
 
       {/* ── Revenue Trend ────────────────────────────────────── */}
       <div className="chart-card chart-card--full">

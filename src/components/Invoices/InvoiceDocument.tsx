@@ -76,6 +76,7 @@ interface Invoice {
   charges?: { subtotal?: number; total?: number };
   payment?: { totalPaid?: number; balanceDue?: number; status?: string };
   notes?: string;
+  generatedBy?: { name?: string; email?: string };
 }
 
 interface ShopDetails {
@@ -171,7 +172,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
   const advancePaid = invoice.payment?.totalPaid ?? 0;
   const balanceDue = invoice.payment?.balanceDue ?? Math.max(0, subtotal - advancePaid);
   const badge = statusStyle(invoice.payment?.status);
-  const tailor = order.assignedTo;
+  const createdBy = invoice.generatedBy;
 
   return (
     <div id="invoice-paper" ref={ref} className="invoice-paper">
@@ -219,9 +220,9 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
           <div style={{ fontSize: 8, color: COLORS.gold, fontWeight: 600 }}>On delivery</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={metaLabel}>Tailor</div>
-          <div style={metaValue}>{tailor?.name || 'Unassigned'}</div>
-          <div style={metaSub}>{tailor ? 'Tailor' : ''}</div>
+          <div style={metaLabel}>Created By</div>
+          <div style={metaValue}>{createdBy?.name || '—'}</div>
+          <div style={metaSub}>{createdBy ? 'Employee' : ''}</div>
         </div>
       </div>
 
