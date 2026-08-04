@@ -601,11 +601,12 @@ const EnhancedCreateOrder: React.FC = () => {
         <div className="grid grid-cols-2 gap-2 p-2 bg-white rounded-lg border border-gray-100">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Fabric</label>
-            <select value={fabric} onChange={e => onFabric(e.target.value)}
-              className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg">
-              <option value="">Select...</option>
-              {fabrics.map(f => <option key={f._id} value={f._id}>{f.name} ({f.quantity}m)</option>)}
-            </select>
+            <input type="text" value={fabric} onChange={e => onFabric(e.target.value)}
+              list={`fabric-suggestions-${productId}`} placeholder="Type fabric name…"
+              className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg" />
+            <datalist id={`fabric-suggestions-${productId}`}>
+              {fabrics.map(f => <option key={f._id} value={f.name}>{`${f.quantity}m available`}</option>)}
+            </datalist>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Used (m)</label>
