@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
+import OrderPicker from './OrderPicker';
 import './Invoices.css';
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; border: string; label: string }> = {
@@ -43,15 +44,10 @@ const Invoices = () => {
     setError('');
     try {
       const [iRes, oRes] = await Promise.all([
-        apiService.getInvoices({ limit: 50 }).catch((e) => { throw e; }),
-        apiService.getOrders({ status: 'ready', limit: 50 }).catch(async () => {
-          // Fallback: fetch without filter if backend rejects filter or fails
-          try {
-            return await apiService.getOrders({ limit: 50 });
-          } catch (err) {
-            throw err;
-          }
-        })
+        apiService.getInvoices({ limit: 50 }),
+        // Any order can need a manually generated/regenerated invoice, not just
+        // ones marked "ready" — the backend already rejects duplicates.
+        apiService.getOrders({ limit: 100, sortBy: 'createdAt', sortOrder: 'desc' })
       ]);
       setInvoices(iRes?.data?.data || []);
       setOrders(oRes?.data?.data || []);
@@ -77,10 +73,14 @@ const Invoices = () => {
 
   const createInvoice = async (e) => {
     e.preventDefault();
+    if (!form.order) {
+      setError('Please select an order');
+      return;
+    }
     try {
       setLoading(true);
       setError('');
-      
+
       // Use backend generation from order to populate items/customer
       const payload = {
         dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : new Date(Date.now() + 30*24*60*60*1000).toISOString(),
@@ -179,20 +179,13 @@ const Invoices = () => {
               <button className="modal-close" onClick={() => setShowForm(false)}>×</button>
             </div>
             <form onSubmit={createInvoice}>
-              <div className="form-row">
-                <div>
-                  <label>Order</label>
-                  <select value={form.order} onChange={(e) => setForm({ ...form, order: e.target.value })} required>
-                    <option value="">{orders.length ? 'Select Order' : 'No eligible orders found'}</option>
-                    {orders.map(o => (
-                      <option key={o._id} value={o._id}>{o.orderNumber} - {o.customer?.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label>Due Date</label>
-                  <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
-                </div>
+              <div className="form-row-single">
+                <label>Order</label>
+                <OrderPicker orders={orders} value={form.order} onChange={(id) => setForm({ ...form, order: id })} />
+              </div>
+              <div className="form-row-single">
+                <label>Due Date</label>
+                <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
               </div>
               <div className="form-row-single">
                 <label>Notes</label>
