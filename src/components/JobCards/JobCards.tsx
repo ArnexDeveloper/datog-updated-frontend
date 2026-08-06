@@ -155,6 +155,21 @@ const MeasurementPanel = ({ measurements }: { measurements: any }) => {
 
 const PRINT_LABELS = ['Length','Chest','Shape','Tummy','Hips','Neck','Shoulder','Sleeves','Biceps','Forearms'];
 
+// Garment type / fit are fixed schema enums (not free text), so they can be
+// safely translated for the Hindi print card — unlike garment.name or a
+// tailor's name, which are free-form data and stay as entered.
+const GARMENT_TYPE_HI: Record<string, string> = {
+  shirt: 'शर्ट', pant: 'पैंट', suit: 'सूट', blazer: 'ब्लेज़र', kurta: 'कुर्ता',
+  pajama: 'पजामा', sherwani: 'शेरवानी', lehenga: 'लहंगा', saree_blouse: 'साड़ी ब्लाउज़',
+  dress: 'ड्रेस', skirt: 'स्कर्ट', top: 'टॉप', jacket: 'जैकेट', coat: 'कोट',
+  waistcoat: 'वेस्टकोट', dhoti: 'धोती', churidar: 'चूड़ीदार', salwar: 'सलवार',
+  dupatta: 'दुपट्टा', other: 'अन्य',
+};
+
+const FIT_HI: Record<string, string> = {
+  slim: 'स्लिम', regular: 'रेगुलर', loose: 'ढीला', custom: 'कस्टम',
+};
+
 type Lang = 'en' | 'hi';
 
 const T = {
@@ -233,8 +248,13 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
       <div style={{ fontSize: '13px', lineHeight: '1.6', fontWeight: 700 }}>
         <div><strong>{t.jobNo}:</strong> {job.jobNumber}</div>
         <div><strong>{t.order}:</strong> {job.order?.orderNumber || '—'}</div>
-        <div><strong>{t.garment}:</strong> {job.garment?.name} ({job.garment?.type})</div>
-        <div><strong>{t.qty}:</strong> {job.garment?.quantity} &nbsp; <strong>{t.fit}:</strong> {job.garment?.fit || '—'}</div>
+        <div>
+          <strong>{t.garment}:</strong> {job.garment?.name} ({lang === 'hi' ? (GARMENT_TYPE_HI[job.garment?.type] || job.garment?.type) : job.garment?.type})
+        </div>
+        <div>
+          <strong>{t.qty}:</strong> {job.garment?.quantity} &nbsp;
+          <strong>{t.fit}:</strong> {job.garment?.fit ? (lang === 'hi' ? (FIT_HI[job.garment.fit] || job.garment.fit) : job.garment.fit) : '—'}
+        </div>
         <div><strong>{t.tailor}:</strong> {job.assignedTo?.name || '—'}</div>
         <div><strong>{t.delivery}:</strong> {job.deliveryDate ? new Date(job.deliveryDate).toLocaleDateString('en-IN') : '—'}</div>
         {job.trialDate && (
