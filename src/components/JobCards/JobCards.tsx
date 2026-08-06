@@ -325,7 +325,7 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
 
       <style>{`
         .jc-print-card {
-          font-family: 'Courier New', Courier, monospace;
+          font-family: 'IBM Plex Sans', sans-serif;
           width: 76mm;
           padding: 2mm;
           background: #fff;
@@ -352,7 +352,7 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
             width: 76mm;
             font-size: 13px;
             font-weight: 700;
-            font-family: monospace;
+            font-family: 'IBM Plex Sans', sans-serif;
           }
 
           .job-card-print-area table {
