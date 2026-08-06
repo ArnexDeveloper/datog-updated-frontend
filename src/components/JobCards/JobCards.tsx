@@ -221,16 +221,16 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
   return (
     <div ref={ref} className="jc-print-card job-card-print-area">
       {/* Business header */}
-      <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}>
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '16px', marginBottom: '2px' }}>
         {t.shopName}
       </div>
-      <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4px' }}>
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>
         {t.jobCard}
       </div>
       <div style={{ borderTop: '1px dashed #000', margin: '3px 0' }} />
 
       {/* Job info */}
-      <div style={{ fontSize: '11px', lineHeight: '1.6' }}>
+      <div style={{ fontSize: '13px', lineHeight: '1.6', fontWeight: 700 }}>
         <div><strong>{t.jobNo}:</strong> {job.jobNumber}</div>
         <div><strong>{t.order}:</strong> {job.order?.orderNumber || '—'}</div>
         <div><strong>{t.garment}:</strong> {job.garment?.name} ({job.garment?.type})</div>
@@ -245,17 +245,17 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
       <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
 
       {/* Measurements table */}
-      <div style={{ fontSize: '11px', fontWeight: 'bold', marginBottom: '2px' }}>
+      <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '2px' }}>
         {t.measurements} ({unit})
       </div>
       {filledRows.length > 0 || customMeasurements.length > 0 ? (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontWeight: 700 }}>
           <thead>
             <tr>
-              <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold' }}>
+              <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 700 }}>
                 {t.measurement}
               </th>
-              <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold' }}>
+              <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 700 }}>
                 {t.value}
               </th>
             </tr>
@@ -263,29 +263,29 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
           <tbody>
             {filledRows.map(label => (
               <tr key={label}>
-                <td style={{ border: '1px solid #000', padding: '2px 4px' }}>
+                <td style={{ border: '1px solid #000', padding: '5px 4px', fontWeight: 700 }}>
                   {lang === 'hi' ? `${t.labels[label] || label} (${label})` : label}
                 </td>
-                <td style={{ border: '1px solid #000', padding: '2px 4px' }}>{measurements[label]} {unit}</td>
+                <td style={{ border: '1px solid #000', padding: '5px 4px', fontWeight: 700 }}>{measurements[label]} {unit}</td>
               </tr>
             ))}
             {customMeasurements.map((c: any, i: number) => (
               <tr key={`custom-${i}`}>
-                <td style={{ border: '1px solid #000', padding: '2px 4px' }}>{c.name}</td>
-                <td style={{ border: '1px solid #000', padding: '2px 4px' }}>{c.value} {c.unit || unit}</td>
+                <td style={{ border: '1px solid #000', padding: '5px 4px', fontWeight: 700 }}>{c.name}</td>
+                <td style={{ border: '1px solid #000', padding: '5px 4px', fontWeight: 700 }}>{c.value} {c.unit || unit}</td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <div style={{ fontSize: '10px' }}>{t.noMeas}</div>
+        <div style={{ fontSize: '12px', fontWeight: 700 }}>{t.noMeas}</div>
       )}
 
       {/* Notes */}
       {(job.garment?.specialInstructions || job.notes || job.garment?.measurements?.notes) && (
         <>
           <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
-          <div style={{ fontSize: '11px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700 }}>
             <strong>{t.notes}:</strong>
             {job.garment?.measurements?.notes && (
               <div style={{ marginTop: '2px' }}>{job.garment.measurements.notes}</div>
@@ -301,7 +301,7 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
       )}
 
       <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
-      <div style={{ textAlign: 'center', fontSize: '10px' }}>{t.thankYou}</div>
+      <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: 700 }}>{t.thankYou}</div>
 
       <style>{`
         .jc-print-card {
@@ -330,20 +330,30 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
             left: 0;
             top: 0;
             width: 76mm;
-            font-size: 11px;
+            font-size: 13px;
+            font-weight: 700;
             font-family: monospace;
           }
 
           .job-card-print-area table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: 13px;
+            font-weight: 700;
           }
 
-          .job-card-print-area td, .job-card-print-area th {
+          .job-card-print-area th {
             border: 1px solid #000;
             padding: 2px 4px;
             word-wrap: break-word;
+            font-weight: 700;
+          }
+
+          .job-card-print-area td {
+            border: 1px solid #000;
+            padding: 5px 4px;
+            word-wrap: break-word;
+            font-weight: 700;
           }
 
           * {
