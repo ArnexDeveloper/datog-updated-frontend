@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import JobCardPrint from '../JobCards/JobCardPrint';
-import OrderSummaryPrint from './OrderSummaryPrint';
 
 interface Customer {
   _id: string;
@@ -94,8 +93,8 @@ const OrderDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [showJobCardModal, setShowJobCardModal] = useState(false);
-  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [selectedGarmentIndex, setSelectedGarmentIndex] = useState(0);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -119,6 +118,29 @@ const OrderDetail: React.FC = () => {
       setError(err.response?.data?.message || 'Failed to fetch order details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePrintInvoice = async () => {
+    if (!order) return;
+    try {
+      setInvoiceLoading(true);
+      const res = await apiService.getInvoices({ order: order._id, limit: 1 });
+      let invoice = res?.data?.data?.[0];
+      if (!invoice) {
+        // Legacy orders created before auto-invoicing won't have one yet
+        const genRes = await apiService.generateInvoiceFromOrder(order._id, {});
+        invoice = genRes?.data?.data;
+      }
+      if (invoice?._id) {
+        navigate(`/invoices/${invoice._id}`);
+      } else {
+        alert('Could not find or create an invoice for this order.');
+      }
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to open invoice');
+    } finally {
+      setInvoiceLoading(false);
     }
   };
 
@@ -187,6 +209,27 @@ const OrderDetail: React.FC = () => {
     );
   }
 
+  // Job cards can be printed for individually-added garments AND for garments
+  // inside a Complete Package — a package-only order has no entries in
+  // order.garments at all, so that alone was leaving "Print Job Card" with
+  // nothing to show.
+  const printableGarments: Array<{
+    name: string; type: string; fit?: string;
+    specialInstructions?: string; notes?: string;
+    measurements?: Record<string, any>; fromPackage?: boolean;
+  }> = [
+    ...order.garments.map(g => ({
+      name: g.name, type: g.type, fit: g.fit,
+      specialInstructions: g.specialInstructions, measurements: g.measurements,
+    })),
+    ...(order.packages || []).flatMap(pkg =>
+      pkg.garments.map(g => ({
+        name: g.name, type: g.type, notes: g.notes,
+        measurements: g.measurements, fromPackage: true,
+      }))
+    ),
+  ];
+
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       {/* Header */}
@@ -205,10 +248,11 @@ const OrderDetail: React.FC = () => {
             🖨 Print Job Card
           </button>
           <button
-            onClick={() => setShowSummaryModal(true)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+            onClick={handlePrintInvoice}
+            disabled={invoiceLoading}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2 disabled:opacity-60"
           >
-            🖨 Print Order Summary
+            🖨 {invoiceLoading ? 'Opening…' : 'Print Invoice'}
           </button>
           <button
             onClick={() => navigate(`/orders/${order._id}/edit`)}
@@ -638,7 +682,7 @@ const OrderDetail: React.FC = () => {
             </div>
 
             {/* Garment selector */}
-            {order.garments.length > 1 && (
+            {printableGarments.length > 1 && (
               <div className="px-5 pt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Select Garment</label>
                 <select
@@ -646,8 +690,8 @@ const OrderDetail: React.FC = () => {
                   onChange={e => setSelectedGarmentIndex(Number(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {order.garments.map((g, i) => (
-                    <option key={i} value={i}>{g.name} ({g.type})</option>
+                  {printableGarments.map((g, i) => (
+                    <option key={i} value={i}>{g.name} ({g.type}){g.fromPackage ? ' · Package' : ''}</option>
                   ))}
                 </select>
               </div>
@@ -655,7 +699,7 @@ const OrderDetail: React.FC = () => {
 
             <div className="px-5 py-4">
               {(() => {
-                const g = order.garments[selectedGarmentIndex];
+                const g = printableGarments[selectedGarmentIndex];
                 if (!g) return <p className="text-sm text-gray-500">No garment found.</p>;
                 const jobCardData = {
                   serialNumber: `${order.orderNumber}-${selectedGarmentIndex + 1}`,
@@ -664,7 +708,7 @@ const OrderDetail: React.FC = () => {
                   deliveryDate: order.deliveryDate,
                   trialDate: order.trialDate,
                   measurements: g.measurements || {},
-                  description: g.specialInstructions || '',
+                  description: g.specialInstructions || g.notes || '',
                   fit: g.fit,
                   tailor: order.assignedTo?.name,
                 };
@@ -675,37 +719,6 @@ const OrderDetail: React.FC = () => {
         </div>
       )}
 
-      {/* Order Summary Print Modal */}
-      {showSummaryModal && (
-        <div className="fixed inset-0 flex items-start justify-center bg-black bg-opacity-50 overflow-y-auto pt-10 pb-10" style={{ zIndex: 10000 }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4">
-            <div className="flex items-center justify-between px-5 py-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">🖨 Print Order Summary</h3>
-              <button onClick={() => setShowSummaryModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
-            </div>
-            <div className="px-5 py-4">
-              <OrderSummaryPrint orderData={{
-                orderNumber: order.orderNumber,
-                customerName: order.customer.name,
-                customerPhone: order.customer.phone,
-                bookingDate: order.orderDate,
-                trialDate: order.trialDate,
-                deliveryDate: order.deliveryDate,
-                totalAmount: order.payment.total,
-                advance: order.payment.advance,
-                balance: order.payment.balance,
-                garments: order.garments.map(g => ({
-                  name: g.name,
-                  type: g.type,
-                  measurements: g.measurements || {},
-                  fit: g.fit,
-                })),
-                notes: order.notes,
-              }} />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
