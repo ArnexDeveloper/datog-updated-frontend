@@ -108,6 +108,7 @@ export const apiService = {
   getInvoices: (params) => api.get('/invoices', { params }),
   getInvoice: (id) => api.get(`/invoices/${id}`),
   createInvoice: (invoice) => api.post('/invoices', invoice),
+  createCustomInvoice: (invoice) => api.post('/invoices/custom', invoice),
   updateInvoice: (id, invoice) => api.put(`/invoices/${id}`, invoice),
   updateInvoicePayment: (id, payment) => api.post(`/invoices/${id}/payment`, payment),
   updateInvoiceStatus: (id, payload) => api.patch(`/invoices/${id}/status`, payload),

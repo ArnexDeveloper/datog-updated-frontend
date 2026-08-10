@@ -67,12 +67,22 @@ interface Customer {
   email?: string;
 }
 
+interface InvoiceItem {
+  description?: string;
+  quantity?: number;
+  unitPrice?: number;
+  totalPrice?: number;
+}
+
 interface Invoice {
   invoiceNumber?: string;
   invoiceDate?: string;
   dueDate?: string;
+  deliveryDate?: string;
+  walkInName?: string;
   order?: Order;
   customer?: Customer;
+  items?: InvoiceItem[];
   charges?: { subtotal?: number; total?: number };
   payment?: { totalPaid?: number; balanceDue?: number; status?: string };
   notes?: string;
@@ -115,7 +125,7 @@ const fabricLabel = (g: Garment | PackageGarment) => {
 const sourceLabel = (source?: string) => (source === 'customer' ? 'Customer' : 'Lounge');
 
 type Row = {
-  type: 'package' | 'individual';
+  type: 'package' | 'individual' | 'custom';
   name: string;
   garments: string[];
   fabric: string;
@@ -164,10 +174,29 @@ const buildRows = (order?: Order): Row[] => {
   return rows;
 };
 
+// Custom invoices have no linked order — build rows straight from the
+// invoice's own line items instead (no fabric/fit columns to show).
+const buildRowsFromItems = (items?: InvoiceItem[]): Row[] =>
+  (items || []).map((item) => ({
+    type: 'custom',
+    name: item.description || 'Item',
+    garments: [],
+    fabric: '',
+    fabricSource: '',
+    fit: '',
+    details: '',
+    quantity: item.quantity || 1,
+    rate: item.unitPrice || 0,
+    amount: item.totalPrice ?? ((item.unitPrice || 0) * (item.quantity || 1)),
+  }));
+
 const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>(({ invoice, shopDetails }, ref) => {
   const order = invoice.order || {};
   const customer = invoice.customer || {};
-  const rows = buildRows(order);
+  const isCustom = !invoice.order;
+  const rows = isCustom ? buildRowsFromItems(invoice.items) : buildRows(order);
+  const billedToName = customer.name || invoice.walkInName || '—';
+  const deliveryDate = order.deliveryDate || invoice.deliveryDate;
   const subtotal = invoice.charges?.total ?? invoice.charges?.subtotal ?? 0;
   const advancePaid = invoice.payment?.totalPaid ?? 0;
   const balanceDue = invoice.payment?.balanceDue ?? Math.max(0, subtotal - advancePaid);
@@ -193,7 +222,9 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
             Tax Invoice
           </div>
           <div style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>#{invoice.invoiceNumber || '—'}</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.65)' }}>Order: {order.orderNumber || '—'}</div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.65)' }}>
+            {isCustom ? 'Custom Invoice' : `Order: ${order.orderNumber || '—'}`}
+          </div>
           <span style={{
             display: 'inline-block', marginTop: 4, borderRadius: 20, fontSize: 8, fontWeight: 600,
             padding: '2px 8px', background: badge.bg, color: badge.text, border: `1px solid ${badge.border}`
@@ -207,7 +238,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
       <div style={{ background: COLORS.paperWarm, borderBottom: `1px solid ${COLORS.paperBorder}`, padding: '7px 26px', display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <div style={metaLabel}>Billed To</div>
-          <div style={metaValue}>{customer.name || '—'}</div>
+          <div style={metaValue}>{billedToName}</div>
           <div style={metaSub}>{[customer.phone, customer.email].filter(Boolean).join(' · ')}</div>
         </div>
         <div>
@@ -216,7 +247,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
         </div>
         <div>
           <div style={metaLabel}>Delivery Date</div>
-          <div style={metaValue}>{fmtDate(order.deliveryDate)}</div>
+          <div style={metaValue}>{fmtDate(deliveryDate)}</div>
           <div style={{ fontSize: 8, color: COLORS.gold, fontWeight: 600 }}>On delivery</div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -257,11 +288,11 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
                           <span key={gi} style={tag}>{g}</span>
                         ))}
                       </div>
-                    ) : (
+                    ) : row.type === 'individual' && order.garments?.[i]?.type ? (
                       <div style={{ marginTop: 3 }}>
-                        <span style={tag}>{order.garments?.[i]?.type || ''}</span>
+                        <span style={tag}>{order.garments[i].type}</span>
                       </div>
-                    )}
+                    ) : null}
                   </td>
                   <td style={{ ...td, textAlign: 'left', color: '#888', fontSize: 8.5 }}>
                     <div>{row.fabric}</div>

@@ -29,6 +29,7 @@ const Fabrics = React.lazy(() => import('./components/Fabrics/Fabrics'));
 const JobCards = React.lazy(() => import('./components/JobCards/JobCards'));
 const Invoices = React.lazy(() => import('./components/Invoices/Invoices'));
 const InvoiceDetail = React.lazy(() => import('./components/Invoices/InvoiceDetail'));
+const CustomInvoiceCreate = React.lazy(() => import('./components/Invoices/CustomInvoiceCreate'));
 const NotificationsPage = React.lazy(() => import('./components/notifications/NotificationsPage'));
 
 function App() {
@@ -105,6 +106,7 @@ function App() {
                             <Route path="/job-cards" element={<JobCards />} />
                             <Route path="/fabrics" element={<Fabrics />} />
                             <Route path="/invoices" element={<Invoices />} />
+                            <Route path="/invoices/create" element={<CustomInvoiceCreate />} />
                             <Route path="/invoices/:id" element={<InvoiceDetail />} />
                             <Route path="/notifications" element={<NotificationsPage />} />
                             <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -118,7 +118,10 @@ const Invoices = () => {
     <div className="invoices-page">
       <div className="page-header">
         <h2>Invoices</h2>
-        <button className="primary" onClick={openCreate}>+ Create Invoice</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={openCreate}>+ Create from Order</button>
+          <button className="primary" onClick={() => navigate('/invoices/create')}>+ Create Custom Invoice</button>
+        </div>
       </div>
 
       {error && <div className="error-banner">{error}</div>}
@@ -141,8 +144,8 @@ const Invoices = () => {
               {invoices.map((inv) => (
                 <tr key={inv._id}>
                   <td>{inv.invoiceNumber || inv._id?.slice(-6)}</td>
-                  <td>{inv.order?.orderNumber}</td>
-                  <td>{inv.customer?.name}</td>
+                  <td>{inv.order?.orderNumber || <span style={{ color: '#9ca3af' }}>Custom</span>}</td>
+                  <td>{inv.customer?.name || (inv.walkInName ? `${inv.walkInName} (walk-in)` : '—')}</td>
                   <td>{inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('en-IN') : ''}</td>
                   <td>₹{(inv.charges?.total ?? inv.order?.payment?.total ?? 0).toLocaleString('en-IN')}</td>
                   <td><StatusBadge status={inv.payment?.status} /></td>
