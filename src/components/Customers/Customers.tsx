@@ -13,6 +13,7 @@ const Customers = () => {
   const [profileCustomer, setProfileCustomer] = useState<any>(null);
   const [creditData, setCreditData] = useState<{ storeCredit: number; loyaltyPoints: number; transactions: any[] } | null>(null);
   const [creditLoading, setCreditLoading] = useState(false);
+  const [pointsData, setPointsData] = useState<{ balance: number; rupeeValue: number; history: any[] } | null>(null);
   const [addCreditAmount, setAddCreditAmount] = useState('');
   const [addCreditDesc, setAddCreditDesc] = useState('');
   const [addCreditLoading, setAddCreditLoading] = useState(false);
@@ -227,6 +228,7 @@ const Customers = () => {
   const openProfile = async (customer: any) => {
     setProfileCustomer(customer);
     setCreditData(null);
+    setPointsData(null);
     setCreditLoading(true);
     setAddCreditAmount('');
     setAddCreditDesc('');
@@ -235,6 +237,10 @@ const Customers = () => {
       if (res.data.success) setCreditData(res.data.data);
     } catch { setCreditData({ storeCredit: 0, loyaltyPoints: 0, transactions: [] }); }
     finally { setCreditLoading(false); }
+    try {
+      const res = await (apiService as any).getCustomerPoints(customer._id);
+      if (res.data.success) setPointsData(res.data.data);
+    } catch { setPointsData({ balance: 0, rupeeValue: 0, history: [] }); }
   };
 
   const handleAddCredit = async () => {
@@ -720,25 +726,38 @@ const Customers = () => {
 
                   {/* History tables */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    {/* Points History (computed from totalSpent for display) */}
+                    {/* Points History */}
                     <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 9, padding: 12 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
-                        ⭐ Points Summary
+                        ⭐ Points History
                       </div>
-                      <div style={{ fontSize: 12, color: '#374151' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #f3f4f6' }}>
-                          <span style={{ color: '#6b7280' }}>Total Spent</span>
-                          <span style={{ fontWeight: 600 }}>₹{(profileCustomer.totalSpent || 0).toLocaleString('en-IN')}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #f3f4f6' }}>
-                          <span style={{ color: '#6b7280' }}>Total Orders</span>
-                          <span style={{ fontWeight: 600 }}>{profileCustomer.totalOrders || 0}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
-                          <span style={{ color: '#6b7280' }}>Current Points</span>
-                          <span style={{ fontWeight: 700, color: '#2563eb' }}>{creditData?.loyaltyPoints ?? 0} pts</span>
-                        </div>
-                      </div>
+                      {pointsData?.history && pointsData.history.length > 0 ? (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                          <thead>
+                            <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                              {['Date', 'Order', 'Points', 'Balance'].map(h => (
+                                <th key={h} style={{ textAlign: 'left', padding: '5px 6px', color: '#6b7280', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pointsData.history.map((tx: any) => (
+                              <tr key={tx._id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                <td style={{ padding: '5px 6px', color: '#374151' }}>{new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
+                                <td style={{ padding: '5px 6px', color: '#374151', fontSize: 10 }}>{tx.order?.orderNumber || '—'}</td>
+                                <td style={{ padding: '5px 6px' }}>
+                                  <span style={{ background: tx.transactionType === 'redeemed' ? '#fee2e2' : '#dcfce7', color: tx.transactionType === 'redeemed' ? '#dc2626' : '#15803d', fontSize: 10, padding: '1px 6px', borderRadius: 3, fontWeight: 600 }}>
+                                    {tx.transactionType === 'redeemed' ? '−' : '+'}{Math.abs(tx.points)} pts
+                                  </span>
+                                </td>
+                                <td style={{ padding: '5px 6px', fontWeight: 600, color: '#374151' }}>{tx.balanceAfter ?? 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <p style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', padding: '10px 0' }}>No points transactions yet</p>
+                      )}
                     </div>
 
                     {/* Credit History */}

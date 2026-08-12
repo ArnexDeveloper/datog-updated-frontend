@@ -5,6 +5,7 @@ import ShopDetailsTab from './ShopDetailsTab';
 import BillingTab from './BillingTab';
 import AppearanceTab from './AppearanceTab';
 import DataManagementTab from './DataManagementTab';
+import WhatsAppTab from './WhatsAppTab';
 import SystemInfoPanel from './SystemInfoPanel';
 import './Settings.css';
 
@@ -40,6 +41,7 @@ const Settings = () => {
     { id: 'billing', label: 'Billing', component: BillingTab },
     { id: 'appearance', label: 'Appearance', component: AppearanceTab },
     { id: 'data-management', label: 'Data Management', component: DataManagementTab },
+    { id: 'whatsapp', label: 'WhatsApp', component: WhatsAppTab },
   ];
 
   if (loading && !settings) {

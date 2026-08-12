@@ -60,6 +60,7 @@ const InvoiceDetail: React.FC = () => {
     <div className="invoice-page-bg">
       <InvoiceActions
         contentRef={contentRef}
+        invoiceId={id}
         invoiceNumber={invoice.invoiceNumber}
         subtotal={invoice.charges?.total ?? invoice.charges?.subtotal}
         balanceDue={invoice.payment?.balanceDue}

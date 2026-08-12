@@ -2,6 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import JobCardPrint from '../JobCards/JobCardPrint';
+import RecordPaymentModal from './RecordPaymentModal';
+
+const PAYMENT_MODE_LABEL: Record<string, string> = {
+  cash: 'Cash', upi: 'UPI', gpay: 'GPay', phonepe: 'PhonePe',
+  bank_transfer: 'Bank Transfer', card: 'Card', cheque: 'Cheque',
+};
+
+const PAYMENT_MODE_STYLE: Record<string, React.CSSProperties> = {
+  cash: { background: '#f0fdf4', color: '#16a34a' },
+  upi: { background: '#eff6ff', color: '#2563eb' },
+  gpay: { background: '#eff6ff', color: '#2563eb' },
+  phonepe: { background: '#eff6ff', color: '#2563eb' },
+  bank_transfer: { background: '#f5f3ff', color: '#7c3aed' },
+  card: { background: '#fffbeb', color: '#c9900a' },
+  default: { background: '#f3f4f6', color: '#374151' },
+};
 
 interface Customer {
   _id: string;
@@ -76,6 +92,13 @@ interface Order {
     advance: number;
     balance: number;
     status: string;
+    paymentHistory?: Array<{
+      _id?: string;
+      amount: number;
+      method: string;
+      date: string;
+      reference?: string;
+    }>;
   };
   assignedTo?: {
     _id: string;
@@ -95,6 +118,7 @@ const OrderDetail: React.FC = () => {
   const [showJobCardModal, setShowJobCardModal] = useState(false);
   const [selectedGarmentIndex, setSelectedGarmentIndex] = useState(0);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -622,7 +646,7 @@ const OrderDetail: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
               <span className="text-sm text-gray-600">Payment Status</span>
               <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
                 order.payment.status === 'paid'    ? 'bg-green-100 text-green-800' :
@@ -632,7 +656,43 @@ const OrderDetail: React.FC = () => {
                 {order.payment.status.toUpperCase()}
               </span>
             </div>
+
+            {order.payment.balance > 0 && (
+              <button
+                onClick={() => setShowPaymentModal(true)}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 text-sm font-medium"
+              >
+                💵 Record Payment
+              </button>
+            )}
           </div>
+
+          {/* Payment History */}
+          {order.payment.paymentHistory && order.payment.paymentHistory.length > 0 && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Payment History</h3>
+              <div className="space-y-2">
+                {[...order.payment.paymentHistory].reverse().map((p, i) => (
+                  <div key={p._id || i} className="flex items-center justify-between text-sm border-b border-gray-100 pb-2 last:border-b-0 last:pb-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 text-xs">{new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={PAYMENT_MODE_STYLE[p.method] || PAYMENT_MODE_STYLE.default}>
+                        {PAYMENT_MODE_LABEL[p.method] || p.method}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">{formatCurrency(p.amount)}</div>
+                      {p.reference && <div className="text-xs text-gray-500">{p.reference}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between text-sm font-semibold text-gray-800 border-t border-gray-200 pt-3 mt-3">
+                <span>Total paid: {formatCurrency(order.payment.advance)}</span>
+                <span>Balance: {formatCurrency(order.payment.balance)}</span>
+              </div>
+            </div>
+          )}
 
           {/* Important Dates */}
           <div className="bg-white shadow rounded-lg p-6">
@@ -717,6 +777,20 @@ const OrderDetail: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Record Payment Modal */}
+      {showPaymentModal && (
+        <RecordPaymentModal
+          orderId={order._id}
+          orderNumber={order.orderNumber}
+          currentBalance={order.payment.balance}
+          onClose={() => setShowPaymentModal(false)}
+          onSaved={(payment) => {
+            setOrder(prev => prev ? { ...prev, payment } : prev);
+            setShowPaymentModal(false);
+          }}
+        />
       )}
 
     </div>

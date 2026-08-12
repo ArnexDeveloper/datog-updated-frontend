@@ -54,6 +54,7 @@ export const apiService = {
   getCustomerOrders: (id, params?) => api.get(`/customers/${id}/orders`, { params }),
   getCustomerCredit: (id) => api.get(`/customers/${id}/credit`),
   addManualCredit: (id, payload) => api.post(`/customers/${id}/credit/add`, payload),
+  getCustomerPoints: (id) => api.get(`/customers/${id}/points`),
 
   // Order endpoints
   getOrders: (params) => api.get('/orders', { params }),
@@ -114,6 +115,9 @@ export const apiService = {
   updateInvoiceStatus: (id, payload) => api.patch(`/invoices/${id}/status`, payload),
   generateInvoiceFromOrder: (orderId, payload) => api.post(`/invoices/generate/${orderId}`, payload),
   getInvoicePDF: (id) => api.get(`/invoices/${id}/pdf`, { responseType: 'blob' }),
+  sendInvoiceWhatsApp: (id) => api.post(`/invoices/${id}/send-whatsapp`),
+  getWhatsAppStatus: () => api.get('/whatsapp/status'),
+  getWhatsAppQr: () => api.get('/whatsapp/qr'),
 
   // Analytics endpoints
   getAnalyticsKpis: (params) => api.get('/analytics/kpis', { params }),
