@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import { useHindiText } from '../../hooks/useHindiText';
 
 interface JobCardPrintProps {
   jobCardData: {
@@ -118,6 +119,11 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
   const rows = buildMeasurements(jobCardData.measurements);
   const measNotes = jobCardData.measurements?.notes;
 
+  // Free text (not a fixed enum like garment type/fit), so it's
+  // machine-translated on demand rather than looked up in a dictionary.
+  const measNotesText = useHindiText(measNotes, lang);
+  const descriptionText = useHindiText(jobCardData.description, lang);
+
   return (
     <div>
       {/* Controls — hidden on print */}
@@ -210,8 +216,8 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
             <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
             <div style={{ fontSize: '11px' }}>
               <strong>{t.notes}:</strong>
-              {measNotes && <div style={{ marginTop: '2px' }}>{measNotes}</div>}
-              {jobCardData.description && <div style={{ marginTop: '2px' }}>{jobCardData.description}</div>}
+              {measNotes && <div style={{ marginTop: '2px' }}>{measNotesText}</div>}
+              {jobCardData.description && <div style={{ marginTop: '2px' }}>{descriptionText}</div>}
             </div>
           </>
         )}
@@ -221,7 +227,7 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
 
         <style>{`
           .jcp-receipt {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'IBM Plex Sans', sans-serif;
             width: 76mm;
             padding: 2mm;
             background: #fff;
@@ -236,7 +242,7 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
               left: 0; top: 0;
               width: 76mm;
               font-size: 11px;
-              font-family: monospace;
+              font-family: 'IBM Plex Sans', sans-serif;
             }
             .jcp-receipt table { width: 100%; border-collapse: collapse; font-size: 11px; }
             .jcp-receipt td, .jcp-receipt th { border: 1px solid #000; padding: 2px 4px; word-wrap: break-word; }

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { apiService } from '../../services/api';
+import { useHindiText } from '../../hooks/useHindiText';
 import './JobCards.css';
 
 // ── Measurement helpers ────────────────────────────────────────────────────────
@@ -233,6 +234,12 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
   const customMeasurements = (job.garment?.measurements?.customMeasurements || [])
     .filter((c: any) => c.value > 0);
 
+  // Notes are free text (not a fixed enum like garment type/fit), so they're
+  // machine-translated on demand rather than looked up in a dictionary.
+  const measNotesText = useHindiText(job.garment?.measurements?.notes, lang);
+  const specialInstructionsText = useHindiText(job.garment?.specialInstructions, lang);
+  const jobNotesText = useHindiText(job.notes, lang);
+
   return (
     <div ref={ref} className="jc-print-card job-card-print-area">
       {/* Business header */}
@@ -308,13 +315,13 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
           <div style={{ fontSize: '13px', fontWeight: 700 }}>
             <strong>{t.notes}:</strong>
             {job.garment?.measurements?.notes && (
-              <div style={{ marginTop: '2px' }}>{job.garment.measurements.notes}</div>
+              <div style={{ marginTop: '2px' }}>{measNotesText}</div>
             )}
             {job.garment?.specialInstructions && (
-              <div style={{ marginTop: '2px' }}>{job.garment.specialInstructions}</div>
+              <div style={{ marginTop: '2px' }}>{specialInstructionsText}</div>
             )}
             {job.notes && (
-              <div style={{ marginTop: '2px' }}>{job.notes}</div>
+              <div style={{ marginTop: '2px' }}>{jobNotesText}</div>
             )}
           </div>
         </>
