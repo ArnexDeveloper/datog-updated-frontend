@@ -211,7 +211,7 @@ const OrdersNew = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -252,34 +252,43 @@ const OrdersNew = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(order.createdAt)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => navigate(`/orders/${order._id}`)}
-                        className="text-blue-600 hover:text-blue-900 mr-3 font-medium"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => navigate(`/orders/${order._id}/edit`)}
-                        className="text-green-600 hover:text-green-900 mr-3 font-medium"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => handleGenerateJobCards(order._id)}
-                        className="text-purple-600 hover:text-purple-900 mr-3 font-medium"
-                      >
-                        Job Cards
-                      </button>
-                      {order.payment?.balance > 0 && (
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-1">
                         <button
-                          onClick={() => setPaymentModalOrder(order)}
-                          className="text-emerald-600 hover:text-emerald-900 font-medium"
+                          title="View"
+                          aria-label="View"
+                          onClick={() => navigate(`/orders/${order._id}`)}
+                          className="p-1.5 rounded hover:bg-blue-50 text-blue-600 text-base leading-none"
                         >
-                          Record Payment
+                          👁️
                         </button>
-                      )}
+                        <button
+                          title="Edit"
+                          aria-label="Edit"
+                          onClick={() => navigate(`/orders/${order._id}/edit`)}
+                          className="p-1.5 rounded hover:bg-green-50 text-green-600 text-base leading-none"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          title="Generate Job Cards"
+                          aria-label="Generate Job Cards"
+                          onClick={() => handleGenerateJobCards(order._id)}
+                          className="p-1.5 rounded hover:bg-purple-50 text-purple-600 text-base leading-none"
+                        >
+                          🧵
+                        </button>
+                        {order.payment?.balance > 0 && (
+                          <button
+                            title="Record Payment"
+                            aria-label="Record Payment"
+                            onClick={() => setPaymentModalOrder(order)}
+                            className="p-1.5 rounded hover:bg-emerald-50 text-emerald-600 text-base leading-none"
+                          >
+                            💵
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
