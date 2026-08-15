@@ -470,6 +470,9 @@ const Dashboard = () => {
           <button className="action-btn" onClick={() => navigate('/employees')}>
             <span className="action-icon">💼</span><span>Manage Staff</span>
           </button>
+          <button className="action-btn" onClick={() => navigate('/orders')}>
+            <span className="action-icon">💵</span><span>Record Payment</span>
+          </button>
         </div>
       </div>
     </div>

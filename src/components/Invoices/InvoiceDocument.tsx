@@ -208,25 +208,25 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
       {/* HEADER */}
       <div style={{ background: COLORS.gold, padding: '13px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div style={{ fontSize: 19, fontWeight: 700, color: '#fff' }}>Da Tog's</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.75)' }}>Designer Lounge</div>
-          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.6)', marginTop: 4 }}>
+          <div style={{ fontSize: 21, fontWeight: 700, color: '#fff' }}>Da Tog's</div>
+          <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Designer Lounge</div>
+          <div style={{ fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
             {shopDetails?.address || 'Bhopal, Madhya Pradesh · India'}
           </div>
-          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.6)' }}>
+          <div style={{ fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)' }}>
             {shopDetails?.phone || '+91 82238 31963'} · {shopDetails?.email || 'datog@gmail.com'} · GSTIN: 23XXXXX1234Z1X
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.6)' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.7)' }}>
             Tax Invoice
           </div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>#{invoice.invoiceNumber || '—'}</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.65)' }}>
+          <div style={{ fontSize: 19, fontWeight: 700, color: '#fff' }}>#{invoice.invoiceNumber || '—'}</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
             {isCustom ? 'Custom Invoice' : `Order: ${order.orderNumber || '—'}`}
           </div>
           <span style={{
-            display: 'inline-block', marginTop: 4, borderRadius: 20, fontSize: 8, fontWeight: 600,
+            display: 'inline-block', marginTop: 4, borderRadius: 20, fontSize: 9, fontWeight: 700,
             padding: '2px 8px', background: badge.bg, color: badge.text, border: `1px solid ${badge.border}`
           }}>
             {badge.label}
@@ -248,7 +248,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
         <div>
           <div style={metaLabel}>Delivery Date</div>
           <div style={metaValue}>{fmtDate(deliveryDate)}</div>
-          <div style={{ fontSize: 8, color: COLORS.gold, fontWeight: 600 }}>On delivery</div>
+          <div style={{ fontSize: 9, color: COLORS.gold, fontWeight: 700 }}>On delivery</div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={metaLabel}>Created By</div>
@@ -262,7 +262,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
         {/* LEFT COLUMN */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <SectionTitle title="Order Items" />
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5, fontWeight: 500 }}>
             <thead>
               <tr style={{ background: COLORS.paperWarm, borderTop: `2px solid ${COLORS.gold}`, borderBottom: '1px solid #e0d8cc' }}>
                 <th style={{ ...th, width: '36%', textAlign: 'left' }}>Item</th>
@@ -277,9 +277,9 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
                 <tr key={i} style={{ borderBottom: '1px solid #f0ece6' }}>
                   <td style={{ ...td, textAlign: 'left' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 500, color: '#1a1a1a' }}>{row.name}</span>
+                      <span style={{ fontWeight: 700, color: '#1a1a1a' }}>{row.name}</span>
                       {row.type === 'package' && (
-                        <span style={{ fontSize: 7, background: '#eff6ff', color: '#1e40af', borderRadius: 3, padding: '1px 5px' }}>PKG</span>
+                        <span style={{ fontSize: 8, fontWeight: 700, background: '#eff6ff', color: '#1e40af', borderRadius: 3, padding: '1px 5px' }}>PKG</span>
                       )}
                     </div>
                     {row.type === 'package' ? (
@@ -294,14 +294,14 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
                       </div>
                     ) : null}
                   </td>
-                  <td style={{ ...td, textAlign: 'left', color: '#888', fontSize: 8.5 }}>
+                  <td style={{ ...td, textAlign: 'left', color: '#666', fontSize: 9.5, fontWeight: 600 }}>
                     <div>{row.fabric}</div>
                     <div>{row.fabricSource}{row.fit ? ` · ${row.fit}` : ''}</div>
                     {row.details && <div>{row.details}</div>}
                   </td>
-                  <td style={{ ...td, textAlign: 'right' }}>{row.quantity}</td>
-                  <td style={{ ...td, textAlign: 'right' }}>{fmtMoney(row.rate)}</td>
-                  <td style={{ ...td, textAlign: 'right', fontWeight: 500 }}>{fmtMoney(row.amount)}</td>
+                  <td style={{ ...td, textAlign: 'right', fontWeight: 600 }}>{row.quantity}</td>
+                  <td style={{ ...td, textAlign: 'right', fontWeight: 600 }}>{fmtMoney(row.rate)}</td>
+                  <td style={{ ...td, textAlign: 'right', fontWeight: 700 }}>{fmtMoney(row.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -312,8 +312,8 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
             <SummaryRow label="Subtotal" value={fmtMoney(subtotal)} />
             <SummaryRow label="Advance received" value={`−${fmtMoney(advancePaid)}`} valueColor={COLORS.advanceGreen} labelColor={COLORS.advanceGreen} />
             <div style={{ background: COLORS.paperWarm, borderTop: `2px solid ${COLORS.gold}`, padding: '6px 7px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#1a1a1a' }}>Balance due</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.balanceDue }}>{fmtMoney(balanceDue)}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>Balance due</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: COLORS.balanceDue }}>{fmtMoney(balanceDue)}</span>
             </div>
           </div>
 
@@ -335,7 +335,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
               <div style={{ width: 100, height: 1, background: '#aaa' }} />
               <div style={sigLabel}>Customer Signature</div>
             </div>
-            <div style={{ maxWidth: 160, textAlign: 'center', fontSize: 8, color: '#888' }}>
+            <div style={{ maxWidth: 160, textAlign: 'center', fontSize: 9, fontWeight: 600, color: '#777' }}>
               Alterations free within 7 days of delivery. All garments subject to final fitting.
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -351,13 +351,13 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
           <SectionTitle title="Fabric Cutting Chart" />
           <div style={{ border: `1px solid ${COLORS.cuttingBorder}`, borderRadius: 3, overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ background: COLORS.darkBg, padding: '5px 9px' }}>
-              <div style={{ fontSize: 9, fontWeight: 600, color: '#fff' }}>Cutting measurements</div>
-              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)' }}>Fill manually before cutting</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>Cutting measurements</div>
+              <div style={{ fontSize: 8, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>Fill manually before cutting</div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: COLORS.cuttingHead, borderBottom: `1px solid #c8bfb0` }}>
               {['Piece', 'Length', 'Width'].map((h, i) => (
                 <div key={h} style={{
-                  fontSize: 7, fontWeight: 700, color: COLORS.cuttingLabel, textTransform: 'uppercase',
+                  fontSize: 8, fontWeight: 700, color: COLORS.cuttingLabel, textTransform: 'uppercase',
                   textAlign: 'center', padding: '4px 0', borderRight: i < 2 ? '1px solid #c8bfb0' : 'none'
                 }}>
                   {h}
@@ -375,7 +375,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
               </div>
             ))}
             <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr', borderTop: '1px solid #c8bfb0' }}>
-              <div style={{ fontSize: 7, textTransform: 'uppercase', color: COLORS.cuttingLabel, background: COLORS.cuttingHead, borderRight: '1px solid #c8bfb0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', color: COLORS.cuttingLabel, background: COLORS.cuttingHead, borderRight: '1px solid #c8bfb0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 Notes
               </div>
               <div style={{ minHeight: 28, background: '#fff' }} />
@@ -386,9 +386,9 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
 
       {/* FOOTER */}
       <div style={{ background: COLORS.darkBg, padding: '7px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>Da Tog's Designer Lounge</span>
-        <span style={{ fontSize: 8, color: '#666' }}>Computer-generated invoice · No physical stamp required</span>
-        <span style={{ fontSize: 8, color: '#555' }}>Page 1 of 1</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Da Tog's Designer Lounge</span>
+        <span style={{ fontSize: 9, fontWeight: 600, color: '#888' }}>Computer-generated invoice · No physical stamp required</span>
+        <span style={{ fontSize: 9, fontWeight: 600, color: '#777' }}>Page 1 of 1</span>
       </div>
 
       {/* Watermark */}
@@ -405,31 +405,31 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
 
 const SectionTitle: React.FC<{ title: string }> = ({ title }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-    <span style={{ fontSize: 7.5, textTransform: 'uppercase', color: '#9a8a70', whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>{title}</span>
+    <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: '#8a7a5f', whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>{title}</span>
     <span style={{ flex: 1, height: 1, background: '#e8e0d0' }} />
   </div>
 );
 
 const SummaryRow: React.FC<{ label: string; value: string; valueColor?: string; labelColor?: string }> = ({ label, value, valueColor, labelColor }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 7px', fontSize: 9.5 }}>
-    <span style={{ color: labelColor || '#555' }}>{label}</span>
-    <span style={{ color: valueColor || '#1a1a1a', fontWeight: 500 }}>{value}</span>
+  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 7px', fontSize: 11, fontWeight: 600 }}>
+    <span style={{ color: labelColor || '#444' }}>{label}</span>
+    <span style={{ color: valueColor || '#1a1a1a', fontWeight: 700 }}>{value}</span>
   </div>
 );
 
 const PaymentMethod: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div>
     <div style={metaLabel}>{label}</div>
-    <div style={{ fontSize: 9.5, fontWeight: 500, color: '#1a1a1a' }}>{value}</div>
+    <div style={{ fontSize: 10.5, fontWeight: 700, color: '#1a1a1a' }}>{value}</div>
   </div>
 );
 
-const metaLabel: React.CSSProperties = { fontSize: 7.5, textTransform: 'uppercase', color: '#9a8a70', letterSpacing: '0.05em' };
-const metaValue: React.CSSProperties = { fontSize: 10.5, fontWeight: 500, color: '#1a1a1a' };
-const metaSub: React.CSSProperties = { fontSize: 8.5, color: '#777' };
-const sigLabel: React.CSSProperties = { fontSize: 7.5, textTransform: 'uppercase', color: '#9a8a70', letterSpacing: '0.07em', marginTop: 4 };
-const th: React.CSSProperties = { fontSize: 7.5, textTransform: 'uppercase', color: '#9a8a70', padding: '5px 7px', fontWeight: 600 };
+const metaLabel: React.CSSProperties = { fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: '#8a7a5f', letterSpacing: '0.05em' };
+const metaValue: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: '#1a1a1a' };
+const metaSub: React.CSSProperties = { fontSize: 9.5, fontWeight: 600, color: '#666' };
+const sigLabel: React.CSSProperties = { fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: '#8a7a5f', letterSpacing: '0.07em', marginTop: 4 };
+const th: React.CSSProperties = { fontSize: 8.5, textTransform: 'uppercase', color: '#8a7a5f', padding: '5px 7px', fontWeight: 700 };
 const td: React.CSSProperties = { padding: '6px 7px', verticalAlign: 'top' };
-const tag: React.CSSProperties = { fontSize: 7, background: '#f0ece6', border: '1px solid #e0d8cc', borderRadius: 3, padding: '1px 5px', color: '#555' };
+const tag: React.CSSProperties = { fontSize: 8, fontWeight: 700, background: '#f0ece6', border: '1px solid #e0d8cc', borderRadius: 3, padding: '1px 5px', color: '#555' };
 
 export default InvoiceDocument;

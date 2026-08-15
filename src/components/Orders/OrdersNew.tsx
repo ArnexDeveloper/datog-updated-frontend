@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
+import RecordPaymentModal from './RecordPaymentModal';
 
 const OrdersNew = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const OrdersNew = () => {
     limit: 10
   });
   const [searchInput, setSearchInput] = useState('');
+  const [paymentModalOrder, setPaymentModalOrder] = useState<any>(null);
 
   const statusColors: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
@@ -266,10 +268,18 @@ const OrdersNew = () => {
 
                       <button
                         onClick={() => handleGenerateJobCards(order._id)}
-                        className="text-purple-600 hover:text-purple-900 font-medium"
+                        className="text-purple-600 hover:text-purple-900 mr-3 font-medium"
                       >
                         Job Cards
                       </button>
+                      {order.payment?.balance > 0 && (
+                        <button
+                          onClick={() => setPaymentModalOrder(order)}
+                          className="text-emerald-600 hover:text-emerald-900 font-medium"
+                        >
+                          Record Payment
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -303,6 +313,19 @@ const OrdersNew = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {paymentModalOrder && (
+        <RecordPaymentModal
+          orderId={paymentModalOrder._id}
+          orderNumber={paymentModalOrder.orderNumber}
+          currentBalance={paymentModalOrder.payment?.balance || 0}
+          onClose={() => setPaymentModalOrder(null)}
+          onSaved={(payment: any) => {
+            setOrders(prev => prev.map(o => o._id === paymentModalOrder._id ? { ...o, payment } : o));
+            setPaymentModalOrder(null);
+          }}
+        />
       )}
     </div>
   );
