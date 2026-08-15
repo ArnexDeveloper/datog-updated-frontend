@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { apiService } from '../../services/api';
 import { useHindiText } from '../../hooks/useHindiText';
+import SkeletonLine from './SkeletonLine';
 import './JobCards.css';
 
 // ── Measurement helpers ────────────────────────────────────────────────────────
@@ -225,8 +226,9 @@ const T = {
 interface PrintableCardProps {
   job: any;
   lang?: Lang;
+  onTranslationStateChange?: (state: { loading: boolean; error: boolean }) => void;
 }
-const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ job, lang = 'en' }, ref) => {
+const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ job, lang = 'en', onTranslationStateChange }, ref) => {
   const t = T[lang];
   const measurements = buildPrintMeasurements(job.garment?.measurements);
   const unit = job.garment?.measurements?.unit || 'inch';
@@ -236,9 +238,17 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
 
   // Notes are free text (not a fixed enum like garment type/fit), so they're
   // machine-translated on demand rather than looked up in a dictionary.
-  const measNotesText = useHindiText(job.garment?.measurements?.notes, lang);
-  const specialInstructionsText = useHindiText(job.garment?.specialInstructions, lang);
-  const jobNotesText = useHindiText(job.notes, lang);
+  const measNotes = useHindiText(job.garment?.measurements?.notes, lang);
+  const specialInstructions = useHindiText(job.garment?.specialInstructions, lang);
+  const jobNotes = useHindiText(job.notes, lang);
+
+  const translating = measNotes.loading || specialInstructions.loading || jobNotes.loading;
+  const translateError = measNotes.error || specialInstructions.error || jobNotes.error;
+
+  useEffect(() => {
+    onTranslationStateChange?.({ loading: translating, error: translateError });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [translating, translateError]);
 
   return (
     <div ref={ref} className="jc-print-card job-card-print-area">
@@ -314,14 +324,23 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
           <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
           <div style={{ fontSize: '13px', fontWeight: 700 }}>
             <strong>{t.notes}:</strong>
-            {job.garment?.measurements?.notes && (
-              <div style={{ marginTop: '2px' }}>{measNotesText}</div>
-            )}
-            {job.garment?.specialInstructions && (
-              <div style={{ marginTop: '2px' }}>{specialInstructionsText}</div>
-            )}
-            {job.notes && (
-              <div style={{ marginTop: '2px' }}>{jobNotesText}</div>
+            {translating ? (
+              <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <SkeletonLine width="88%" />
+                <SkeletonLine width="62%" />
+              </div>
+            ) : (
+              <>
+                {job.garment?.measurements?.notes && (
+                  <div style={{ marginTop: '2px' }}>{measNotes.text}</div>
+                )}
+                {job.garment?.specialInstructions && (
+                  <div style={{ marginTop: '2px' }}>{specialInstructions.text}</div>
+                )}
+                {job.notes && (
+                  <div style={{ marginTop: '2px' }}>{jobNotes.text}</div>
+                )}
+              </>
             )}
           </div>
         </>
@@ -331,6 +350,13 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
       <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: 700 }}>{t.thankYou}</div>
 
       <style>{`
+        @keyframes jc-shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        @keyframes jc-spin {
+          to { transform: rotate(360deg); }
+        }
         .jc-print-card {
           font-family: 'IBM Plex Sans', sans-serif;
           width: 76mm;
@@ -693,6 +719,8 @@ interface PrintModalProps {
 const PrintModal: React.FC<PrintModalProps> = ({ job, onClose }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<Lang>('en');
+  const [translating, setTranslating] = useState(false);
+  const [translateError, setTranslateError] = useState(false);
   const handlePrint = useReactToPrint({ contentRef: printRef });
 
   return (
@@ -708,28 +736,56 @@ const PrintModal: React.FC<PrintModalProps> = ({ job, onClose }) => {
           <span style={{ fontSize: '13px', color: '#6b7280' }}>Language / भाषा:</span>
           <button
             onClick={() => setLang('en')}
+            disabled={translating}
             style={{
-              padding: '4px 14px', borderRadius: '9999px', fontSize: '13px', cursor: 'pointer', border: '1px solid',
+              padding: '4px 14px', borderRadius: '9999px', fontSize: '13px',
+              cursor: translating ? 'not-allowed' : 'pointer', border: '1px solid',
               background: lang === 'en' ? '#1d4ed8' : '#fff',
               color: lang === 'en' ? '#fff' : '#374151',
               borderColor: lang === 'en' ? '#1d4ed8' : '#d1d5db',
               fontWeight: lang === 'en' ? 600 : 400,
+              opacity: translating ? 0.7 : 1,
             }}
           >English</button>
           <button
             onClick={() => setLang('hi')}
+            disabled={translating}
             style={{
-              padding: '4px 14px', borderRadius: '9999px', fontSize: '13px', cursor: 'pointer', border: '1px solid',
+              padding: '4px 14px', borderRadius: '9999px', fontSize: '13px',
+              cursor: translating ? 'not-allowed' : 'pointer', border: '1px solid',
               background: lang === 'hi' ? '#1d4ed8' : '#fff',
               color: lang === 'hi' ? '#fff' : '#374151',
               borderColor: lang === 'hi' ? '#1d4ed8' : '#d1d5db',
               fontWeight: lang === 'hi' ? 600 : 400,
+              opacity: translating ? 0.7 : 1,
+              display: 'inline-flex', alignItems: 'center',
             }}
-          >हिन्दी</button>
+          >
+            {translating && lang === 'hi' && (
+              <span style={{
+                display: 'inline-block', width: 12, height: 12, border: '2px solid #fff',
+                borderTopColor: 'transparent', borderRadius: '50%', animation: 'jc-spin 0.6s linear infinite', marginRight: 5
+              }} />
+            )}
+            हिन्दी
+          </button>
+          {translateError && (
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginLeft: 4 }}>
+              Translation failed. Please try again.
+            </span>
+          )}
         </div>
 
         <div className="jc-print-preview">
-          <PrintableCard ref={printRef} job={job} lang={lang} />
+          <PrintableCard
+            ref={printRef}
+            job={job}
+            lang={lang}
+            onTranslationStateChange={({ loading, error }) => {
+              setTranslating(loading);
+              setTranslateError(error);
+            }}
+          />
         </div>
         <div className="jc-edit-footer">
           <button type="button" className="jc-btn-cancel" onClick={onClose}>Close</button>

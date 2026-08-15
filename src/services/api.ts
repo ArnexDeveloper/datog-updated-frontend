@@ -58,6 +58,7 @@ export const apiService = {
 
   // Order endpoints
   getOrders: (params) => api.get('/orders', { params }),
+  getOrdersBalanceDueCount: () => api.get('/orders/balance-due-count'),
   getOrder: (id) => api.get(`/orders/${id}`),
   createOrder: (order) => api.post('/orders', order),
   updateOrder: (id, order) => api.put(`/orders/${id}`, order),
@@ -118,6 +119,7 @@ export const apiService = {
   sendInvoiceWhatsApp: (id) => api.post(`/invoices/${id}/send-whatsapp`),
   getWhatsAppStatus: () => api.get('/whatsapp/status'),
   getWhatsAppQr: () => api.get('/whatsapp/qr'),
+  disconnectWhatsApp: () => api.post('/whatsapp/disconnect'),
 
   // Analytics endpoints
   getAnalyticsKpis: (params) => api.get('/analytics/kpis', { params }),

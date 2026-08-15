@@ -206,8 +206,15 @@ const Dashboard = () => {
   const [activeModal,      setActiveModal]      = useState<ModalType>(null);
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState<string | null>(null);
+  const [balanceDueCount,  setBalanceDueCount]  = useState<number | null>(null);
 
   useEffect(() => { loadDashboard(); /* eslint-disable-next-line */ }, []);
+
+  useEffect(() => {
+    apiService.getOrdersBalanceDueCount()
+      .then((res: any) => setBalanceDueCount(res?.data?.count ?? null))
+      .catch(() => setBalanceDueCount(null));
+  }, []);
 
   const loadDashboard = async () => {
     try {
@@ -470,8 +477,21 @@ const Dashboard = () => {
           <button className="action-btn" onClick={() => navigate('/employees')}>
             <span className="action-icon">💼</span><span>Manage Staff</span>
           </button>
-          <button className="action-btn" onClick={() => navigate('/orders')}>
+          <button
+            className="action-btn"
+            title="View orders with pending balance"
+            style={{ position: 'relative' }}
+            onClick={() => navigate('/orders?filter=balance_due')}
+          >
             <span className="action-icon">💵</span><span>Record Payment</span>
+            {!!balanceDueCount && (
+              <span style={{
+                position: 'absolute', top: -6, right: -6, background: '#dc2626', color: '#fff',
+                borderRadius: 9999, fontSize: 10, fontWeight: 700, padding: '1px 6px', lineHeight: '14px'
+              }}>
+                {balanceDueCount} pending
+              </span>
+            )}
           </button>
         </div>
       </div>

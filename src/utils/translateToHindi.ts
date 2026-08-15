@@ -4,6 +4,8 @@
 // so they need an actual translation call rather than a dictionary.
 const cache = new Map<string, string>();
 
+// Throws on network failure or an unusable response — callers (useHindiText)
+// decide the fallback/error UX, this just does the raw translation.
 export const translateToHindi = async (text: string): Promise<string> => {
   const trimmed = (text || '').trim();
   if (!trimmed) return text;
@@ -11,19 +13,14 @@ export const translateToHindi = async (text: string): Promise<string> => {
   const cached = cache.get(trimmed);
   if (cached) return cached;
 
-  try {
-    const res = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|hi`
-    );
-    const data = await res.json();
-    const translated = data?.responseData?.translatedText;
-    if (typeof translated === 'string' && translated.trim()) {
-      cache.set(trimmed, translated);
-      return translated;
-    }
-  } catch {
-    // Network/API failure — fall through to returning the original text
-    // below, so a translation hiccup never blocks printing a job card.
+  const res = await fetch(
+    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|hi`
+  );
+  const data = await res.json();
+  const translated = data?.responseData?.translatedText;
+  if (typeof translated === 'string' && translated.trim()) {
+    cache.set(trimmed, translated);
+    return translated;
   }
-  return text;
+  throw new Error('Translation unavailable');
 };

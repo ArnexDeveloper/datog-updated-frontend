@@ -1,21 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import RecordPaymentModal from './RecordPaymentModal';
+import OrderActionsDropdown, { DropdownAction } from './OrderActionsDropdown';
 
 const OrdersNew = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: '',
     search: '',
+    filter: searchParams.get('filter') || '',
     page: 1,
     limit: 10
   });
   const [searchInput, setSearchInput] = useState('');
   const [paymentModalOrder, setPaymentModalOrder] = useState<any>(null);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+  const clearShortcutFilter = () => {
+    setFilters(prev => ({ ...prev, filter: '', page: 1 }));
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete('filter');
+      return next;
+    });
+  };
 
   const statusColors: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
@@ -114,6 +127,24 @@ const OrdersNew = () => {
           Create Order
         </button>
       </div>
+
+      {/* Shortcut filter chip */}
+      {filters.filter === 'balance_due' && (
+        <div style={{
+          background: '#fffbeb', border: '1px solid #f59e0b', color: '#92400e',
+          borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600,
+          display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16
+        }}>
+          Showing: Orders with balance due
+          <button
+            onClick={clearShortcutFilter}
+            aria-label="Clear filter"
+            style={{ color: '#92400e', fontSize: 14, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -253,42 +284,24 @@ const OrdersNew = () => {
                       {formatDate(order.createdAt)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-1">
-                        <button
-                          title="View"
-                          aria-label="View"
-                          onClick={() => navigate(`/orders/${order._id}`)}
-                          className="p-1.5 rounded hover:bg-blue-50 text-blue-600 text-base leading-none"
-                        >
-                          👁️
-                        </button>
-                        <button
-                          title="Edit"
-                          aria-label="Edit"
-                          onClick={() => navigate(`/orders/${order._id}/edit`)}
-                          className="p-1.5 rounded hover:bg-green-50 text-green-600 text-base leading-none"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          title="Generate Job Cards"
-                          aria-label="Generate Job Cards"
-                          onClick={() => handleGenerateJobCards(order._id)}
-                          className="p-1.5 rounded hover:bg-purple-50 text-purple-600 text-base leading-none"
-                        >
-                          🧵
-                        </button>
-                        {order.payment?.balance > 0 && (
-                          <button
-                            title="Record Payment"
-                            aria-label="Record Payment"
-                            onClick={() => setPaymentModalOrder(order)}
-                            className="p-1.5 rounded hover:bg-emerald-50 text-emerald-600 text-base leading-none"
-                          >
-                            💵
-                          </button>
-                        )}
-                      </div>
+                      {(() => {
+                        const actions: DropdownAction[] = [
+                          { key: 'view', label: 'View Order', icon: '👁️', onClick: () => navigate(`/orders/${order._id}`) },
+                          { key: 'edit', label: 'Edit Order', icon: '✏️', onClick: () => navigate(`/orders/${order._id}/edit`) },
+                          { key: 'jobcards', label: 'Generate Job Cards', icon: '🧵', onClick: () => handleGenerateJobCards(order._id) },
+                        ];
+                        if (order.payment?.balance > 0) {
+                          actions.push({ key: 'payment', label: 'Record Payment', icon: '💵', onClick: () => setPaymentModalOrder(order) });
+                        }
+                        return (
+                          <OrderActionsDropdown
+                            actions={actions}
+                            isOpen={openDropdownId === order._id}
+                            onOpen={() => setOpenDropdownId(order._id)}
+                            onClose={() => setOpenDropdownId(prev => (prev === order._id ? null : prev))}
+                          />
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}

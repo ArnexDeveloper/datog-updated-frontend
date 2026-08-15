@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { useHindiText } from '../../hooks/useHindiText';
+import SkeletonLine from './SkeletonLine';
 
 interface JobCardPrintProps {
   jobCardData: {
@@ -123,6 +124,8 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
   // machine-translated on demand rather than looked up in a dictionary.
   const measNotesText = useHindiText(measNotes, lang);
   const descriptionText = useHindiText(jobCardData.description, lang);
+  const translating = measNotesText.loading || descriptionText.loading;
+  const translateError = measNotesText.error || descriptionText.error;
 
   return (
     <div>
@@ -135,18 +138,32 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
             <button
               key={l}
               onClick={() => setLang(l)}
+              disabled={translating}
               style={{
                 padding: '3px 12px', borderRadius: '9999px', fontSize: '13px',
-                cursor: 'pointer', border: '1px solid',
+                cursor: translating ? 'not-allowed' : 'pointer', border: '1px solid',
                 background: lang === l ? '#1d4ed8' : '#fff',
                 color: lang === l ? '#fff' : '#374151',
                 borderColor: lang === l ? '#1d4ed8' : '#d1d5db',
                 fontWeight: lang === l ? 600 : 400,
+                opacity: translating ? 0.7 : 1,
+                display: 'inline-flex', alignItems: 'center',
               }}
             >
+              {translating && l === 'hi' && lang === 'hi' && (
+                <span style={{
+                  display: 'inline-block', width: 12, height: 12, border: '2px solid #fff',
+                  borderTopColor: 'transparent', borderRadius: '50%', animation: 'jcp-spin 0.6s linear infinite', marginRight: 5
+                }} />
+              )}
               {l === 'en' ? 'English' : 'हिन्दी'}
             </button>
           ))}
+          {translateError && (
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginLeft: 4 }}>
+              Translation failed. Please try again.
+            </span>
+          )}
         </div>
 
         <button
@@ -216,8 +233,17 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
             <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
             <div style={{ fontSize: '11px' }}>
               <strong>{t.notes}:</strong>
-              {measNotes && <div style={{ marginTop: '2px' }}>{measNotesText}</div>}
-              {jobCardData.description && <div style={{ marginTop: '2px' }}>{descriptionText}</div>}
+              {translating ? (
+                <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <SkeletonLine width="85%" height={11} />
+                  <SkeletonLine width="60%" height={11} />
+                </div>
+              ) : (
+                <>
+                  {measNotes && <div style={{ marginTop: '2px' }}>{measNotesText.text}</div>}
+                  {jobCardData.description && <div style={{ marginTop: '2px' }}>{descriptionText.text}</div>}
+                </>
+              )}
             </div>
           </>
         )}
@@ -226,6 +252,13 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
         <div style={{ textAlign: 'center', fontSize: '10px' }}>{t.thankYou}</div>
 
         <style>{`
+          @keyframes jc-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+          }
+          @keyframes jcp-spin {
+            to { transform: rotate(360deg); }
+          }
           .jcp-receipt {
             font-family: 'IBM Plex Sans', sans-serif;
             width: 76mm;
