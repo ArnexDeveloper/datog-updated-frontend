@@ -416,8 +416,7 @@ const OrderEdit: React.FC = () => {
               <select id="status" name="status" value={formData.status} onChange={handleInputChange}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                 <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="in-progress">In Progress</option>
+                <option value="in_progress">In Progress</option>
                 <option value="trial_pending">Trial Pending</option>
                 <option value="ready">Ready</option>
                 <option value="delivered">Delivered</option>
