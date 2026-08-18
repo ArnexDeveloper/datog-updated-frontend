@@ -66,6 +66,7 @@ const InvoiceDetail: React.FC = () => {
         balanceDue={invoice.payment?.balanceDue}
         orderNumber={invoice.order?.orderNumber}
         customerPhone={invoice.customer?.phone}
+        onPaymentRecorded={(payment) => setInvoice((prev: any) => prev ? { ...prev, payment } : prev)}
       />
       <InvoiceDocument ref={contentRef} invoice={invoice} shopDetails={shopDetails} />
     </div>

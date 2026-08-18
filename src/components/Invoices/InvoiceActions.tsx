@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { apiService } from '../../services/api';
+import RecordInvoicePaymentModal from './RecordInvoicePaymentModal';
 
 interface InvoiceActionsProps {
   contentRef: React.RefObject<HTMLDivElement | null>;
@@ -10,11 +11,13 @@ interface InvoiceActionsProps {
   balanceDue?: number;
   orderNumber?: string;
   customerPhone?: string;
+  onPaymentRecorded?: (payment: any) => void;
 }
 
-const InvoiceActions: React.FC<InvoiceActionsProps> = ({ contentRef, invoiceId, invoiceNumber, subtotal, balanceDue, orderNumber, customerPhone }) => {
+const InvoiceActions: React.FC<InvoiceActionsProps> = ({ contentRef, invoiceId, invoiceNumber, subtotal, balanceDue, orderNumber, customerPhone, onPaymentRecorded }) => {
   const [sendStatus, setSendStatus] = useState<{ state: 'idle' | 'sending' | 'success' | 'error'; message?: string }>({ state: 'idle' });
   const [waConnected, setWaConnected] = useState<boolean | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     (apiService as any).getWhatsAppStatus()
@@ -62,6 +65,9 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ contentRef, invoiceId, 
     }}>
       <button onClick={() => handlePrint()} style={btnPrimary}>🖨 Print</button>
       <button onClick={() => handlePrint()} style={btn}>⬇ Download PDF</button>
+      {!!balanceDue && balanceDue > 0 && invoiceId && (
+        <button onClick={() => setShowPaymentModal(true)} style={btn}>💵 Record Payment</button>
+      )}
       <button onClick={handleWhatsApp} style={btn}>WhatsApp</button>
       <button
         onClick={handleSendWhatsAppPDF}
@@ -83,6 +89,19 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ contentRef, invoiceId, 
         <span style={{ fontSize: 12, color: '#dc2626' }}>✕ {sendStatus.message}</span>
       )}
       <span style={{ marginLeft: 'auto', fontSize: 12, color: '#666' }}>1 page · print ready</span>
+
+      {showPaymentModal && invoiceId && (
+        <RecordInvoicePaymentModal
+          invoiceId={invoiceId}
+          invoiceNumber={invoiceNumber || ''}
+          currentBalance={balanceDue || 0}
+          onClose={() => setShowPaymentModal(false)}
+          onSaved={(payment) => {
+            setShowPaymentModal(false);
+            onPaymentRecorded?.(payment);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -49,6 +49,7 @@ interface Garment {
   category?: string;
   imageUrl?: string;
   measurements?: Record<string, any>;
+  accessories?: string[];
 }
 
 interface PackageGarment {
@@ -241,15 +242,18 @@ const OrderDetail: React.FC = () => {
     name: string; type: string; fit?: string;
     specialInstructions?: string; notes?: string;
     measurements?: Record<string, any>; fromPackage?: boolean;
+    accessories?: string[];
   }> = [
     ...order.garments.map(g => ({
       name: g.name, type: g.type, fit: g.fit,
       specialInstructions: g.specialInstructions, measurements: g.measurements,
+      accessories: g.accessories,
     })),
     ...(order.packages || []).flatMap(pkg =>
       pkg.garments.map(g => ({
         name: g.name, type: g.type, notes: g.notes,
         measurements: g.measurements, fromPackage: true,
+        accessories: g.accessories,
       }))
     ),
   ];
@@ -770,6 +774,7 @@ const OrderDetail: React.FC = () => {
                   measurements: g.measurements || {},
                   description: g.specialInstructions || g.notes || '',
                   fit: g.fit,
+                  accessories: g.accessories,
                   tailor: order.assignedTo?.name,
                 };
                 return <JobCardPrint jobCardData={jobCardData} />;

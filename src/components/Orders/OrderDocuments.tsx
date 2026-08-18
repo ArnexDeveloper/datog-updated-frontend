@@ -22,6 +22,7 @@ interface Order {
     fit?: string;
     fabricSource: string;
     specialInstructions?: string;
+    accessories?: string[];
   }>;
   orderDate: string;
   trialDate?: string;
@@ -108,7 +109,8 @@ const OrderDocuments: React.FC = () => {
     bookingDate: order.orderDate || new Date().toISOString(),
     deliveryDate: order.deliveryDate || new Date().toISOString(),
     measurements: selectedGarment?.measurements || {},
-    description: selectedGarment?.specialInstructions || ''
+    description: selectedGarment?.specialInstructions || '',
+    accessories: selectedGarment?.accessories
   };
 
   return (

@@ -114,6 +114,7 @@ interface PackageGarment {
   fabricSource: 'lounge' | 'customer'; fabric: string; fabricUsed: number;
   customerFabricDetails: { description: string; type: string; color: string; quantity: number };
   accessories: string[]; measurements: Record<string, number>; notes: string;
+  imageUrl?: string;
 }
 
 interface Package {
@@ -284,6 +285,12 @@ const EnhancedCreateOrder: React.FC = () => {
   };
 
   // ── Package handlers ──
+
+  const handlePackageGarmentImageUpload = (pkgId: string, garmentId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => updateGarment(pkgId, garmentId, 'imageUrl', reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const openPackagePicker = () => {
     setPickerOpen(true);
@@ -549,7 +556,7 @@ const EnhancedCreateOrder: React.FC = () => {
             return {
               type: mapToGarmentType(g.productName), name: g.productName,
               fabricSource: g.fabricSource, accessories: g.accessories || [],
-              notes: g.notes || '',
+              notes: g.notes || '', imageUrl: g.imageUrl || '',
               measurementData: hasMeas
                 ? { ...gridMeas, garmentType: mapToGarmentType(g.productName), unit: measurementUnit === 'cm' ? 'cm' : 'inch' }
                 : undefined,
@@ -1016,6 +1023,20 @@ const EnhancedCreateOrder: React.FC = () => {
                               </div>
                             </div>
                           )}
+                          {/* Image */}
+                          <div className="p-3 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                            <label className="block text-xs font-semibold text-purple-900 mb-2">Reference Image for {garment.productName}</label>
+                            <input type="file" accept="image/*"
+                              onChange={e => { const f = e.target.files?.[0]; if (f) handlePackageGarmentImageUpload(pkg.id, garment.id, f); }}
+                              className="w-full px-3 py-2 text-xs border border-purple-300 rounded-lg bg-white file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200" />
+                            {garment.imageUrl && (
+                              <div className="relative mt-2">
+                                <img src={garment.imageUrl} alt="ref" className="w-full h-40 object-cover rounded-lg border-2 border-purple-300" />
+                                <button onClick={() => updateGarment(pkg.id, garment.id, 'imageUrl', '')}
+                                  className="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">Remove</button>
+                              </div>
+                            )}
+                          </div>
                           {/* Notes */}
                           <div>
                             <label className="block text-xs font-semibold text-gray-700 mb-1">Special Instructions for {garment.productName}</label>
