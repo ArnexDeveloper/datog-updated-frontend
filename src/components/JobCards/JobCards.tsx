@@ -183,6 +183,7 @@ const T = {
     garment:      'Garment',
     qty:          'Qty',
     fit:          'Fit',
+    accessories:  'Accessories',
     tailor:       'Tailor',
     delivery:     'Delivery',
     trial:        'Trial',
@@ -206,6 +207,7 @@ const T = {
     garment:      'कपड़ा',
     qty:          'मात्रा',
     fit:          'फिट',
+    accessories:  'एक्सेसरीज़',
     tailor:       'दर्जी',
     delivery:     'डिलीवरी',
     trial:        'ट्रायल',
@@ -241,9 +243,12 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
   const measNotes = useHindiText(job.garment?.measurements?.notes, lang);
   const specialInstructions = useHindiText(job.garment?.specialInstructions, lang);
   const jobNotes = useHindiText(job.notes, lang);
+  // Accessories are free-typed by staff (no fixed enum), so — like notes —
+  // they go through machine translation rather than a lookup table.
+  const accessories = useHindiText(job.garment?.accessories?.join(', '), lang);
 
-  const translating = measNotes.loading || specialInstructions.loading || jobNotes.loading;
-  const translateError = measNotes.error || specialInstructions.error || jobNotes.error;
+  const translating = measNotes.loading || specialInstructions.loading || jobNotes.loading || accessories.loading;
+  const translateError = measNotes.error || specialInstructions.error || jobNotes.error || accessories.error;
 
   useEffect(() => {
     onTranslationStateChange?.({ loading: translating, error: translateError });
@@ -253,16 +258,16 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
   return (
     <div ref={ref} className="jc-print-card job-card-print-area">
       {/* Business header */}
-      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '16px', marginBottom: '2px' }}>
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '19px', marginBottom: '2px' }}>
         {t.shopName}
       </div>
-      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>
         {t.jobCard}
       </div>
       <div style={{ borderTop: '1px dashed #000', margin: '3px 0' }} />
 
       {/* Job info */}
-      <div style={{ fontSize: '13px', lineHeight: '1.6', fontWeight: 700 }}>
+      <div style={{ fontSize: '15px', lineHeight: '1.7', fontWeight: 700 }}>
         <div><strong>{t.jobNo}:</strong> {job.jobNumber}</div>
         <div><strong>{t.order}:</strong> {job.order?.orderNumber || '—'}</div>
         <div>
@@ -272,8 +277,10 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
           <strong>{t.qty}:</strong> {job.garment?.quantity} &nbsp;
           <strong>{t.fit}:</strong> {job.garment?.fit ? (lang === 'hi' ? (FIT_HI[job.garment.fit] || job.garment.fit) : job.garment.fit) : '—'}
         </div>
+        {job.garment?.accessories?.length > 0 && (
+          <div><strong>{t.accessories}:</strong> {accessories.text}</div>
+        )}
         <div><strong>{t.tailor}:</strong> {job.assignedTo?.name || '—'}</div>
-        <div><strong>{t.delivery}:</strong> {job.deliveryDate ? new Date(job.deliveryDate).toLocaleDateString('en-IN') : '—'}</div>
         {job.trialDate && (
           <div><strong>{t.trial}:</strong> {new Date(job.trialDate).toLocaleDateString('en-IN')}</div>
         )}
@@ -282,17 +289,17 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
       <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
 
       {/* Measurements table */}
-      <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '2px' }}>
+      <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '2px' }}>
         {t.measurements} ({unit})
       </div>
       {filledRows.length > 0 || customMeasurements.length > 0 ? (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontWeight: 700 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '15px', fontWeight: 700 }}>
           <thead>
             <tr>
-              <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 700 }}>
+              <th style={{ border: '1px solid #000', padding: '3px 4px', textAlign: 'left', fontWeight: 700 }}>
                 {t.measurement}
               </th>
-              <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 700 }}>
+              <th style={{ border: '1px solid #000', padding: '3px 4px', textAlign: 'left', fontWeight: 700 }}>
                 {t.value}
               </th>
             </tr>
@@ -300,29 +307,29 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
           <tbody>
             {filledRows.map(label => (
               <tr key={label}>
-                <td style={{ border: '1px solid #000', padding: '5px 4px', fontWeight: 700 }}>
+                <td style={{ border: '1px solid #000', padding: '6px 4px', fontWeight: 700 }}>
                   {lang === 'hi' ? `${t.labels[label] || label} (${label})` : label}
                 </td>
-                <td style={{ border: '1px solid #000', padding: '5px 4px', fontWeight: 700 }}>{measurements[label]} {unit}</td>
+                <td style={{ border: '1px solid #000', padding: '6px 4px', fontWeight: 700 }}>{measurements[label]} {unit}</td>
               </tr>
             ))}
             {customMeasurements.map((c: any, i: number) => (
               <tr key={`custom-${i}`}>
-                <td style={{ border: '1px solid #000', padding: '5px 4px', fontWeight: 700 }}>{c.name}</td>
-                <td style={{ border: '1px solid #000', padding: '5px 4px', fontWeight: 700 }}>{c.value} {c.unit || unit}</td>
+                <td style={{ border: '1px solid #000', padding: '6px 4px', fontWeight: 700 }}>{c.name}</td>
+                <td style={{ border: '1px solid #000', padding: '6px 4px', fontWeight: 700 }}>{c.value} {c.unit || unit}</td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <div style={{ fontSize: '12px', fontWeight: 700 }}>{t.noMeas}</div>
+        <div style={{ fontSize: '14px', fontWeight: 700 }}>{t.noMeas}</div>
       )}
 
       {/* Notes */}
       {(job.garment?.specialInstructions || job.notes || job.garment?.measurements?.notes) && (
         <>
           <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
-          <div style={{ fontSize: '13px', fontWeight: 700 }}>
+          <div style={{ fontSize: '15px', fontWeight: 700 }}>
             <strong>{t.notes}:</strong>
             {translating ? (
               <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -347,7 +354,7 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
       )}
 
       <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
-      <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: 700 }}>{t.thankYou}</div>
+      <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>{t.thankYou}</div>
 
       <style>{`
         @keyframes jc-shimmer {
@@ -383,7 +390,7 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
             left: 0;
             top: 0;
             width: 76mm;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 700;
             font-family: 'IBM Plex Sans', sans-serif;
           }
@@ -391,20 +398,20 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
           .job-card-print-area table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 700;
           }
 
           .job-card-print-area th {
             border: 1px solid #000;
-            padding: 2px 4px;
+            padding: 3px 4px;
             word-wrap: break-word;
             font-weight: 700;
           }
 
           .job-card-print-area td {
             border: 1px solid #000;
-            padding: 5px 4px;
+            padding: 6px 4px;
             word-wrap: break-word;
             font-weight: 700;
           }
@@ -420,6 +427,184 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
   );
 });
 PrintableCard.displayName = 'PrintableCard';
+
+// ── Blank job card (measurements-only paper template) ───────────────────────────
+// A hand-fillable template for staff to write measurements during a fitting
+// before there's an order/job card to attach them to — same paper size/style
+// as a real job card, but every field is blank instead of populated from data.
+
+const BlankPrintableCard = React.forwardRef<HTMLDivElement, { lang: Lang }>(({ lang }, ref) => {
+  const t = T[lang];
+  const blankLine = '_'.repeat(22);
+
+  return (
+    <div ref={ref} className="jc-print-card job-card-print-area">
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '16px', marginBottom: '2px' }}>
+        {t.shopName}
+      </div>
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>
+        {t.jobCard}
+      </div>
+      <div style={{ borderTop: '1px dashed #000', margin: '3px 0' }} />
+
+      <div style={{ fontSize: '15px', lineHeight: '2', fontWeight: 700 }}>
+        <div><strong>{t.jobNo}:</strong> {blankLine}</div>
+        <div><strong>{t.order}:</strong> {blankLine}</div>
+        <div><strong>{t.garment}:</strong> {blankLine}</div>
+        <div><strong>{t.qty}:</strong> _____ &nbsp; <strong>{t.fit}:</strong> _______________</div>
+        <div><strong>{t.tailor}:</strong> {blankLine}</div>
+      </div>
+
+      <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
+
+      <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '2px' }}>
+        {t.measurements}
+      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '15px', fontWeight: 700 }}>
+        <thead>
+          <tr>
+            <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 700 }}>
+              {t.measurement}
+            </th>
+            <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 700 }}>
+              {t.value}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {PRINT_LABELS.map(label => (
+            <tr key={label}>
+              <td style={{ border: '1px solid #000', padding: '7px 4px', fontWeight: 700 }}>
+                {lang === 'hi' ? (t.labels[label] || label) : label}
+              </td>
+              <td style={{ border: '1px solid #000', padding: '7px 4px' }}>&nbsp;</td>
+            </tr>
+          ))}
+          {[1, 2, 3].map(i => (
+            <tr key={`extra-${i}`}>
+              <td style={{ border: '1px solid #000', padding: '7px 4px' }}>&nbsp;</td>
+              <td style={{ border: '1px solid #000', padding: '7px 4px' }}>&nbsp;</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
+      <div style={{ fontSize: '15px', fontWeight: 700 }}>
+        <strong>{t.notes}:</strong>
+        <div style={{ borderBottom: '1px solid #000', height: 16, marginTop: 6 }} />
+        <div style={{ borderBottom: '1px solid #000', height: 16, marginTop: 6 }} />
+      </div>
+
+      <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
+      <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>{t.thankYou}</div>
+
+      <style>{`
+        .jc-print-card {
+          font-family: 'IBM Plex Sans', sans-serif;
+          width: 76mm;
+          padding: 2mm;
+          background: #fff;
+          color: #000;
+        }
+        @media print {
+          @page {
+            size: 80mm auto;
+            margin: 2mm;
+          }
+          body * {
+            visibility: hidden;
+          }
+          .job-card-print-area, .job-card-print-area * {
+            visibility: visible;
+          }
+          .job-card-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 76mm;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'IBM Plex Sans', sans-serif;
+          }
+          .job-card-print-area table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+            font-weight: 700;
+          }
+          .job-card-print-area th, .job-card-print-area td {
+            border: 1px solid #000;
+            padding: 6px 4px;
+            word-wrap: break-word;
+            font-weight: 700;
+          }
+          * {
+            page-break-inside: avoid !important;
+            page-break-before: avoid !important;
+            page-break-after: avoid !important;
+          }
+        }
+      `}</style>
+    </div>
+  );
+});
+BlankPrintableCard.displayName = 'BlankPrintableCard';
+
+interface BlankPrintModalProps {
+  onClose: () => void;
+}
+
+const BlankPrintModal: React.FC<BlankPrintModalProps> = ({ onClose }) => {
+  const printRef = useRef<HTMLDivElement>(null);
+  const [lang, setLang] = useState<Lang>('en');
+  const handlePrint = useReactToPrint({ contentRef: printRef });
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="jc-print-modal" onClick={e => e.stopPropagation()}>
+        <div className="jc-edit-header">
+          <h3>Print Blank Job Card</h3>
+          <button className="jc-close-btn" onClick={onClose}>✕</button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderBottom: '1px solid #e5e7eb' }}>
+          <span style={{ fontSize: '13px', color: '#6b7280' }}>Language / भाषा:</span>
+          <button
+            onClick={() => setLang('en')}
+            style={{
+              padding: '4px 14px', borderRadius: '9999px', fontSize: '13px', cursor: 'pointer', border: '1px solid',
+              background: lang === 'en' ? '#1d4ed8' : '#fff',
+              color: lang === 'en' ? '#fff' : '#374151',
+              borderColor: lang === 'en' ? '#1d4ed8' : '#d1d5db',
+              fontWeight: lang === 'en' ? 600 : 400,
+            }}
+          >English</button>
+          <button
+            onClick={() => setLang('hi')}
+            style={{
+              padding: '4px 14px', borderRadius: '9999px', fontSize: '13px', cursor: 'pointer', border: '1px solid',
+              background: lang === 'hi' ? '#1d4ed8' : '#fff',
+              color: lang === 'hi' ? '#fff' : '#374151',
+              borderColor: lang === 'hi' ? '#1d4ed8' : '#d1d5db',
+              fontWeight: lang === 'hi' ? 600 : 400,
+            }}
+          >हिन्दी</button>
+        </div>
+
+        <div className="jc-print-preview">
+          <BlankPrintableCard ref={printRef} lang={lang} />
+        </div>
+        <div className="jc-edit-footer">
+          <button type="button" className="jc-btn-cancel" onClick={onClose}>Close</button>
+          <button type="button" className="jc-btn-save" onClick={() => handlePrint()}>
+            🖨 Print Blank Job Card
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ── Edit modal ─────────────────────────────────────────────────────────────────
 
@@ -810,6 +995,7 @@ const JobCards = () => {
   const [printingJob, setPrintingJob] = useState<any | null>(null);
   const [employees, setEmployees]     = useState<any[]>([]);
   const [showCreateInfo, setShowCreateInfo] = useState(false);
+  const [showBlankPrint, setShowBlankPrint] = useState(false);
 
   const loadJobs = async () => {
     setLoading(true);
@@ -873,9 +1059,14 @@ const JobCards = () => {
     <div className="jobcards-page">
       <div className="page-header">
         <h2>Job Cards</h2>
-        <button className="btn btn-primary" onClick={() => setShowCreateInfo(true)}>
-          Create Job Card
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary" onClick={() => setShowBlankPrint(true)}>
+            🖨 Print Blank Job Card
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowCreateInfo(true)}>
+            Create Job Card
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -1042,6 +1233,11 @@ const JobCards = () => {
       {/* Print modal */}
       {printingJob && (
         <PrintModal job={printingJob} onClose={() => setPrintingJob(null)} />
+      )}
+
+      {/* Blank job card print modal */}
+      {showBlankPrint && (
+        <BlankPrintModal onClose={() => setShowBlankPrint(false)} />
       )}
 
       {/* Create info modal */}

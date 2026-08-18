@@ -14,6 +14,7 @@ interface JobCardPrintProps {
     description?: string;
     tailor?: string;
     fit?: string;
+    accessories?: string[];
   };
 }
 
@@ -26,6 +27,7 @@ const T = {
     jobNo:        'Job #',
     garment:      'Garment',
     fit:          'Fit',
+    accessories:  'Accessories',
     tailor:       'Tailor',
     delivery:     'Delivery',
     trial:        'Trial',
@@ -48,6 +50,7 @@ const T = {
     jobNo:        'जॉब नं.',
     garment:      'कपड़ा',
     fit:          'फिट',
+    accessories:  'एक्सेसरीज़',
     tailor:       'दर्जी',
     delivery:     'डिलीवरी',
     trial:        'ट्रायल',
@@ -64,6 +67,12 @@ const T = {
       Biceps: 'बाइसेप्स', Forearms: 'अग्रभुज',
     } as Record<string, string>,
   },
+};
+
+// Fit is a fixed enum (slim/regular/loose/custom), so it's translated via a
+// lookup table rather than machine translation — same mapping JobCards.tsx uses.
+const FIT_HI: Record<string, string> = {
+  slim: 'स्लिम', regular: 'रेगुलर', loose: 'ढीला', custom: 'कस्टम',
 };
 
 // Maps DB field names → print label names
@@ -124,8 +133,11 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
   // machine-translated on demand rather than looked up in a dictionary.
   const measNotesText = useHindiText(measNotes, lang);
   const descriptionText = useHindiText(jobCardData.description, lang);
-  const translating = measNotesText.loading || descriptionText.loading;
-  const translateError = measNotesText.error || descriptionText.error;
+  // Accessories are free-typed by staff (no fixed enum), so — like notes —
+  // they go through machine translation rather than a lookup table.
+  const accessoriesText = useHindiText(jobCardData.accessories?.join(', '), lang);
+  const translating = measNotesText.loading || descriptionText.loading || accessoriesText.loading;
+  const translateError = measNotesText.error || descriptionText.error || accessoriesText.error;
 
   return (
     <div>
@@ -176,38 +188,42 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
 
       {/* Printable receipt */}
       <div ref={componentRef} className="jcp-receipt">
-        <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '13px', marginBottom: '2px' }}>
+        <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '16px', marginBottom: '2px' }}>
           {t.shopName}
         </div>
-        <div style={{ textAlign: 'center', fontSize: '10px', marginBottom: '4px' }}>
+        <div style={{ textAlign: 'center', fontSize: '13px', marginBottom: '4px' }}>
           {t.jobCard}
         </div>
         <div style={{ borderTop: '1px dashed #000', margin: '3px 0' }} />
 
         {/* Job info */}
-        <div style={{ fontSize: '11px', lineHeight: '1.7' }}>
+        <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
           <div><strong>{t.jobNo}:</strong> {jobCardData.serialNumber}</div>
           <div><strong>{t.garment}:</strong> {garmentName}{garmentType ? ` (${garmentType})` : ''}</div>
-          {jobCardData.fit && <div><strong>{t.fit}:</strong> {jobCardData.fit}</div>}
+          {jobCardData.fit && (
+            <div><strong>{t.fit}:</strong> {lang === 'hi' ? (FIT_HI[jobCardData.fit] || jobCardData.fit) : jobCardData.fit}</div>
+          )}
+          {!!jobCardData.accessories?.length && (
+            <div><strong>{t.accessories}:</strong> {accessoriesText.text}</div>
+          )}
           {jobCardData.tailor && <div><strong>{t.tailor}:</strong> {jobCardData.tailor}</div>}
-          <div><strong>{t.delivery}:</strong> {fmt(jobCardData.deliveryDate)}</div>
           {jobCardData.trialDate && <div><strong>{t.trial}:</strong> {fmt(jobCardData.trialDate)}</div>}
         </div>
 
         <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
 
         {/* Measurements table */}
-        <div style={{ fontSize: '11px', fontWeight: 'bold', marginBottom: '2px' }}>
+        <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px' }}>
           {t.measurements} ({unit})
         </div>
         {rows.length > 0 ? (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>
               <tr>
-                <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold' }}>
+                <th style={{ border: '1px solid #000', padding: '3px 4px', textAlign: 'left', fontWeight: 'bold' }}>
                   {t.measurement}
                 </th>
-                <th style={{ border: '1px solid #000', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold' }}>
+                <th style={{ border: '1px solid #000', padding: '3px 4px', textAlign: 'left', fontWeight: 'bold' }}>
                   {t.value}
                 </th>
               </tr>
@@ -215,23 +231,23 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
             <tbody>
               {rows.map((r, i) => (
                 <tr key={i}>
-                  <td style={{ border: '1px solid #000', padding: '2px 4px' }}>
+                  <td style={{ border: '1px solid #000', padding: '5px 4px' }}>
                     {lang === 'hi' ? `${t.labels[r.label] || r.label} (${r.label})` : r.label}
                   </td>
-                  <td style={{ border: '1px solid #000', padding: '2px 4px' }}>{r.value} {r.unit}</td>
+                  <td style={{ border: '1px solid #000', padding: '5px 4px' }}>{r.value} {r.unit}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
-          <div style={{ fontSize: '10px' }}>{t.noMeas}</div>
+          <div style={{ fontSize: '13px' }}>{t.noMeas}</div>
         )}
 
         {/* Notes */}
         {(measNotes || jobCardData.description) && (
           <>
             <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
-            <div style={{ fontSize: '11px' }}>
+            <div style={{ fontSize: '14px' }}>
               <strong>{t.notes}:</strong>
               {translating ? (
                 <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -249,7 +265,7 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
         )}
 
         <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
-        <div style={{ textAlign: 'center', fontSize: '10px' }}>{t.thankYou}</div>
+        <div style={{ textAlign: 'center', fontSize: '13px' }}>{t.thankYou}</div>
 
         <style>{`
           @keyframes jc-shimmer {
@@ -274,11 +290,11 @@ const JobCardPrint: React.FC<JobCardPrintProps> = ({ jobCardData }) => {
               position: absolute;
               left: 0; top: 0;
               width: 76mm;
-              font-size: 11px;
+              font-size: 14px;
               font-family: 'IBM Plex Sans', sans-serif;
             }
-            .jcp-receipt table { width: 100%; border-collapse: collapse; font-size: 11px; }
-            .jcp-receipt td, .jcp-receipt th { border: 1px solid #000; padding: 2px 4px; word-wrap: break-word; }
+            .jcp-receipt table { width: 100%; border-collapse: collapse; font-size: 14px; }
+            .jcp-receipt td, .jcp-receipt th { border: 1px solid #000; padding: 4px 4px; word-wrap: break-word; }
             * {
               page-break-inside: avoid !important;
               page-break-before: avoid !important;
