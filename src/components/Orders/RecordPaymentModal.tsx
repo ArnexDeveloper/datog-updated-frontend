@@ -20,35 +20,64 @@ interface RecordPaymentModalProps {
   onSaved: (payment: any) => void;
 }
 
+interface SplitRow {
+  id: number;
+  amount: number | '';
+  mode: string;
+  reference: string;
+}
+
+let splitIdSeq = 0;
+const newSplit = (mode = 'cash'): SplitRow => ({ id: splitIdSeq++, amount: '', mode, reference: '' });
+
+// Records one or more payments (e.g. part-cash + part-UPI) against an order's
+// balance in a single submission, instead of the user reopening this modal
+// once per payment mode.
 const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ orderId, orderNumber, currentBalance, onClose, onSaved }) => {
-  const [amount, setAmount] = useState<number | ''>('');
-  const [mode, setMode] = useState('cash');
+  const [splits, setSplits] = useState<SplitRow[]>([newSplit()]);
   const [date, setDate] = useState(todayStr());
-  const [reference, setReference] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const amountNum = Number(amount) || 0;
-  const balanceAfter = Math.max(0, currentBalance - amountNum);
   const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+
+  const updateSplit = (id: number, patch: Partial<SplitRow>) => {
+    setSplits(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
+  };
+
+  const addSplit = () => {
+    const lastMode = splits[splits.length - 1]?.mode;
+    const nextMode = PAYMENT_MODES.find(m => m.value !== lastMode)?.value || 'cash';
+    setSplits(prev => [...prev, newSplit(nextMode)]);
+  };
+
+  const removeSplit = (id: number) => {
+    setSplits(prev => (prev.length > 1 ? prev.filter(s => s.id !== id) : prev));
+  };
+
+  const totalAmount = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+  const balanceAfter = Math.max(0, currentBalance - totalAmount);
 
   const handleSave = async () => {
     setError('');
-    if (!amountNum || amountNum <= 0) {
-      setError('Enter a valid amount');
+    const validSplits = splits.filter(s => Number(s.amount) > 0);
+    if (validSplits.length === 0) {
+      setError('Enter at least one payment amount');
       return;
     }
-    if (amountNum > currentBalance) {
-      setError(`Amount cannot exceed the balance due (${fmt(currentBalance)})`);
+    if (totalAmount > currentBalance) {
+      setError(`Total cannot exceed the balance due (${fmt(currentBalance)})`);
       return;
     }
     try {
       setSaving(true);
       const res = await apiService.addOrderPayment(orderId, {
-        amount: amountNum,
-        method: mode,
+        payments: validSplits.map(s => ({
+          amount: Number(s.amount),
+          method: s.mode,
+          reference: s.reference.trim() || undefined,
+        })),
         date,
-        reference: reference || undefined,
       });
       onSaved(res?.data?.data?.payment);
     } catch (err: any) {
@@ -66,47 +95,84 @@ const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ orderId, orderN
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
         </div>
 
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-5 py-4 space-y-3" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {error && (
             <div style={{ background: '#fff2f2', color: '#991b1b', padding: '8px 12px', borderRadius: 6, border: '1px solid #fecaca', fontSize: 13 }}>
               {error}
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Amount received (₹)</label>
-            <input
-              type="number"
-              min={0}
-              value={amount}
-              onChange={e => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
-              placeholder="0"
-              autoFocus
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          {splits.map((split, i) => (
+            <div key={split.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
+              {splits.length > 1 && (
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-gray-500">Payment {i + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeSplit(split.id)}
+                    className="text-gray-400 hover:text-red-600 text-sm leading-none"
+                    title="Remove this payment"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Payment mode</label>
-            <div className="flex flex-wrap gap-2">
-              {PAYMENT_MODES.map(m => (
-                <button
-                  key={m.value}
-                  type="button"
-                  onClick={() => setMode(m.value)}
-                  style={{
-                    padding: '5px 12px', borderRadius: 9999, fontSize: 12.5, cursor: 'pointer',
-                    border: '1px solid', fontWeight: mode === m.value ? 600 : 400,
-                    background: mode === m.value ? '#1d4ed8' : '#fff',
-                    color: mode === m.value ? '#fff' : '#374151',
-                    borderColor: mode === m.value ? '#1d4ed8' : '#d1d5db',
-                  }}
-                >
-                  {m.label}
-                </button>
-              ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount received (₹)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={split.amount}
+                  onChange={e => updateSplit(split.id, { amount: e.target.value === '' ? '' : Number(e.target.value) })}
+                  placeholder="0"
+                  autoFocus={i === 0}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment mode</label>
+                <div className="flex flex-wrap gap-2">
+                  {PAYMENT_MODES.map(m => (
+                    <button
+                      key={m.value}
+                      type="button"
+                      onClick={() => updateSplit(split.id, { mode: m.value })}
+                      style={{
+                        padding: '5px 12px', borderRadius: 9999, fontSize: 12.5, cursor: 'pointer',
+                        border: '1px solid', fontWeight: split.mode === m.value ? 600 : 400,
+                        background: split.mode === m.value ? '#1d4ed8' : '#fff',
+                        color: split.mode === m.value ? '#fff' : '#374151',
+                        borderColor: split.mode === m.value ? '#1d4ed8' : '#d1d5db',
+                      }}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reference / Transaction ID (optional)</label>
+                <input
+                  type="text"
+                  value={split.reference}
+                  onChange={e => updateSplit(split.id, { reference: e.target.value })}
+                  placeholder="e.g. UPI ref 123456789"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
             </div>
-          </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addSplit}
+            className="w-full px-3 py-2 border border-dashed border-blue-300 rounded-md text-sm font-medium text-blue-700 hover:bg-blue-50"
+          >
+            + Add another payment mode
+          </button>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Payment date</label>
@@ -119,20 +185,15 @@ const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({ orderId, orderN
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Reference / Transaction ID (optional)</label>
-            <input
-              type="text"
-              value={reference}
-              onChange={e => setReference(e.target.value)}
-              placeholder="e.g. UPI ref 123456789"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          <div className="flex justify-between items-center bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
-            <span className="text-sm text-gray-600">Balance after this payment</span>
-            <span className={`text-base font-bold ${balanceAfter > 0 ? 'text-red-600' : 'text-green-600'}`}>{fmt(balanceAfter)}</span>
+          <div className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Total received</span>
+              <span className="font-semibold text-gray-900">{fmt(totalAmount)}</span>
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-gray-600">Balance after</span>
+              <span className={`font-bold ${balanceAfter > 0 ? 'text-red-600' : 'text-green-600'}`}>{fmt(balanceAfter)}</span>
+            </div>
           </div>
         </div>
 

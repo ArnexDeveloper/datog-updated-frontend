@@ -111,84 +111,116 @@ const buildNotifications = (data: any): ToastNotification[] => {
     message: `${uj} urgent job card${uj !== 1 ? 's' : ''} need attention`
   });
 
+  // 6. Orders with a balance due
+  const dp = (data.duePayments || []).length;
+  if (dp > 0) notifs.push({
+    id: 'due-payments', type: 'warning', icon: '💰',
+    title: 'Payments Due',
+    message: `${dp} order${dp !== 1 ? 's' : ''} with an outstanding balance`
+  });
+
+  // 7. Birthdays in the next 7 days
+  const bd = (data.upcomingBirthdays || []).length;
+  if (bd > 0) notifs.push({
+    id: 'birthdays', type: 'info', icon: '🎂',
+    title: 'Upcoming Birthdays',
+    message: `${bd} customer${bd !== 1 ? 's' : ''} celebrating this week`
+  });
+
   return notifs;
 };
 
-/* ── Today Detail Modal ───────────────────────────────────────── */
-type ModalType = 'trials' | 'deliveries' | null;
+/* ── Activity tabs + table (replaces the old per-widget cards/modals) ── */
+type DashTab = 'trials' | 'deliveries' | 'dueOrders' | 'duePayments' | 'trialsWeek' | 'pendingOrders' | 'birthdays' | 'anniversaries';
 
-interface TodayModalProps {
-  type: ModalType;
-  trials: any[];
-  deliveries: any[];
-  onClose: () => void;
+const TAB_META: Record<DashTab, { label: string; icon: string; emptyMsg: string }> = {
+  trials:        { label: "Today's Trials",    icon: '🗓️', emptyMsg: 'No trials scheduled today.' },
+  deliveries:    { label: "Today's Deliveries", icon: '🚚', emptyMsg: 'No deliveries due today.' },
+  dueOrders:     { label: 'Due Orders',         icon: '⏳', emptyMsg: 'No overdue orders.' },
+  duePayments:   { label: 'Due Payment',        icon: '💰', emptyMsg: 'No outstanding balances.' },
+  trialsWeek:    { label: 'Trial Date',         icon: '📅', emptyMsg: 'No trials scheduled this week.' },
+  pendingOrders: { label: 'Pending Orders',     icon: '📋', emptyMsg: 'No open orders.' },
+  birthdays:     { label: 'Birthday',           icon: '🎂', emptyMsg: 'No birthdays in the next 7 days.' },
+  anniversaries: { label: 'Anniversary',        icon: '💍', emptyMsg: 'No anniversaries in the next 7 days.' },
+};
+
+const PEOPLE_TABS = new Set<DashTab>(['birthdays', 'anniversaries']);
+
+interface DashboardActivityTableProps {
+  tab: DashTab;
+  rows: any[];
 }
 
-const TodayModal: React.FC<TodayModalProps> = ({ type, trials, deliveries, onClose }) => {
-  if (!type) return null;
-  const isTrials    = type === 'trials';
-  const rows        = isTrials ? trials : deliveries;
-  const title       = isTrials ? "Today's Trial Orders" : "Today's Delivery Orders";
-  const emptyMsg    = isTrials ? 'No trial orders scheduled for today.' : 'No deliveries due today.';
+const DashboardActivityTable: React.FC<DashboardActivityTableProps> = ({ tab, rows }) => {
+  const meta = TAB_META[tab];
+
+  if (rows.length === 0) {
+    return <p className="today-modal__empty">{meta.emptyMsg}</p>;
+  }
+
+  if (PEOPLE_TABS.has(tab)) {
+    const dateField = tab === 'birthdays' ? 'dateOfBirth' : 'anniversary';
+    const dateLabel = tab === 'birthdays' ? 'Birthday' : 'Anniversary';
+    return (
+      <table className="today-modal__table">
+        <thead>
+          <tr><th>Name</th><th>Phone</th><th>{dateLabel}</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((c: any) => (
+            <tr key={c._id}>
+              <td>{c.name || '—'}</td>
+              <td>{c.phone || '—'}</td>
+              <td>{c[dateField] ? new Date(c[dateField]).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
+  const showTrialTime = tab === 'trials';
+  const showUrgency = tab === 'deliveries';
+  const dateField = tab === 'trialsWeek' ? 'trialDate' : (tab === 'dueOrders' || tab === 'pendingOrders') ? 'deliveryDate' : null;
+  const dateLabel = tab === 'trialsWeek' ? 'Trial Date' : 'Delivery Date';
+  const showBalance = tab === 'deliveries' || tab === 'dueOrders' || tab === 'duePayments';
 
   return (
-    <div className="today-modal-overlay" onClick={onClose}>
-      <div className="today-modal" onClick={e => e.stopPropagation()}>
-        <div className={`today-modal__header today-modal__header--${type}`}>
-          <span className="today-modal__title-icon">{isTrials ? '🗓️' : '🚚'}</span>
-          <h3>{title}</h3>
-          <button className="today-modal__close" onClick={onClose}>×</button>
-        </div>
-
-        {rows.length === 0 ? (
-          <p className="today-modal__empty">{emptyMsg}</p>
-        ) : (
-          <div className="today-modal__body">
-            <table className="today-modal__table">
-              <thead>
-                <tr>
-                  <th>Order #</th>
-                  <th>Customer</th>
-                  <th>Phone</th>
-                  <th>Status</th>
-                  {isTrials ? <th>Trial Time</th> : <th>Urgency</th>}
-                  {!isTrials && <th>Balance</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((o: any) => (
-                  <tr key={o._id}>
-                    <td className="today-modal__order-no">#{o.orderNumber}</td>
-                    <td>{o.customer?.name || '—'}</td>
-                    <td>{o.customer?.phone || '—'}</td>
-                    <td>
-                      <span className={`status ${o.status?.toLowerCase()}`}>{o.status}</span>
-                    </td>
-                    {isTrials ? (
-                      <td>{fmtTime(o.trialDate)}</td>
-                    ) : (
-                      <td>
-                        <span
-                          className="urgency-badge"
-                          style={{ background: URGENCY_COLOR[o.urgency] || '#6b7280' }}
-                        >
-                          {o.urgency || 'medium'}
-                        </span>
-                      </td>
-                    )}
-                    {!isTrials && (
-                      <td className="today-modal__balance">
-                        {o.payment?.balance > 0 ? fmtFull(o.payment.balance) : <span className="paid-tag">Paid</span>}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
+    <table className="today-modal__table">
+      <thead>
+        <tr>
+          <th>Order #</th><th>Customer</th><th>Phone</th><th>Status</th>
+          {showTrialTime && <th>Trial Time</th>}
+          {showUrgency && <th>Urgency</th>}
+          {dateField && <th>{dateLabel}</th>}
+          {showBalance && <th>Balance</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((o: any) => (
+          <tr key={o._id}>
+            <td className="today-modal__order-no">#{o.orderNumber}</td>
+            <td>{o.customer?.name || '—'}</td>
+            <td>{o.customer?.phone || '—'}</td>
+            <td><span className={`status ${o.status?.toLowerCase()}`}>{o.status}</span></td>
+            {showTrialTime && <td>{fmtTime(o.trialDate)}</td>}
+            {showUrgency && (
+              <td>
+                <span className="urgency-badge" style={{ background: URGENCY_COLOR[o.urgency] || '#6b7280' }}>
+                  {o.urgency || 'medium'}
+                </span>
+              </td>
+            )}
+            {dateField && <td>{o[dateField] ? new Date(o[dateField]).toLocaleDateString('en-IN') : '—'}</td>}
+            {showBalance && (
+              <td className="today-modal__balance">
+                {o.payment?.balance > 0 ? fmtFull(o.payment.balance) : <span className="paid-tag">Paid</span>}
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 };
 
@@ -202,8 +234,14 @@ const Dashboard = () => {
   const [topCustomers,     setTopCustomers]     = useState<any[]>([]);
   const [trialsDueToday,   setTrialsDueToday]   = useState<any[]>([]);
   const [deliveryDueToday, setDeliveryDueToday] = useState<any[]>([]);
+  const [dueOrders,        setDueOrders]        = useState<any[]>([]);
+  const [duePayments,      setDuePayments]      = useState<any[]>([]);
+  const [trialsDueNext7Days, setTrialsDueNext7Days] = useState<any[]>([]);
+  const [pendingOrdersList,  setPendingOrdersList]  = useState<any[]>([]);
+  const [upcomingBirthdays,     setUpcomingBirthdays]     = useState<any[]>([]);
+  const [upcomingAnniversaries, setUpcomingAnniversaries] = useState<any[]>([]);
   const [toastNotifs,      setToastNotifs]      = useState<ToastNotification[]>([]);
-  const [activeModal,      setActiveModal]      = useState<ModalType>(null);
+  const [activeTab,        setActiveTab]        = useState<DashTab>('trials');
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState<string | null>(null);
   const [balanceDueCount,  setBalanceDueCount]  = useState<number | null>(null);
@@ -227,6 +265,12 @@ const Dashboard = () => {
       setTopCustomers((d.topCustomers  || []).slice(0, 5));
       setTrialsDueToday(d.trialsDueToday   || []);
       setDeliveryDueToday(d.deliveryDueToday || []);
+      setDueOrders(d.dueOrders || []);
+      setDuePayments(d.duePayments || []);
+      setTrialsDueNext7Days(d.trialsDueNext7Days || []);
+      setPendingOrdersList(d.pendingOrdersList || []);
+      setUpcomingBirthdays(d.upcomingBirthdays || []);
+      setUpcomingAnniversaries(d.upcomingAnniversaries || []);
 
       setMonthlyTrends(
         (d.monthlyTrends || []).map((t: any) => ({
@@ -265,11 +309,16 @@ const Dashboard = () => {
     Orders: c.orderCount
   }));
 
-  /* ── today-card helpers ───────────────────────────────────── */
-  const previewNames = (list: any[], max = 2) => {
-    const names = list.slice(0, max).map(o => o.customer?.name?.split(' ')[0] || '—');
-    const extra = list.length - max;
-    return extra > 0 ? `${names.join(', ')} +${extra} more` : names.join(', ');
+  /* ── activity tab rows ───────────────────────────────────── */
+  const TAB_ROWS: Record<DashTab, any[]> = {
+    trials: trialsDueToday,
+    deliveries: deliveryDueToday,
+    dueOrders,
+    duePayments,
+    trialsWeek: trialsDueNext7Days,
+    pendingOrders: pendingOrdersList,
+    birthdays: upcomingBirthdays,
+    anniversaries: upcomingAnniversaries,
   };
 
   if (loading) return (
@@ -286,51 +335,24 @@ const Dashboard = () => {
     <div className="dashboard">
       <DashboardToasts notifications={toastNotifs} />
 
-      {/* Detail modal */}
-      <TodayModal
-        type={activeModal}
-        trials={trialsDueToday}
-        deliveries={deliveryDueToday}
-        onClose={() => setActiveModal(null)}
-      />
-
-      {/* ── Today's Activity Cards ───────────────────────────── */}
-      <div className="today-cards">
-        {/* Trials today */}
-        <button
-          className="today-card today-card--trial"
-          onClick={() => setActiveModal('trials')}
-        >
-          <div className="today-card__top">
-            <span className="today-card__icon">🗓️</span>
-            <span className="today-card__label">Today's Trials</span>
-          </div>
-          <div className="today-card__count">{trialsDueToday.length}</div>
-          <div className="today-card__preview">
-            {trialsDueToday.length === 0
-              ? 'No trials scheduled today'
-              : previewNames(trialsDueToday)}
-          </div>
-          <div className="today-card__cta">View details →</div>
-        </button>
-
-        {/* Deliveries today */}
-        <button
-          className="today-card today-card--delivery"
-          onClick={() => setActiveModal('deliveries')}
-        >
-          <div className="today-card__top">
-            <span className="today-card__icon">🚚</span>
-            <span className="today-card__label">Today's Deliveries</span>
-          </div>
-          <div className="today-card__count">{deliveryDueToday.length}</div>
-          <div className="today-card__preview">
-            {deliveryDueToday.length === 0
-              ? 'No deliveries due today'
-              : previewNames(deliveryDueToday)}
-          </div>
-          <div className="today-card__cta">View details →</div>
-        </button>
+      {/* ── Activity tabs + table ────────────────────────────── */}
+      <div className="dash-activity-panel">
+        <div className="dash-tabs">
+          {(Object.keys(TAB_META) as DashTab[]).map(t => (
+            <button
+              key={t}
+              className={`dash-tab ${activeTab === t ? 'dash-tab--active' : ''}`}
+              onClick={() => setActiveTab(t)}
+            >
+              <span className="dash-tab__icon">{TAB_META[t].icon}</span>
+              <span>{TAB_META[t].label}</span>
+              <span className="dash-tab__count">{TAB_ROWS[t].length}</span>
+            </button>
+          ))}
+        </div>
+        <div className="dash-tab-body">
+          <DashboardActivityTable tab={activeTab} rows={TAB_ROWS[activeTab]} />
+        </div>
       </div>
 
       {/* ── Analytics Dashboard (new) ─────────────────────────── */}

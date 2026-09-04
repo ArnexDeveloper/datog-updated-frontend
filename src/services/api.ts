@@ -104,6 +104,7 @@ export const apiService = {
   getMyJobCards: (params) => api.get('/jobcards/my-jobs', { params }),
   getJobCardPDF: (id) => api.get(`/jobcards/${id}/pdf`, { responseType: 'blob' }),
   getJobCardStats: () => api.get('/jobcards/stats'),
+  getNextJobNumber: () => api.get('/jobcards/next-number'),
   generateJobCardsFromOrder: (orderId, payload) => api.post(`/jobcards/generate-from-order/${orderId}`, payload),
 
   // Invoice endpoints

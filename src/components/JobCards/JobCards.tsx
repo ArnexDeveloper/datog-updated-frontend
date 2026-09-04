@@ -3,7 +3,28 @@ import { useReactToPrint } from 'react-to-print';
 import { apiService } from '../../services/api';
 import { useHindiText } from '../../hooks/useHindiText';
 import SkeletonLine from './SkeletonLine';
+import CustomerPicker, { PickedCustomer } from '../Invoices/CustomerPicker';
 import './JobCards.css';
+
+// ── Blank job card: gender → upper/bottom garment lists ──────────────────────
+
+const GARMENT_OPTIONS: Record<'male' | 'female', { upper: string[]; bottom: string[] }> = {
+  male: {
+    upper: ['Shirt', 'Kurta', 'Blazer', 'Coat', 'Sherwani'],
+    bottom: ['Trouser', 'Pajama', 'Churidar'],
+  },
+  female: {
+    upper: ['Blouse', 'Kurti', 'Suit Top', 'Choli'],
+    bottom: ['Lehenga', 'Salwar', 'Skirt', 'Petticoat'],
+  },
+};
+
+const GARMENT_LABEL_TO_TYPE: Record<string, string> = {
+  Shirt: 'shirt', Kurta: 'kurta', Blazer: 'blazer', Coat: 'coat', Sherwani: 'sherwani',
+  Trouser: 'trouser', Pajama: 'pajama', Churidar: 'churidar',
+  Blouse: 'blouse', Kurti: 'kurti', 'Suit Top': 'suit_top', Choli: 'choli',
+  Lehenga: 'lehenga', Salwar: 'salwar', Skirt: 'skirt', Petticoat: 'petticoat',
+};
 
 // ── Measurement helpers ────────────────────────────────────────────────────────
 
@@ -56,7 +77,7 @@ const getMeasurementFields = (type: string): { key: string; label: string; place
       { key: 'shirtLength', label: 'Length',     placeholder: '30' },
       { key: 'neck',        label: 'Neck',       placeholder: '16' },
     ];
-  if (['trousers','pant','pajama','pajamas','shalwars','dhoti','churidar','salwar'].includes(t))
+  if (['trousers','trouser','pant','pajama','pajamas','shalwars','dhoti','churidar','salwar'].includes(t))
     return [
       { key: 'waist',   label: 'Waist',  placeholder: '32' },
       { key: 'hip',     label: 'Hip',    placeholder: '38' },
@@ -65,7 +86,7 @@ const getMeasurementFields = (type: string): { key: string; label: string; place
       { key: 'thigh',   label: 'Thigh',  placeholder: '24' },
       { key: 'rise',    label: 'Rise',   placeholder: '11' },
     ];
-  if (['blazer','jacket','west-coat','waistcoat','sherwani','coat','suit'].includes(t))
+  if (['blazer','jacket','west-coat','waistcoat','sherwani','coat','suit','suit_top','choli'].includes(t))
     return [
       { key: 'chest',       label: 'Chest',    placeholder: '42' },
       { key: 'waist',       label: 'Waist',    placeholder: '36' },
@@ -82,7 +103,7 @@ const getMeasurementFields = (type: string): { key: string; label: string; place
       { key: 'shoulder',    label: 'Shoulder',     placeholder: '16' },
       { key: 'dressLength', label: 'Dress Length', placeholder: '42' },
     ];
-  if (['skirt','skirts','garara','sharara','lehenga'].includes(t))
+  if (['skirt','skirts','garara','sharara','lehenga','petticoat'].includes(t))
     return [
       { key: 'waist',       label: 'Waist',  placeholder: '28' },
       { key: 'hip',         label: 'Hip',    placeholder: '38' },
@@ -100,7 +121,8 @@ const getMeasurementFields = (type: string): { key: string; label: string; place
 const VALID_MEASUREMENT_TYPES = [
   'shirt','pant','suit','blazer','kurta','pajama','sherwani',
   'lehenga','saree_blouse','dress','skirt','top','jacket',
-  'coat','waistcoat','dhoti','churidar','salwar','dupatta'
+  'coat','waistcoat','dhoti','churidar','salwar','dupatta',
+  'trouser','blouse','kurti','suit_top','choli','petticoat'
 ];
 
 const resolveGarmentType = (type: string): string => {
@@ -157,6 +179,11 @@ const MeasurementPanel = ({ measurements }: { measurements: any }) => {
 
 const PRINT_LABELS = ['Length','Chest','Shape','Tummy','Hips','Neck','Shoulder','Sleeves','Biceps','Forearms'];
 
+// Field sets for the quick gender + upper/bottom blank print (no garment/order
+// picked — just the measurement labels relevant to that half of the body).
+const UPPER_PRINT_LABELS = ['Length', 'Chest/Bust', 'Shoulder', 'Sleeve', 'Neck', 'Waist'];
+const BOTTOM_PRINT_LABELS = ['Waist', 'Hip', 'Length', 'Inseam', 'Thigh', 'Rise'];
+
 // Garment type / fit are fixed schema enums (not free text), so they can be
 // safely translated for the Hindi print card — unlike garment.name or a
 // tailor's name, which are free-form data and stay as entered.
@@ -193,10 +220,18 @@ const T = {
     notes:        'Notes for Tailor',
     noMeas:       'No measurements recorded',
     thankYou:     'Thank You',
+    gender:       'Gender',
+    male:         'Male',
+    female:       'Female',
+    category:     'Category',
+    upper:        'Upper',
+    bottom:       'Bottom',
     labels: {
       Length: 'Length', Chest: 'Chest', Shape: 'Shape', Tummy: 'Tummy',
       Hips: 'Hips', Neck: 'Neck', Shoulder: 'Shoulder', Sleeves: 'Sleeves',
       Biceps: 'Biceps', Forearms: 'Forearms',
+      'Chest/Bust': 'Chest/Bust', Sleeve: 'Sleeve', Waist: 'Waist',
+      Hip: 'Hip', Inseam: 'Inseam', Thigh: 'Thigh', Rise: 'Rise',
     } as Record<string, string>,
   },
   hi: {
@@ -217,10 +252,18 @@ const T = {
     notes:        'दर्जी के लिए नोट्स',
     noMeas:       'कोई माप दर्ज नहीं है',
     thankYou:     'धन्यवाद',
+    gender:       'लिंग',
+    male:         'पुरुष',
+    female:       'महिला',
+    category:     'श्रेणी',
+    upper:        'ऊपरी',
+    bottom:       'निचला',
     labels: {
       Length: 'लंबाई', Chest: 'छाती', Shape: 'आकार', Tummy: 'पेट',
       Hips: 'कूल्हे', Neck: 'गर्दन', Shoulder: 'कंधा', Sleeves: 'आस्तीन',
       Biceps: 'बाइसेप्स', Forearms: 'अग्रभुज',
+      'Chest/Bust': 'छाती/बस्ट', Sleeve: 'आस्तीन', Waist: 'कमर',
+      Hip: 'कूल्हा', Inseam: 'भीतरी लंबाई', Thigh: 'जांघ', Rise: 'राइज़',
     } as Record<string, string>,
   },
 };
@@ -281,9 +324,6 @@ const PrintableCard = React.forwardRef<HTMLDivElement, PrintableCardProps>(({ jo
           <div><strong>{t.accessories}:</strong> {accessories.text}</div>
         )}
         <div><strong>{t.tailor}:</strong> {job.assignedTo?.name || '—'}</div>
-        {job.trialDate && (
-          <div><strong>{t.trial}:</strong> {new Date(job.trialDate).toLocaleDateString('en-IN')}</div>
-        )}
       </div>
 
       <div style={{ borderTop: '1px dashed #000', margin: '4px 0' }} />
@@ -433,9 +473,17 @@ PrintableCard.displayName = 'PrintableCard';
 // before there's an order/job card to attach them to — same paper size/style
 // as a real job card, but every field is blank instead of populated from data.
 
-const BlankPrintableCard = React.forwardRef<HTMLDivElement, { lang: Lang }>(({ lang }, ref) => {
+interface BlankPrintableCardProps {
+  lang: Lang;
+  gender: 'male' | 'female';
+  category: 'upper' | 'bottom';
+  jobNo: string;
+}
+
+const BlankPrintableCard = React.forwardRef<HTMLDivElement, BlankPrintableCardProps>(({ lang, gender, category, jobNo }, ref) => {
   const t = T[lang];
   const blankLine = '_'.repeat(22);
+  const printLabels = category === 'upper' ? UPPER_PRINT_LABELS : BOTTOM_PRINT_LABELS;
 
   return (
     <div ref={ref} className="jc-print-card job-card-print-area">
@@ -448,10 +496,10 @@ const BlankPrintableCard = React.forwardRef<HTMLDivElement, { lang: Lang }>(({ l
       <div style={{ borderTop: '1px dashed #000', margin: '3px 0' }} />
 
       <div style={{ fontSize: '15px', lineHeight: '2', fontWeight: 700 }}>
-        <div><strong>{t.jobNo}:</strong> {blankLine}</div>
-        <div><strong>{t.order}:</strong> {blankLine}</div>
+        <div><strong>{t.jobNo}:</strong> {jobNo || '…'}</div>
+        <div><strong>{t.gender}:</strong> {gender === 'male' ? t.male : t.female} &nbsp; <strong>{t.category}:</strong> {category === 'upper' ? t.upper : t.bottom}</div>
         <div><strong>{t.garment}:</strong> {blankLine}</div>
-        <div><strong>{t.qty}:</strong> _____ &nbsp; <strong>{t.fit}:</strong> _______________</div>
+        <div><strong>{t.fit}:</strong> _______________</div>
         <div><strong>{t.tailor}:</strong> {blankLine}</div>
       </div>
 
@@ -472,7 +520,7 @@ const BlankPrintableCard = React.forwardRef<HTMLDivElement, { lang: Lang }>(({ l
           </tr>
         </thead>
         <tbody>
-          {PRINT_LABELS.map(label => (
+          {printLabels.map(label => (
             <tr key={label}>
               <td style={{ border: '1px solid #000', padding: '7px 4px', fontWeight: 700 }}>
                 {lang === 'hi' ? (t.labels[label] || label) : label}
@@ -558,7 +606,24 @@ interface BlankPrintModalProps {
 const BlankPrintModal: React.FC<BlankPrintModalProps> = ({ onClose }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<Lang>('en');
+  const [gender, setGender] = useState<'male' | 'female' | ''>('');
+  const [category, setCategory] = useState<'upper' | 'bottom' | ''>('');
+  const [jobNo, setJobNo] = useState('');
   const handlePrint = useReactToPrint({ contentRef: printRef });
+
+  useEffect(() => {
+    apiService.getNextJobNumber()
+      .then(res => setJobNo(res.data?.jobNumber || ''))
+      .catch(() => setJobNo(''));
+  }, []);
+
+  const pickerButtonStyle = (active: boolean): React.CSSProperties => ({
+    padding: '8px 20px', borderRadius: 8, fontSize: 13, cursor: 'pointer', border: '1px solid',
+    fontWeight: active ? 600 : 400,
+    background: active ? '#1d4ed8' : '#fff',
+    color: active ? '#fff' : '#374151',
+    borderColor: active ? '#1d4ed8' : '#d1d5db',
+  });
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -592,15 +657,273 @@ const BlankPrintModal: React.FC<BlankPrintModalProps> = ({ onClose }) => {
           >हिन्दी</button>
         </div>
 
-        <div className="jc-print-preview">
-          <BlankPrintableCard ref={printRef} lang={lang} />
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: 6 }}>Gender</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(['male', 'female'] as const).map(g => (
+                <button key={g} type="button" onClick={() => setGender(g)} style={pickerButtonStyle(gender === g)}>
+                  {g === 'male' ? 'Male' : 'Female'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: 6 }}>Upper / Bottom</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(['upper', 'bottom'] as const).map(c => (
+                <button key={c} type="button" onClick={() => setCategory(c)} style={pickerButtonStyle(category === c)}>
+                  {c === 'upper' ? 'Upper' : 'Bottom'}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
+
+        {gender && category ? (
+          <div className="jc-print-preview">
+            <BlankPrintableCard ref={printRef} lang={lang} gender={gender} category={category} jobNo={jobNo} />
+          </div>
+        ) : (
+          <div style={{ padding: '24px 16px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>
+            Select a gender and upper/bottom to preview the blank job card.
+          </div>
+        )}
+
         <div className="jc-edit-footer">
           <button type="button" className="jc-btn-cancel" onClick={onClose}>Close</button>
-          <button type="button" className="jc-btn-save" onClick={() => handlePrint()}>
+          <button type="button" className="jc-btn-save" onClick={() => handlePrint()} disabled={!gender || !category}>
             🖨 Print Blank Job Card
           </button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Create blank job card modal (no order required) ──────────────────────────
+
+interface CreateBlankJobCardModalProps {
+  employees: any[];
+  onClose: () => void;
+  onCreated: () => void;
+}
+
+const CreateBlankJobCardModal: React.FC<CreateBlankJobCardModalProps> = ({ employees, onClose, onCreated }) => {
+  const [gender, setGender] = useState<'male' | 'female' | ''>('');
+  const [garmentLabel, setGarmentLabel] = useState('');
+  const [garmentName, setGarmentName] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [customer, setCustomer] = useState<PickedCustomer | null>(null);
+  const [assignedTo, setAssignedTo] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [measForm, setMeasForm] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const garmentType = garmentLabel ? (GARMENT_LABEL_TO_TYPE[garmentLabel] || 'other') : '';
+  const measFields = garmentType ? getMeasurementFields(garmentType) : [];
+
+  const handleSelectGender = (g: 'male' | 'female') => {
+    setGender(g);
+    setGarmentLabel('');
+    setGarmentName('');
+    setMeasForm({});
+  };
+
+  const handleSelectGarment = (label: string) => {
+    setGarmentLabel(label);
+    setGarmentName(label);
+    setMeasForm({});
+  };
+
+  const handleMeasChange = (key: string, value: string) => {
+    setMeasForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  const garmentButtonStyle = (active: boolean): React.CSSProperties => ({
+    padding: '6px 14px', borderRadius: 20, fontSize: 12.5, cursor: 'pointer', border: '1px solid',
+    fontWeight: active ? 600 : 400,
+    background: active ? '#1d4ed8' : '#fff',
+    color: active ? '#fff' : '#374151',
+    borderColor: active ? '#1d4ed8' : '#d1d5db',
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!gender) { setError('Please select a gender'); return; }
+    if (!garmentLabel) { setError('Please select a garment'); return; }
+    if (!customer) { setError('Please select a customer'); return; }
+    if (!assignedTo) { setError('Please assign an employee'); return; }
+    if (!deliveryDate) { setError('Please set a delivery date'); return; }
+
+    try {
+      setSaving(true);
+
+      let measurementId: string | undefined;
+      const numericValues: Record<string, number> = {};
+      measFields.forEach(f => {
+        const v = parseFloat(measForm[f.key] || '');
+        if (!isNaN(v) && v > 0) numericValues[f.key] = v;
+      });
+      if (Object.keys(numericValues).length > 0) {
+        const resolvedType = resolveGarmentType(garmentType);
+        const measRes = await apiService.createMeasurement({
+          customer: customer._id,
+          garmentType: resolvedType,
+          unit: 'inch',
+          ...numericValues,
+          notes: measForm['_notes'] || undefined,
+        });
+        measurementId = measRes.data?.data?._id;
+      }
+
+      await apiService.createJobCard({
+        customer: customer._id,
+        assignedTo,
+        gender,
+        garment: {
+          type: garmentType,
+          name: garmentName.trim() || garmentLabel,
+          quantity,
+          ...(measurementId && { measurements: measurementId }),
+        },
+        deliveryDate,
+      });
+
+      onCreated();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.response?.data?.errors?.[0]?.msg || 'Failed to create job card');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="jc-edit-modal" onClick={e => e.stopPropagation()}>
+        <div className="jc-edit-header">
+          <h3>Create Blank Job Card</h3>
+          <button className="jc-close-btn" onClick={onClose}>✕</button>
+        </div>
+
+        {error && <div className="jc-edit-error">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="jc-tab-body">
+            {/* Gender */}
+            <div className="jc-form-group" style={{ marginBottom: 14 }}>
+              <label>Gender</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {(['male', 'female'] as const).map(g => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => handleSelectGender(g)}
+                    style={{
+                      padding: '8px 20px', borderRadius: 8, fontSize: 13, cursor: 'pointer', border: '1px solid',
+                      fontWeight: gender === g ? 600 : 400,
+                      background: gender === g ? '#1d4ed8' : '#fff',
+                      color: gender === g ? '#fff' : '#374151',
+                      borderColor: gender === g ? '#1d4ed8' : '#d1d5db',
+                    }}
+                  >
+                    {g === 'male' ? 'Male' : 'Female'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Garment picker: Upper / Bottom */}
+            {gender && (
+              <div style={{ marginBottom: 14 }}>
+                <div className="jc-form-group" style={{ marginBottom: 8 }}>
+                  <label>Upper</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {GARMENT_OPTIONS[gender].upper.map(label => (
+                      <button key={label} type="button" onClick={() => handleSelectGarment(label)}
+                        style={garmentButtonStyle(garmentLabel === label)}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="jc-form-group">
+                  <label>Bottom</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {GARMENT_OPTIONS[gender].bottom.map(label => (
+                      <button key={label} type="button" onClick={() => handleSelectGarment(label)}
+                        style={garmentButtonStyle(garmentLabel === label)}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {garmentLabel && (
+              <>
+                <div className="jc-form-row">
+                  <div className="jc-form-group">
+                    <label>Garment Name</label>
+                    <input type="text" value={garmentName} onChange={e => setGarmentName(e.target.value)} />
+                  </div>
+                  <div className="jc-form-group">
+                    <label>Quantity</label>
+                    <input type="number" min={1} value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} />
+                  </div>
+                </div>
+
+                <div className="jc-form-group" style={{ marginBottom: 14 }}>
+                  <label>Customer</label>
+                  <CustomerPicker value={customer} onChange={setCustomer} />
+                </div>
+
+                <div className="jc-form-row">
+                  <div className="jc-form-group">
+                    <label>Assigned To</label>
+                    <select value={assignedTo} onChange={e => setAssignedTo(e.target.value)}>
+                      <option value="">— select employee —</option>
+                      {employees.map((emp: any) => (
+                        <option key={emp._id} value={emp._id}>{emp.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="jc-form-group">
+                    <label>Delivery Date</label>
+                    <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} required />
+                  </div>
+                </div>
+
+                <p className="jc-meas-edit-hint">Measurements (optional, all in inches)</p>
+                <div className="jc-meas-edit-grid">
+                  {measFields.map(f => (
+                    <div key={f.key} className="jc-form-group">
+                      <label>{f.label}</label>
+                      <div className="jc-meas-input-wrap">
+                        <input
+                          type="number" step="0.1" min="0" placeholder={f.placeholder}
+                          value={measForm[f.key] ?? ''}
+                          onChange={e => handleMeasChange(f.key, e.target.value)}
+                        />
+                        <span className="jc-meas-unit-tag">in</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="jc-edit-footer">
+            <button type="button" className="jc-btn-cancel" onClick={onClose} disabled={saving}>Cancel</button>
+            <button type="submit" className="jc-btn-save" disabled={saving || !garmentLabel}>
+              {saving ? 'Creating…' : 'Create Job Card'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -624,7 +947,6 @@ const EditModal: React.FC<EditModalProps> = ({ job, employees, onClose, onSaved 
     priority:            job.priority || 'medium',
     assignedTo:          job.assignedTo?._id || job.assignedTo || '',
     deliveryDate:        job.deliveryDate ? new Date(job.deliveryDate).toISOString().split('T')[0] : '',
-    trialDate:           job.trialDate ? new Date(job.trialDate).toISOString().split('T')[0] : '',
     estimatedHours:      job.estimatedHours ?? '',
     notes:               job.notes || '',
     garmentFit:          job.garment?.fit || 'regular',
@@ -708,7 +1030,6 @@ const EditModal: React.FC<EditModalProps> = ({ job, employees, onClose, onSaved 
         priority:       form.priority,
         assignedTo:     form.assignedTo,
         deliveryDate:   form.deliveryDate,
-        trialDate:      form.trialDate || undefined,
         estimatedHours: form.estimatedHours !== '' ? Number(form.estimatedHours) : undefined,
         notes:          form.notes,
         garment: {
@@ -842,10 +1163,6 @@ const EditModal: React.FC<EditModalProps> = ({ job, employees, onClose, onSaved 
                 <div className="jc-form-group">
                   <label>Delivery Date</label>
                   <input type="date" name="deliveryDate" value={form.deliveryDate} onChange={handleChange} required />
-                </div>
-                <div className="jc-form-group">
-                  <label>Trial Date <span className="jc-optional">(optional)</span></label>
-                  <input type="date" name="trialDate" value={form.trialDate} onChange={handleChange} />
                 </div>
               </div>
 
@@ -994,7 +1311,7 @@ const JobCards = () => {
   const [editingJob, setEditingJob]   = useState<any | null>(null);
   const [printingJob, setPrintingJob] = useState<any | null>(null);
   const [employees, setEmployees]     = useState<any[]>([]);
-  const [showCreateInfo, setShowCreateInfo] = useState(false);
+  const [showCreateBlank, setShowCreateBlank] = useState(false);
   const [showBlankPrint, setShowBlankPrint] = useState(false);
 
   const loadJobs = async () => {
@@ -1063,7 +1380,7 @@ const JobCards = () => {
           <button className="btn btn-secondary" onClick={() => setShowBlankPrint(true)}>
             🖨 Print Blank Job Card
           </button>
-          <button className="btn btn-primary" onClick={() => setShowCreateInfo(true)}>
+          <button className="btn btn-primary" onClick={() => setShowCreateBlank(true)}>
             Create Job Card
           </button>
         </div>
@@ -1173,9 +1490,6 @@ const JobCards = () => {
                                   {j.garment?.fabric && (
                                     <div><span className="jc-info-label">Fabric</span><span>{j.garment.fabric.name}</span></div>
                                   )}
-                                  {j.trialDate && (
-                                    <div><span className="jc-info-label">Trial Date</span><span>{new Date(j.trialDate).toLocaleDateString()}</span></div>
-                                  )}
                                   {j.estimatedHours != null && (
                                     <div><span className="jc-info-label">Est. Hours</span><span>{j.estimatedHours}h</span></div>
                                   )}
@@ -1240,25 +1554,16 @@ const JobCards = () => {
         <BlankPrintModal onClose={() => setShowBlankPrint(false)} />
       )}
 
-      {/* Create info modal */}
-      {showCreateInfo && (
-        <div className="modal-overlay" onClick={() => setShowCreateInfo(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Create Job Card</h3>
-            <p>Job cards are generated from orders using the "Job Cards" button in the Orders table.</p>
-            <ol>
-              <li>Go to Orders</li>
-              <li>Find the order</li>
-              <li>Click the "Job Cards" button in the Actions column</li>
-            </ol>
-            <div className="modal-actions">
-              <button onClick={() => setShowCreateInfo(false)}>Close</button>
-              <button onClick={() => { setShowCreateInfo(false); window.location.href = '/orders'; }}>
-                Go to Orders
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Create blank job card modal */}
+      {showCreateBlank && (
+        <CreateBlankJobCardModal
+          employees={employees}
+          onClose={() => setShowCreateBlank(false)}
+          onCreated={async () => {
+            setShowCreateBlank(false);
+            await loadJobs();
+          }}
+        />
       )}
     </div>
   );

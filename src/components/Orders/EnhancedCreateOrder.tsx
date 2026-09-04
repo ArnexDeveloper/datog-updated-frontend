@@ -121,6 +121,20 @@ interface Package {
   id: string; price: number; quantity: number; garments: PackageGarment[];
 }
 
+// A native <input type="date"> already blocks most malformed input (day 32,
+// month 13 reset to an empty value), but that's inconsistent across browsers
+// and doesn't catch a roll-over date like Feb 30 or an unreasonable year
+// (e.g. 20226) that a typed/pasted value could still smuggle through.
+const isValidDeliveryDate = (value: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [y, m, d] = value.split('-').map(Number);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+  const currentYear = new Date().getFullYear();
+  if (y < currentYear || y > currentYear + 10) return false;
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 const EnhancedCreateOrder: React.FC = () => {
@@ -134,8 +148,11 @@ const EnhancedCreateOrder: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [deliveryDateError, setDeliveryDateError] = useState('');
   const [trialDate, setTrialDate] = useState('');
   const [advance, setAdvance] = useState(0);
+  const [advanceMethod, setAdvanceMethod] = useState('cash');
+  const [advanceReference, setAdvanceReference] = useState('');
   const [priority, setPriority] = useState('medium');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -526,6 +543,7 @@ const EnhancedCreateOrder: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!deliveryDate) { setError('Please select a delivery date'); return; }
+    if (!isValidDeliveryDate(deliveryDate)) { setError('Please enter a valid delivery date'); return; }
     try {
       setLoading(true);
       setError('');
@@ -568,7 +586,7 @@ const EnhancedCreateOrder: React.FC = () => {
         deliveryDate, trialDate: trialDate || undefined, urgency: priority, notes,
         pointsRedeemed: pointsDiscount,
         creditRedeemed: creditDiscount,
-        payment: { total, advance }
+        payment: { total, advance, method: advanceMethod, reference: advanceReference.trim() || undefined }
       };
       const r = await apiService.createOrder(payload);
       if (r.data.success) {
@@ -1308,9 +1326,17 @@ const EnhancedCreateOrder: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Delivery Date *</label>
-                    <input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)}
+                    <input type="date" value={deliveryDate}
+                      onChange={e => {
+                        const v = e.target.value;
+                        setDeliveryDate(v);
+                        setDeliveryDateError(v && !isValidDeliveryDate(v) ? 'Enter a valid date' : '');
+                      }}
                       min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
-                      className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
+                      className={`w-full px-3 py-2 text-sm border-2 rounded-lg focus:outline-none ${
+                        deliveryDateError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+                      }`} />
+                    {deliveryDateError && <p className="text-xs text-red-600 mt-1">{deliveryDateError}</p>}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">Priority</label>
@@ -1428,6 +1454,45 @@ const EnhancedCreateOrder: React.FC = () => {
                     className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
                 </div>
 
+                {advance > 0 && (
+                  <div className="pt-2">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Payment mode</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { value: 'cash', label: 'Cash' },
+                        { value: 'upi', label: 'UPI' },
+                        { value: 'gpay', label: 'GPay' },
+                        { value: 'phonepe', label: 'PhonePe' },
+                        { value: 'bank_transfer', label: 'Bank Transfer' },
+                        { value: 'card', label: 'Card' },
+                      ].map(m => (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => setAdvanceMethod(m.value)}
+                          className={`px-2.5 py-1 rounded-full text-xs border ${
+                            advanceMethod === m.value
+                              ? 'bg-blue-700 text-white border-blue-700 font-semibold'
+                              : 'bg-white text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {advance > 0 && advanceMethod !== 'cash' && (
+                  <div className="pt-2">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Transaction ID / Reference</label>
+                    <input type="text" value={advanceReference}
+                      onChange={e => setAdvanceReference(e.target.value)}
+                      placeholder="e.g. UPI ref 123456789"
+                      className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
+                  </div>
+                )}
+
                 {/* Checklist */}
                 <div className="mt-3 pt-3 border-t space-y-1.5">
                   <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-green-600" /><span className="text-xs text-green-700 font-medium">Customer Selected</span></div>
@@ -1441,7 +1506,7 @@ const EnhancedCreateOrder: React.FC = () => {
                       : <><div className="w-3.5 h-3.5 border-2 border-gray-300 rounded-full" /><span className="text-xs text-gray-500">Set Delivery Date</span></>}
                   </div>
                 </div>
-                <button onClick={handleSubmit} disabled={!deliveryDate || loading}
+                <button onClick={handleSubmit} disabled={!deliveryDate || !!deliveryDateError || loading}
                   className="w-full mt-4 px-4 py-2.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center justify-center gap-2">
                   {loading ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Check className="w-4 h-4" />}
                   {loading ? 'Creating...' : 'Create Order'}

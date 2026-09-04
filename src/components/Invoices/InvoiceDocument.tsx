@@ -69,6 +69,7 @@ interface Customer {
 
 interface InvoiceItem {
   description?: string;
+  size?: string;
   quantity?: number;
   unitPrice?: number;
   totalPrice?: number;
@@ -80,6 +81,7 @@ interface Invoice {
   dueDate?: string;
   deliveryDate?: string;
   walkInName?: string;
+  walkInMobile?: string;
   order?: Order;
   customer?: Customer;
   items?: InvoiceItem[];
@@ -182,7 +184,7 @@ const buildRowsFromItems = (items?: InvoiceItem[]): Row[] =>
     name: item.description || 'Item',
     garments: [],
     fabric: '',
-    fabricSource: '',
+    fabricSource: item.size ? `Size: ${item.size}` : '',
     fit: '',
     details: '',
     quantity: item.quantity || 1,
@@ -239,7 +241,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
         <div>
           <div style={metaLabel}>Billed To</div>
           <div style={metaValue}>{billedToName}</div>
-          <div style={metaSub}>{[customer.phone, customer.email].filter(Boolean).join(' · ')}</div>
+          <div style={metaSub}>{[customer.phone || invoice.walkInMobile, customer.email].filter(Boolean).join(' · ')}</div>
         </div>
         <div>
           <div style={metaLabel}>Invoice Date</div>

@@ -196,6 +196,79 @@
 .today-card--trial    .today-card__cta { color: #3b82f6; }
 .today-card--delivery .today-card__cta { color: #d4af37; }
 
+/* ── Activity Tabs Panel (tab strip + table, replaces today-cards) ── */
+.dash-activity-panel {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  margin-bottom: var(--space-sm);
+  overflow: hidden;
+}
+
+.dash-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--card-border, #e5e7eb);
+  background: var(--bg-secondary, #f9fafb);
+}
+
+.dash-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.dash-tab:hover {
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #111);
+}
+
+.dash-tab--active {
+  background: var(--color-gold, #d4af37);
+  color: #fff;
+  border-color: var(--color-gold, #d4af37);
+}
+
+.dash-tab__icon { font-size: 0.95rem; line-height: 1; }
+
+.dash-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: rgba(0,0,0,0.12);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.dash-tab--active .dash-tab__count { background: rgba(255,255,255,0.28); }
+
+.dash-tab-body {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .dash-tabs { padding: 8px; }
+  .dash-tab { padding: 6px 10px; font-size: 0.75rem; }
+}
+
 /* ── Today Detail Modal ──────────────────────────────────────── */
 .today-modal-overlay {
   position: fixed;

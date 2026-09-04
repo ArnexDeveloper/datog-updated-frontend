@@ -30,14 +30,16 @@ const OrdersNew = () => {
     });
   };
 
-  const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-    confirmed: 'bg-blue-100 text-blue-800 border border-blue-200',
-    'in-progress': 'bg-purple-100 text-purple-800 border border-purple-200',
-    completed: 'bg-green-100 text-green-800 border border-green-200',
-    delivered: 'bg-gray-100 text-gray-800 border border-gray-200',
-    cancelled: 'bg-red-100 text-red-800 border border-red-200'
+  const STATUS_META: Record<string, { label: string; color: string }> = {
+    pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border border-yellow-200' },
+    in_progress: { label: 'In Progress', color: 'bg-purple-100 text-purple-800 border border-purple-200' },
+    trial_pending: { label: 'Trial Pending', color: 'bg-orange-100 text-orange-800 border border-orange-200' },
+    ready: { label: 'Ready', color: 'bg-blue-100 text-blue-800 border border-blue-200' },
+    delivered: { label: 'Delivered', color: 'bg-gray-100 text-gray-800 border border-gray-200' },
+    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border border-red-200' }
   };
+  const ORDER_STATUSES = Object.keys(STATUS_META);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -77,6 +79,24 @@ const OrdersNew = () => {
       style: 'currency',
       currency: 'INR'
     }).format(amount);
+  };
+
+  const handleStatusChange = async (order: any, newStatus: string) => {
+    const prevStatus = order.status;
+    if (newStatus === prevStatus) return;
+    setOrders(prev => prev.map(o => (o._id === order._id ? { ...o, status: newStatus } : o)));
+    setStatusUpdatingId(order._id);
+    try {
+      const response = await apiService.updateOrderStatus(order._id, newStatus);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to update status');
+      }
+    } catch (err: any) {
+      setOrders(prev => prev.map(o => (o._id === order._id ? { ...o, status: prevStatus } : o)));
+      alert(err.response?.data?.message || err.message || 'Failed to update order status');
+    } finally {
+      setStatusUpdatingId(null);
+    }
   };
 
   const handleGenerateJobCards = async (orderId: string) => {
@@ -194,17 +214,17 @@ const OrdersNew = () => {
               >
                 All
               </button>
-              {Object.keys(statusColors).map((status) => (
+              {ORDER_STATUSES.map((status) => (
                 <button
                   key={status}
                   onClick={() => handleStatusFilter(status)}
-                  className={`px-3 py-1 text-sm rounded-full capitalize ${
+                  className={`px-3 py-1 text-sm rounded-full ${
                     filters.status === status
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {status.replace('-', ' ')}
+                  {STATUS_META[status].label}
                 </button>
               ))}
             </div>
@@ -271,11 +291,19 @@ const OrdersNew = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        statusColors[order.status] || 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {order.status?.replace('-', ' ')}
-                      </span>
+                      <select
+                        value={order.status}
+                        disabled={statusUpdatingId === order._id}
+                        onChange={(e) => handleStatusChange(order, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`text-xs font-semibold rounded-full px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${
+                          STATUS_META[order.status]?.color || 'bg-gray-100 text-gray-800 border border-gray-200'
+                        }`}
+                      >
+                        {ORDER_STATUSES.map((status) => (
+                          <option key={status} value={status}>{STATUS_META[status].label}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(order.payment?.total || 0)}
