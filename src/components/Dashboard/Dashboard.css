@@ -208,56 +208,60 @@
 
 .dash-tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 10px 12px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 12px;
   border-bottom: 1px solid var(--card-border, #e5e7eb);
   background: var(--bg-secondary, #f9fafb);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .dash-tab {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border: 1px solid transparent;
-  border-radius: 9999px;
-  background: transparent;
+  justify-content: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  min-width: 96px;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
   color: var(--text-secondary, #6b7280);
-  font-size: 0.8125rem;
-  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
 
 .dash-tab:hover {
-  background: var(--card-bg, #fff);
-  color: var(--text-primary, #111);
+  border-color: #d1d5db;
 }
 
 .dash-tab--active {
-  background: var(--color-gold, #d4af37);
-  color: #fff;
-  border-color: var(--color-gold, #d4af37);
+  background: #fffbeb;
+  border-color: #c9900a;
 }
 
-.dash-tab__icon { font-size: 0.95rem; line-height: 1; }
+.dash-tab__icon { font-size: 1.1rem; line-height: 1; }
 
 .dash-tab__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9999px;
-  background: rgba(0,0,0,0.12);
-  font-size: 0.7rem;
+  font-size: 1.4rem;
   font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary, #111827);
 }
 
-.dash-tab--active .dash-tab__count { background: rgba(255,255,255,0.28); }
+.dash-tab--active .dash-tab__count { color: #c9900a; }
+
+.dash-tab__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-align: center;
+}
 
 .dash-tab-body {
   max-height: 380px;
@@ -266,7 +270,8 @@
 
 @media (max-width: 768px) {
   .dash-tabs { padding: 8px; }
-  .dash-tab { padding: 6px 10px; font-size: 0.75rem; }
+  .dash-tab { min-width: 84px; padding: 8px 10px; }
+  .dash-tab__count { font-size: 1.2rem; }
 }
 
 /* ── Today Detail Modal ──────────────────────────────────────── */

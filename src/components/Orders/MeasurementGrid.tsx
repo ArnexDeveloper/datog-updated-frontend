@@ -1,35 +1,74 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 // ─── Measurement row definitions ──────────────────────────────────────────
+// Fixed-order, gender + body-part measurement chart. `field` is the
+// underlying grid-storage / Measurement-schema field name (shared between a
+// row's Upper Body and Lower Body incarnation, e.g. Length/Hip appear in
+// both lists but store to the same field — only one is ever editable for a
+// given garment since a garment is classified as exactly one body part).
+// `key` is the row's own render/navigation identity and is always unique
+// (body-part-prefixed) so React keys and Tab/Enter navigation never collide.
 
 export interface MeasurementRowDef {
   key: string;
+  field: string;
   label: string;
   unit: string;
   section: string;
   isText?: boolean;
 }
 
-export const MEASUREMENT_ROWS: MeasurementRowDef[] = [
-  // Upper Body
-  { key: 'chest',       label: 'Chest',          unit: 'in', section: 'Upper Body' },
-  { key: 'shoulder',    label: 'Shoulder',        unit: 'in', section: 'Upper Body' },
-  { key: 'sleeve',      label: 'Sleeve Length',   unit: 'in', section: 'Upper Body' },
-  { key: 'upperLength', label: 'Length',          unit: 'in', section: 'Upper Body' },
-  { key: 'neck',        label: 'Neck',            unit: 'in', section: 'Upper Body' },
-  // Lower Body
-  { key: 'waist',        label: 'Waist',          unit: 'in', section: 'Lower Body' },
-  { key: 'hip',          label: 'Hip',            unit: 'in', section: 'Lower Body' },
-  { key: 'thigh',        label: 'Thigh',          unit: 'in', section: 'Lower Body' },
-  { key: 'inseam',       label: 'Inseam',         unit: 'in', section: 'Lower Body' },
-  { key: 'lowerLength',  label: 'Length',         unit: 'in', section: 'Lower Body' },
-  { key: 'bottomOpening',label: 'Bottom Opening', unit: 'in', section: 'Lower Body' },
-  { key: 'rise',         label: 'Rise',           unit: 'in', section: 'Lower Body' },
-  // Notes
-  { key: 'notes', label: 'Tailor Notes', unit: '', section: 'Notes', isText: true },
+export type FieldDef = [field: string, label: string];
+
+// Male — Upper Body (12, exact order)
+const MALE_UPPER_FIELDS: FieldDef[] = [
+  ['length', 'Length'], ['chest', 'Chest'], ['shape', 'Shape'], ['tummy', 'Tummy'],
+  ['hip', 'Hip'], ['neck', 'Neck'], ['shoulder', 'Shoulder'], ['sleeves', 'Sleeves'],
+  ['bicep', 'Biceps'], ['forearm', 'Forearm'], ['mori', 'Mori'], ['armHole', 'Armhole'],
+];
+// Male — Lower Body (8, exact order)
+const LOWER_FIELDS: FieldDef[] = [
+  ['length', 'Length'], ['waist', 'Waist'], ['hip', 'Hip'], ['thigh', 'Thigh'],
+  ['knee', 'Knee'], ['calf', 'Calf'], ['bottom', 'Bottom'], ['flyU', 'Fly (U)'],
+];
+// Female — Upper Body (15, exact order)
+const FEMALE_UPPER_FIELDS: FieldDef[] = [
+  ['length', 'Length'], ['upperBust', 'Upper Bust'], ['midBust', 'Mid Bust'], ['underBust', 'Under Bust'],
+  ['bustPoint', 'Bust Point'], ['shape', 'Shape'], ['tummy', 'Tummy'], ['hip', 'Hip'],
+  ['neck', 'Neck'], ['shoulder', 'Shoulder'], ['sleeves', 'Sleeves'], ['bicep', 'Biceps'],
+  ['forearm', 'Forearm'], ['mori', 'Mori'], ['armHole', 'Armhole'],
+];
+// Female — Lower Body is identical to Male — Lower Body (8, exact order)
+
+const buildRows = (fields: FieldDef[], section: string, prefix: string): MeasurementRowDef[] =>
+  fields.map(([field, label]) => ({ key: `${prefix}_${field}`, field, label, unit: 'in', section }));
+
+const NOTES_ROW: MeasurementRowDef = { key: 'notes', field: 'notes', label: 'Tailor Notes', unit: '', section: 'Notes', isText: true };
+
+const MALE_ROWS: MeasurementRowDef[] = [
+  ...buildRows(MALE_UPPER_FIELDS, 'Upper Body', 'upper'),
+  ...buildRows(LOWER_FIELDS, 'Lower Body', 'lower'),
+  NOTES_ROW,
+];
+const FEMALE_ROWS: MeasurementRowDef[] = [
+  ...buildRows(FEMALE_UPPER_FIELDS, 'Upper Body', 'upper'),
+  ...buildRows(LOWER_FIELDS, 'Lower Body', 'lower'),
+  NOTES_ROW,
 ];
 
-const ALL_MEASUREMENT_KEYS = MEASUREMENT_ROWS.filter(r => !r.isText).map(r => r.key);
+// Customer gender determines which fixed field list applies; defaults to the
+// male chart when gender isn't set on the customer profile.
+export function getMeasurementRows(gender?: string): MeasurementRowDef[] {
+  return gender === 'female' ? FEMALE_ROWS : MALE_ROWS;
+}
+
+// The single gender+body-part field list (field/label, exact spec order) —
+// used wherever a saved measurement needs to be displayed or printed rather
+// than edited in the grid (Order Detail view, Job Card print template).
+export function getOrderedFields(gender?: string, bodyPart?: string): FieldDef[] {
+  if (bodyPart === 'lower') return LOWER_FIELDS;
+  return gender === 'female' ? FEMALE_UPPER_FIELDS : MALE_UPPER_FIELDS;
+}
 
 // ─── N/A logic ────────────────────────────────────────────────────────────
 
@@ -46,17 +85,24 @@ const LONG_UPPERS = new Set([
   'One Piece','Gown','Sherwani','Froog',
 ]);
 
-export function isNACell(measurementKey: string, garmentName: string): boolean {
-  const isBottom    = BOTTOM_GARMENTS.has(garmentName);
-  const isShortUp   = SHORT_UPPERS.has(garmentName);
-  const isLongUp    = LONG_UPPERS.has(garmentName);
-  const isAnyUpper  = isShortUp || isLongUp;
-  if (measurementKey === 'notes') return false;
-  if (['chest','shoulder','sleeve','upperLength'].includes(measurementKey)) return isBottom;
-  if (measurementKey === 'neck')        return isBottom || isLongUp;
-  if (measurementKey === 'lowerLength') return isShortUp;
-  if (['waist','hip','thigh','inseam','bottomOpening','rise'].includes(measurementKey)) return isAnyUpper;
+// rowKey is the unique, body-part-prefixed row identity (e.g. 'upper_length',
+// 'lower_hip') — a row is N/A when its body part doesn't match the garment's.
+// An unclassified garment (not in any of the three sets above) shows every
+// row as applicable, matching the previous grid's fallback behaviour.
+export function isNACell(rowKey: string, garmentName: string): boolean {
+  if (rowKey === 'notes') return false;
+  const isBottom = BOTTOM_GARMENTS.has(garmentName);
+  const isUpper  = SHORT_UPPERS.has(garmentName) || LONG_UPPERS.has(garmentName);
+  if (rowKey.startsWith('upper_')) return isBottom;
+  if (rowKey.startsWith('lower_')) return isUpper;
   return false;
+}
+
+// Classifies a garment as upper or lower body so the submitted measurement
+// document can be tagged with the matching bodyPart. Unclassified garments
+// (not in any of the three sets) are treated as upper by default.
+export function getGarmentBodyPart(garmentName: string): 'upper' | 'lower' {
+  return BOTTOM_GARMENTS.has(garmentName) ? 'lower' : 'upper';
 }
 
 // ─── Column grouping ──────────────────────────────────────────────────────
@@ -92,9 +138,11 @@ function getPalette(col: GridColumn) {
 
 // ─── Status ───────────────────────────────────────────────────────────────
 
-function colStatus(colId: string, garmentName: string, grid: GridData): 'complete' | 'partial' | 'empty' {
-  const applicable = ALL_MEASUREMENT_KEYS.filter(k => !isNACell(k, garmentName));
-  const filled = applicable.filter(k => (grid[colId]?.[k] || '') !== '').length;
+function colStatus(colId: string, garmentName: string, grid: GridData, rows: MeasurementRowDef[]): 'complete' | 'partial' | 'empty' {
+  const applicableFields = new Set<string>();
+  rows.forEach(r => { if (!r.isText && !isNACell(r.key, garmentName)) applicableFields.add(r.field); });
+  const applicable = Array.from(applicableFields);
+  const filled = applicable.filter(f => (grid[colId]?.[f] || '') !== '').length;
   if (filled === 0) return 'empty';
   if (filled === applicable.length) return 'complete';
   return 'partial';
@@ -109,6 +157,7 @@ interface Props {
   grid: GridData;
   unit: 'inches' | 'cm';
   customerName: string;
+  gender?: string;
   onGridChange: (colId: string, key: string, value: string) => void;
   onUnitChange: (u: 'inches' | 'cm') => void;
   onLoadProfile: () => void;
@@ -120,17 +169,19 @@ interface Props {
 // ─── Component ────────────────────────────────────────────────────────────
 
 export default function MeasurementGrid({
-  columns, grid, unit, customerName,
+  columns, grid, unit, customerName, gender,
   onGridChange, onUnitChange, onLoadProfile, onSaveProfile,
   onBack, onContinue,
 }: Props) {
+
+  const rows = useMemo(() => getMeasurementRows(gender), [gender]);
 
   // Tab/Enter navigation
   const handleKeyDown = useCallback((
     e: React.KeyboardEvent<HTMLInputElement>,
     rowKey: string, colId: string
   ) => {
-    const rowIdx = MEASUREMENT_ROWS.findIndex(r => r.key === rowKey);
+    const rowIdx = rows.findIndex(r => r.key === rowKey);
     const colIdx = columns.findIndex(c => c.id === colId);
 
     if (e.key === 'Tab') {
@@ -143,10 +194,10 @@ export default function MeasurementGrid({
         }
       }
       // wrap to next row
-      for (let ri = rowIdx + 1; ri < MEASUREMENT_ROWS.length; ri++) {
+      for (let ri = rowIdx + 1; ri < rows.length; ri++) {
         for (let ci = 0; ci < columns.length; ci++) {
-          if (!isNACell(MEASUREMENT_ROWS[ri].key, columns[ci].garmentName)) {
-            document.getElementById(`cell_${MEASUREMENT_ROWS[ri].key}_${columns[ci].id}`)?.focus();
+          if (!isNACell(rows[ri].key, columns[ci].garmentName)) {
+            document.getElementById(`cell_${rows[ri].key}_${columns[ci].id}`)?.focus();
             return;
           }
         }
@@ -156,14 +207,14 @@ export default function MeasurementGrid({
     if (e.key === 'Enter') {
       e.preventDefault();
       // next non-NA in same column
-      for (let ri = rowIdx + 1; ri < MEASUREMENT_ROWS.length; ri++) {
-        if (!isNACell(MEASUREMENT_ROWS[ri].key, columns[colIdx].garmentName)) {
-          document.getElementById(`cell_${MEASUREMENT_ROWS[ri].key}_${colId}`)?.focus();
+      for (let ri = rowIdx + 1; ri < rows.length; ri++) {
+        if (!isNACell(rows[ri].key, columns[colIdx].garmentName)) {
+          document.getElementById(`cell_${rows[ri].key}_${colId}`)?.focus();
           return;
         }
       }
     }
-  }, [columns]);
+  }, [columns, rows]);
 
   // Build group span info for the band header row
   const groupSpans: Array<{ id: string; label: string; span: number; groupIndex: number; groupType: 'package' | 'individual' }> = [];
@@ -192,7 +243,7 @@ export default function MeasurementGrid({
       ? INDIV_PALETTE
       : PKG_PALETTE[gs.groupIndex % PKG_PALETTE.length];
     const statParts = cols.map(c => {
-      const st = colStatus(c.id, c.garmentName, grid);
+      const st = colStatus(c.id, c.garmentName, grid, rows);
       const stLabel = st === 'complete' ? '✓ done' : st === 'partial' ? '~ partial' : '○ empty';
       return `${c.garmentName}: ${stLabel}`;
     });
@@ -200,7 +251,7 @@ export default function MeasurementGrid({
   });
 
   // Unique sections (preserve order, no duplicates)
-  const sections = MEASUREMENT_ROWS.reduce<string[]>((acc, r) => {
+  const sections = rows.reduce<string[]>((acc, r) => {
     if (!acc.includes(r.section)) acc.push(r.section);
     return acc;
   }, []);
@@ -291,7 +342,7 @@ export default function MeasurementGrid({
             <tr>
               {columns.map(col => {
                 const pal = getPalette(col);
-                const st = colStatus(col.id, col.garmentName, grid);
+                const st = colStatus(col.id, col.garmentName, grid, rows);
                 const stBg = st === 'complete' ? '#dcfce7' : st === 'partial' ? '#fef9c3' : '#f1f5f9';
                 const stColor = st === 'complete' ? '#15803d' : st === 'partial' ? '#854d0e' : '#64748b';
                 return (
@@ -310,7 +361,7 @@ export default function MeasurementGrid({
 
           <tbody>
             {sections.map(section => {
-              const rows = MEASUREMENT_ROWS.filter(r => r.section === section);
+              const sectionRows = rows.filter(r => r.section === section);
               return (
                 <React.Fragment key={section}>
                   {/* Section header */}
@@ -321,7 +372,7 @@ export default function MeasurementGrid({
                     </td>
                   </tr>
 
-                  {rows.map((row, rowIdx) => {
+                  {sectionRows.map((row, rowIdx) => {
                     const even = rowIdx % 2 === 0;
                     const rowBg = even ? '#fafbfc' : '#fff';
                     return (
@@ -345,7 +396,7 @@ export default function MeasurementGrid({
                         {columns.map(col => {
                           const na = isNACell(row.key, col.garmentName);
                           const pal = getPalette(col);
-                          const val = grid[col.id]?.[row.key] || '';
+                          const val = grid[col.id]?.[row.field] || '';
                           const hasVal = val !== '' && val !== 'N/A';
                           const cellBg = na
                             ? '#f8fafc'
@@ -360,7 +411,7 @@ export default function MeasurementGrid({
                                   id={`cell_${row.key}_${col.id}`}
                                   type="text"
                                   value={val}
-                                  onChange={e => onGridChange(col.id, row.key, e.target.value)}
+                                  onChange={e => onGridChange(col.id, row.field, e.target.value)}
                                   onKeyDown={e => handleKeyDown(e, row.key, col.id)}
                                   placeholder="note…"
                                   style={{ border: 'none', outline: 'none', width: '100%', height: 34, fontSize: 10, color: '#64748b', background: 'transparent', padding: '0 8px', fontStyle: 'italic' }}
@@ -387,7 +438,7 @@ export default function MeasurementGrid({
                                 type="number"
                                 step="0.5"
                                 value={val}
-                                onChange={e => onGridChange(col.id, row.key, e.target.value)}
+                                onChange={e => onGridChange(col.id, row.field, e.target.value)}
                                 onKeyDown={e => handleKeyDown(e, row.key, col.id)}
                                 placeholder="—"
                                 style={{

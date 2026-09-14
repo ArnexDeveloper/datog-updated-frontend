@@ -454,7 +454,7 @@ const OrderEdit: React.FC = () => {
               </div>
               <div>
                 <label htmlFor="advance" className="block text-sm font-medium text-gray-700 mb-2">Advance Payment (₹)</label>
-                <input type="number" id="advance" name="advance" value={formData.advance}
+                <input type="number" id="advance" name="advance" value={formData.advance || ''}
                   onChange={handleInputChange} min="0" max={order.payment.total} step="0.01"
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" />
               </div>
@@ -526,13 +526,13 @@ const OrderEdit: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
-                        <input type="number" value={garment.quantity}
+                        <input type="number" value={garment.quantity || ''}
                           onChange={(e) => handleGarmentChange(index, 'quantity', parseInt(e.target.value) || 1)}
                           min="1" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Price (₹)</label>
-                        <input type="number" value={garment.price}
+                        <input type="number" value={garment.price || ''}
                           onChange={(e) => handleGarmentChange(index, 'price', parseFloat(e.target.value) || 0)}
                           min="0" step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
                       </div>

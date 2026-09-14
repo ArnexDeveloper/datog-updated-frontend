@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
-import NotificationBell from '../notifications/NotificationBell';
 import { apiService } from '../../services/api';
 import './Header.css';
 
@@ -451,10 +450,8 @@ const Header = ({ user, onLogout }) => {
           )}
         </div>
 
-        {/* Right: Notifications & User Menu */}
+        {/* Right: User Menu (notifications now live in the floating bell — see NotificationFab) */}
         <div className="flex items-center space-x-4 flex-shrink-0">
-          <NotificationBell />
-
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={toggleDropdown}

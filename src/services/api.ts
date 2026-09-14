@@ -59,6 +59,7 @@ export const apiService = {
   // Order endpoints
   getOrders: (params) => api.get('/orders', { params }),
   getOrdersBalanceDueCount: () => api.get('/orders/balance-due-count'),
+  getOrderStatusCounts: () => api.get('/orders/status-counts'),
   getOrder: (id) => api.get(`/orders/${id}`),
   createOrder: (order) => api.post('/orders', order),
   updateOrder: (id, order) => api.put(`/orders/${id}`, order),

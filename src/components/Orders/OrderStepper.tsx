@@ -425,7 +425,7 @@ const OrderStepper: React.FC<OrderStepperProps> = ({ order, onSubmit, onCancel, 
                 <Input
                   type="number"
                   min="1"
-                  value={garment.quantity}
+                  value={garment.quantity || ''}
                   onChange={(e) => updateGarment(index, 'quantity', parseInt(e.target.value) || 1)}
                 />
                 {errors[`garment_${index}_quantity`] && (
@@ -439,7 +439,7 @@ const OrderStepper: React.FC<OrderStepperProps> = ({ order, onSubmit, onCancel, 
                   type="number"
                   min="0"
                   step="0.01"
-                  value={garment.price}
+                  value={garment.price || ''}
                   onChange={(e) => updateGarment(index, 'price', parseFloat(e.target.value) || 0)}
                   placeholder="Enter price"
                 />
@@ -507,7 +507,7 @@ const OrderStepper: React.FC<OrderStepperProps> = ({ order, onSubmit, onCancel, 
                   type="number"
                   min="0"
                   step="0.1"
-                  value={garment.fabricUsed}
+                  value={garment.fabricUsed || ''}
                   onChange={(e) => updateGarment(index, 'fabricUsed', parseFloat(e.target.value) || 0)}
                   placeholder="Enter fabric used"
                 />
@@ -565,7 +565,7 @@ const OrderStepper: React.FC<OrderStepperProps> = ({ order, onSubmit, onCancel, 
               type="number"
               min="0"
               max={orderData.payment.total}
-              value={orderData.payment.advance}
+              value={orderData.payment.advance || ''}
               onChange={(e) => setOrderData(prev => ({
                 ...prev,
                 payment: { ...prev.payment, advance: parseFloat(e.target.value) || 0 }

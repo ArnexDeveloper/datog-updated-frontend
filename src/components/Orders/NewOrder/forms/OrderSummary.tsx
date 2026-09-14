@@ -135,8 +135,8 @@ export default function OrderSummary({
           <label className="block text-sm font-medium text-amber-800 mb-2">Advance Payment (₹)</label>
           <input
             type="number"
-            value={formData.advancePayment}
-            onChange={(e) => setFormData(prev => ({ ...prev, advancePayment: parseFloat(e.target.value) }))}
+            value={formData.advancePayment || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, advancePayment: parseFloat(e.target.value) || 0 }))}
             className="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50/50 transition-colors"
             placeholder="0.00"
           />

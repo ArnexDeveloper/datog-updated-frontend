@@ -160,7 +160,7 @@ const Fabrics = () => {
             <div className="form-row two">
               <div>
                 <label>Quantity</label>
-                <input type="number" min="0" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })} />
+                <input type="number" min="0" value={form.quantity || ''} onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) || 0 })} />
               </div>
               <div>
                 <label>Unit</label>
@@ -174,11 +174,11 @@ const Fabrics = () => {
             <div className="form-row two">
               <div>
                 <label>Price/Unit</label>
-                <input type="number" min="0" value={form.pricePerUnit} onChange={(e) => setForm({ ...form, pricePerUnit: Number(e.target.value) })} />
+                <input type="number" min="0" value={form.pricePerUnit || ''} onChange={(e) => setForm({ ...form, pricePerUnit: Number(e.target.value) || 0 })} />
               </div>
               <div>
                 <label>Min Stock</label>
-                <input type="number" min="0" value={form.minStockLevel} onChange={(e) => setForm({ ...form, minStockLevel: Number(e.target.value) })} />
+                <input type="number" min="0" value={form.minStockLevel || ''} onChange={(e) => setForm({ ...form, minStockLevel: Number(e.target.value) || 0 })} />
               </div>
             </div>
 

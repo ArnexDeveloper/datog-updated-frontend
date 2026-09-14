@@ -4,6 +4,7 @@ import { apiService } from '../../services/api';
 import { useHindiText } from '../../hooks/useHindiText';
 import SkeletonLine from './SkeletonLine';
 import CustomerPicker, { PickedCustomer } from '../Invoices/CustomerPicker';
+import { getOrderedFields } from '../Orders/MeasurementGrid';
 import './JobCards.css';
 
 // ── Blank job card: gender → upper/bottom garment lists ──────────────────────
@@ -179,11 +180,6 @@ const MeasurementPanel = ({ measurements }: { measurements: any }) => {
 
 const PRINT_LABELS = ['Length','Chest','Shape','Tummy','Hips','Neck','Shoulder','Sleeves','Biceps','Forearms'];
 
-// Field sets for the quick gender + upper/bottom blank print (no garment/order
-// picked — just the measurement labels relevant to that half of the body).
-const UPPER_PRINT_LABELS = ['Length', 'Chest/Bust', 'Shoulder', 'Sleeve', 'Neck', 'Waist'];
-const BOTTOM_PRINT_LABELS = ['Waist', 'Hip', 'Length', 'Inseam', 'Thigh', 'Rise'];
-
 // Garment type / fit are fixed schema enums (not free text), so they can be
 // safely translated for the Hindi print card — unlike garment.name or a
 // tailor's name, which are free-form data and stay as entered.
@@ -232,6 +228,9 @@ const T = {
       Biceps: 'Biceps', Forearms: 'Forearms',
       'Chest/Bust': 'Chest/Bust', Sleeve: 'Sleeve', Waist: 'Waist',
       Hip: 'Hip', Inseam: 'Inseam', Thigh: 'Thigh', Rise: 'Rise',
+      Forearm: 'Forearm', Mori: 'Mori', Armhole: 'Armhole',
+      'Upper Bust': 'Upper Bust', 'Mid Bust': 'Mid Bust', 'Under Bust': 'Under Bust',
+      'Bust Point': 'Bust Point', Knee: 'Knee', Calf: 'Calf', Bottom: 'Bottom', 'Fly (U)': 'Fly (U)',
     } as Record<string, string>,
   },
   hi: {
@@ -264,6 +263,9 @@ const T = {
       Biceps: 'बाइसेप्स', Forearms: 'अग्रभुज',
       'Chest/Bust': 'छाती/बस्ट', Sleeve: 'आस्तीन', Waist: 'कमर',
       Hip: 'कूल्हा', Inseam: 'भीतरी लंबाई', Thigh: 'जांघ', Rise: 'राइज़',
+      Forearm: 'अग्रबाहु', Mori: 'मोरी', Armhole: 'आर्महोल',
+      'Upper Bust': 'ऊपरी बस्ट', 'Mid Bust': 'मध्य बस्ट', 'Under Bust': 'अंडर बस्ट',
+      'Bust Point': 'बस्ट पॉइंट', Knee: 'घुटना', Calf: 'पिंडली', Bottom: 'बॉटम', 'Fly (U)': 'फ्लाई (यू)',
     } as Record<string, string>,
   },
 };
@@ -483,7 +485,7 @@ interface BlankPrintableCardProps {
 const BlankPrintableCard = React.forwardRef<HTMLDivElement, BlankPrintableCardProps>(({ lang, gender, category, jobNo }, ref) => {
   const t = T[lang];
   const blankLine = '_'.repeat(22);
-  const printLabels = category === 'upper' ? UPPER_PRINT_LABELS : BOTTOM_PRINT_LABELS;
+  const printFields = getOrderedFields(gender, category === 'bottom' ? 'lower' : 'upper');
 
   return (
     <div ref={ref} className="jc-print-card job-card-print-area">
@@ -520,17 +522,11 @@ const BlankPrintableCard = React.forwardRef<HTMLDivElement, BlankPrintableCardPr
           </tr>
         </thead>
         <tbody>
-          {printLabels.map(label => (
-            <tr key={label}>
+          {printFields.map(([field, label]) => (
+            <tr key={field}>
               <td style={{ border: '1px solid #000', padding: '7px 4px', fontWeight: 700 }}>
                 {lang === 'hi' ? (t.labels[label] || label) : label}
               </td>
-              <td style={{ border: '1px solid #000', padding: '7px 4px' }}>&nbsp;</td>
-            </tr>
-          ))}
-          {[1, 2, 3].map(i => (
-            <tr key={`extra-${i}`}>
-              <td style={{ border: '1px solid #000', padding: '7px 4px' }}>&nbsp;</td>
               <td style={{ border: '1px solid #000', padding: '7px 4px' }}>&nbsp;</td>
             </tr>
           ))}
@@ -872,7 +868,7 @@ const CreateBlankJobCardModal: React.FC<CreateBlankJobCardModalProps> = ({ emplo
                   </div>
                   <div className="jc-form-group">
                     <label>Quantity</label>
-                    <input type="number" min={1} value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} />
+                    <input type="number" min={1} value={quantity || ''} onChange={e => setQuantity(parseInt(e.target.value) || 1)} />
                   </div>
                 </div>
 

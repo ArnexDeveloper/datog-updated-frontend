@@ -3,6 +3,28 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import JobCardPrint from '../JobCards/JobCardPrint';
 import RecordPaymentModal from './RecordPaymentModal';
+import { getOrderedFields } from './MeasurementGrid';
+
+// Gender + body-part measurement chart, in exact spec order, 2-column grid
+// (left column first) — only rendered when the saved measurement has gender
+// set (i.e. was captured through the current measurement step).
+const GenderMeasurementGrid: React.FC<{ measurements: any }> = ({ measurements }) => {
+  const fields = getOrderedFields(measurements.gender, measurements.bodyPart)
+    .filter(([field]) => measurements[field] != null && measurements[field] > 0);
+  if (fields.length === 0) return null;
+  return (
+    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+      {fields.map(([field, label]) => (
+        <div key={field} className="flex justify-between text-xs py-0.5 border-b border-amber-100">
+          <span className="text-amber-700 font-medium">{label}</span>
+          <span className="text-gray-800 font-semibold ml-2">
+            {measurements[field]} {measurements.unit || 'in'}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const PAYMENT_MODE_LABEL: Record<string, string> = {
   cash: 'Cash', upi: 'UPI', gpay: 'GPay', phonepe: 'PhonePe',
@@ -417,50 +439,54 @@ const OrderDetail: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1">
-                        {([
-                          ['chest',       'Chest'],
-                          ['bust',        'Bust'],
-                          ['waist',       'Waist'],
-                          ['hip',         'Hip'],
-                          ['shoulder',    'Shoulder'],
-                          ['armLength',   'Arm Length'],
-                          ['armHole',     'Arm Hole'],
-                          ['bicep',       'Bicep'],
-                          ['wrist',       'Wrist'],
-                          ['neck',        'Neck'],
-                          ['shirtLength', 'Shirt Length'],
-                          ['kurtalLength','Kurta Length'],
-                          ['dressLength', 'Dress Length'],
-                          ['skirtLength', 'Skirt Length'],
-                          ['blouseLength','Blouse Length'],
-                          ['inseam',      'Inseam'],
-                          ['outseam',     'Outseam'],
-                          ['thigh',       'Thigh'],
-                          ['knee',        'Knee'],
-                          ['calf',        'Calf'],
-                          ['ankle',       'Ankle'],
-                          ['rise',        'Rise'],
-                          ['height',      'Height'],
-                          ['weight',      'Weight (kg)'],
-                        ] as [string, string][])
-                          .filter(([key]) => garment.measurements[key] != null && garment.measurements[key] > 0)
-                          .map(([key, label]) => (
-                            <div key={key} className="flex justify-between text-xs py-0.5 border-b border-amber-100">
-                              <span className="text-amber-700 font-medium">{label}</span>
-                              <span className="text-gray-800 font-semibold ml-2">
-                                {garment.measurements[key]} {garment.measurements.unit || 'in'}
-                              </span>
+                      {garment.measurements.gender ? (
+                        <GenderMeasurementGrid measurements={garment.measurements} />
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1">
+                          {([
+                            ['chest',       'Chest'],
+                            ['bust',        'Bust'],
+                            ['waist',       'Waist'],
+                            ['hip',         'Hip'],
+                            ['shoulder',    'Shoulder'],
+                            ['armLength',   'Arm Length'],
+                            ['armHole',     'Arm Hole'],
+                            ['bicep',       'Bicep'],
+                            ['wrist',       'Wrist'],
+                            ['neck',        'Neck'],
+                            ['shirtLength', 'Shirt Length'],
+                            ['kurtalLength','Kurta Length'],
+                            ['dressLength', 'Dress Length'],
+                            ['skirtLength', 'Skirt Length'],
+                            ['blouseLength','Blouse Length'],
+                            ['inseam',      'Inseam'],
+                            ['outseam',     'Outseam'],
+                            ['thigh',       'Thigh'],
+                            ['knee',        'Knee'],
+                            ['calf',        'Calf'],
+                            ['ankle',       'Ankle'],
+                            ['rise',        'Rise'],
+                            ['height',      'Height'],
+                            ['weight',      'Weight (kg)'],
+                          ] as [string, string][])
+                            .filter(([key]) => garment.measurements[key] != null && garment.measurements[key] > 0)
+                            .map(([key, label]) => (
+                              <div key={key} className="flex justify-between text-xs py-0.5 border-b border-amber-100">
+                                <span className="text-amber-700 font-medium">{label}</span>
+                                <span className="text-gray-800 font-semibold ml-2">
+                                  {garment.measurements[key]} {garment.measurements.unit || 'in'}
+                                </span>
+                              </div>
+                            ))
+                          }
+                          {garment.measurements.customMeasurements?.map((cm: any) => (
+                            <div key={cm.name} className="flex justify-between text-xs py-0.5 border-b border-amber-100">
+                              <span className="text-amber-700 font-medium">{cm.name}</span>
+                              <span className="text-gray-800 font-semibold ml-2">{cm.value} {cm.unit}</span>
                             </div>
-                          ))
-                        }
-                        {garment.measurements.customMeasurements?.map((cm: any) => (
-                          <div key={cm.name} className="flex justify-between text-xs py-0.5 border-b border-amber-100">
-                            <span className="text-amber-700 font-medium">{cm.name}</span>
-                            <span className="text-gray-800 font-semibold ml-2">{cm.value} {cm.unit}</span>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                       {garment.measurements.notes && (
                         <p className="mt-2 text-xs text-amber-700 italic">{garment.measurements.notes}</p>
                       )}
@@ -556,21 +582,25 @@ const OrderDetail: React.FC = () => {
                           {g.measurements && typeof g.measurements === 'object' && (g.measurements as any)._id && (
                             <div className="mt-2 p-2 rounded bg-amber-50 border border-amber-100">
                               <p className="text-xs font-semibold text-amber-800 mb-1">📏 Measurements</p>
-                              <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-3 gap-y-0.5">
-                                {([
-                                  ['chest','Chest'],['shoulder','Shoulder'],['armLength','Sleeve'],
-                                  ['neck','Neck'],['waist','Waist'],['hip','Hip'],
-                                  ['thigh','Thigh'],['inseam','Inseam'],['outseam','Length'],
-                                  ['rise','Rise'],['shirtLength','Shirt Length'],['blouseLength','Blouse Length'],
-                                ] as [string,string][])
-                                  .filter(([k]) => (g.measurements as any)[k] != null && (g.measurements as any)[k] > 0)
-                                  .map(([k, lbl]) => (
-                                    <div key={k} className="flex justify-between text-xs py-0.5 border-b border-amber-100">
-                                      <span className="text-amber-700">{lbl}</span>
-                                      <span className="font-semibold ml-1">{(g.measurements as any)[k]} {(g.measurements as any).unit || 'in'}</span>
-                                    </div>
-                                  ))}
-                              </div>
+                              {(g.measurements as any).gender ? (
+                                <GenderMeasurementGrid measurements={g.measurements} />
+                              ) : (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-3 gap-y-0.5">
+                                  {([
+                                    ['chest','Chest'],['shoulder','Shoulder'],['armLength','Sleeve'],
+                                    ['neck','Neck'],['waist','Waist'],['hip','Hip'],
+                                    ['thigh','Thigh'],['inseam','Inseam'],['outseam','Length'],
+                                    ['rise','Rise'],['shirtLength','Shirt Length'],['blouseLength','Blouse Length'],
+                                  ] as [string,string][])
+                                    .filter(([k]) => (g.measurements as any)[k] != null && (g.measurements as any)[k] > 0)
+                                    .map(([k, lbl]) => (
+                                      <div key={k} className="flex justify-between text-xs py-0.5 border-b border-amber-100">
+                                        <span className="text-amber-700">{lbl}</span>
+                                        <span className="font-semibold ml-1">{(g.measurements as any)[k]} {(g.measurements as any).unit || 'in'}</span>
+                                      </div>
+                                    ))}
+                                </div>
+                              )}
                               {(g.measurements as any).notes && (
                                 <p className="mt-1 text-xs text-amber-700 italic">{(g.measurements as any).notes}</p>
                               )}
@@ -789,6 +819,8 @@ const OrderDetail: React.FC = () => {
         <RecordPaymentModal
           orderId={order._id}
           orderNumber={order.orderNumber}
+          customerName={order.customer?.name}
+          totalAmount={order.payment?.total}
           currentBalance={order.payment.balance}
           onClose={() => setShowPaymentModal(false)}
           onSaved={(payment) => {

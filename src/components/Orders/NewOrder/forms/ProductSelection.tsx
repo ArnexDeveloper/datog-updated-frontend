@@ -396,7 +396,7 @@ export default function ProductSelection({ formData, fabrics = [], onProductsCha
       </div>
       <div>
         <label className="block text-xs text-gray-500 mb-1">Quantity</label>
-        <input type="number" min="1" value={qty}
+        <input type="number" min="1" value={qty || ''}
           onChange={e => onQty(parseInt(e.target.value) || 1)}
           className="w-full h-8 px-2 border border-gray-200 rounded-md text-sm bg-white" />
       </div>
@@ -636,7 +636,7 @@ export default function ProductSelection({ formData, fabrics = [], onProductsCha
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Quantity</label>
-              <input type="number" min="1" value={activeIndiv.quantity}
+              <input type="number" min="1" value={activeIndiv.quantity || ''}
                 onChange={e => updateIndiv(activeIndiv.uid, 'quantity', parseInt(e.target.value) || 1)}
                 className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm bg-white" />
             </div>

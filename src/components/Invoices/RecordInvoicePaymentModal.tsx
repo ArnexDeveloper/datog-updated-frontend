@@ -78,7 +78,7 @@ const RecordInvoicePaymentModal: React.FC<RecordInvoicePaymentModalProps> = ({ i
             <input
               type="number"
               min={0}
-              value={amount}
+              value={amount || ''}
               onChange={e => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="0"
               autoFocus

@@ -21,6 +21,7 @@ import { useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import GlobalToasts from './components/notifications/GlobalToasts';
+import NotificationFab from './components/notifications/NotificationFab';
 import './styles/global.css';
 import './App.css';
 
@@ -77,6 +78,7 @@ function App() {
                 <ProtectedRoute>
                   <div className="app-layout">
                     <GlobalToasts />
+                    <NotificationFab />
                     <Sidebar
                       isCollapsed={sidebarCollapsed}
                       onToggle={toggleSidebar}

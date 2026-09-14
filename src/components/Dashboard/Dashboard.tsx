@@ -134,14 +134,14 @@ const buildNotifications = (data: any): ToastNotification[] => {
 type DashTab = 'trials' | 'deliveries' | 'dueOrders' | 'duePayments' | 'trialsWeek' | 'pendingOrders' | 'birthdays' | 'anniversaries';
 
 const TAB_META: Record<DashTab, { label: string; icon: string; emptyMsg: string }> = {
-  trials:        { label: "Today's Trials",    icon: '🗓️', emptyMsg: 'No trials scheduled today.' },
-  deliveries:    { label: "Today's Deliveries", icon: '🚚', emptyMsg: 'No deliveries due today.' },
   dueOrders:     { label: 'Due Orders',         icon: '⏳', emptyMsg: 'No overdue orders.' },
   duePayments:   { label: 'Due Payment',        icon: '💰', emptyMsg: 'No outstanding balances.' },
   trialsWeek:    { label: 'Trial Date',         icon: '📅', emptyMsg: 'No trials scheduled this week.' },
   pendingOrders: { label: 'Pending Orders',     icon: '📋', emptyMsg: 'No open orders.' },
   birthdays:     { label: 'Birthday',           icon: '🎂', emptyMsg: 'No birthdays in the next 7 days.' },
   anniversaries: { label: 'Anniversary',        icon: '💍', emptyMsg: 'No anniversaries in the next 7 days.' },
+  deliveries:    { label: 'Deliveries Today',   icon: '🚚', emptyMsg: 'No deliveries due today.' },
+  trials:        { label: 'Trials Today',       icon: '🧪', emptyMsg: 'No trials scheduled today.' },
 };
 
 const PEOPLE_TABS = new Set<DashTab>(['birthdays', 'anniversaries']);
@@ -345,8 +345,8 @@ const Dashboard = () => {
               onClick={() => setActiveTab(t)}
             >
               <span className="dash-tab__icon">{TAB_META[t].icon}</span>
-              <span>{TAB_META[t].label}</span>
               <span className="dash-tab__count">{TAB_ROWS[t].length}</span>
+              <span className="dash-tab__label">{TAB_META[t].label}</span>
             </button>
           ))}
         </div>

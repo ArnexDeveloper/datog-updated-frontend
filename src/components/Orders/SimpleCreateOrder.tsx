@@ -238,7 +238,7 @@ const SimpleCreateOrder: React.FC = () => {
                   type="number"
                   id="quantity"
                   name="quantity"
-                  value={formData.quantity}
+                  value={formData.quantity || ''}
                   onChange={handleInputChange}
                   min="1"
                   required
@@ -254,7 +254,7 @@ const SimpleCreateOrder: React.FC = () => {
                   type="number"
                   id="price"
                   name="price"
-                  value={formData.price}
+                  value={formData.price || ''}
                   onChange={handleInputChange}
                   min="0"
                   step="0.01"
@@ -328,7 +328,7 @@ const SimpleCreateOrder: React.FC = () => {
                   type="number"
                   id="advance"
                   name="advance"
-                  value={formData.advance}
+                  value={formData.advance || ''}
                   onChange={handleInputChange}
                   min="0"
                   max={formData.price * formData.quantity}

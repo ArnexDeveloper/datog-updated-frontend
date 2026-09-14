@@ -22,7 +22,9 @@ const BillingTab = ({ settings, onSaveSettings, loading, isAdmin }) => {
   }, [settings]);
 
   const handleChange = (e) => {
-    const value = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
+    const value = e.target.type === 'number'
+      ? (e.target.value === '' ? '' : parseFloat(e.target.value) || 0)
+      : e.target.value;
     setFormData({
       ...formData,
       [e.target.name]: value
@@ -74,7 +76,7 @@ const BillingTab = ({ settings, onSaveSettings, loading, isAdmin }) => {
               type="number"
               id="taxRate"
               name="taxRate"
-              value={formData.taxRate}
+              value={formData.taxRate || ''}
               onChange={handleChange}
               min="0"
               max="100"
@@ -105,7 +107,7 @@ const BillingTab = ({ settings, onSaveSettings, loading, isAdmin }) => {
               type="number"
               id="netDays"
               name="netDays"
-              value={formData.netDays}
+              value={formData.netDays || ''}
               onChange={handleChange}
               min="1"
               disabled={loading || !isAdmin}
@@ -119,7 +121,7 @@ const BillingTab = ({ settings, onSaveSettings, loading, isAdmin }) => {
             type="number"
             id="advancePercentage"
             name="advancePercentage"
-            value={formData.advancePercentage}
+            value={formData.advancePercentage || ''}
             onChange={handleChange}
             min="0"
             max="100"

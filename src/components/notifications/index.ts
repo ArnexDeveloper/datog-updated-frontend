@@ -1,7 +1,5 @@
 // Export all notification components for easier imports
-export { default as NotificationBell } from './NotificationBell';
-export { default as NotificationDrawer } from './NotificationDrawer';
-export { default as NotificationDrawerItem } from './NotificationDrawerItem';
+export { default as NotificationFab } from './NotificationFab';
 export { default as NotificationItem } from './NotificationItem';
 export { default as NotificationsPage } from './NotificationsPage';
 export { default as AdminNotificationComposer } from './AdminNotificationComposer';

@@ -27,6 +27,18 @@ const PAYMENT_MODES = [
   { value: 'card', label: 'Card' },
 ];
 
+interface AdvanceSplit {
+  id: number;
+  amount: number | '';
+  mode: string;
+  reference: string;
+}
+
+let advanceSplitIdSeq = 0;
+// Advance can be split across multiple payment modes (e.g. part-cash + part-UPI),
+// matching the split-payment support on order checkout / recording payments.
+const newAdvanceSplit = (mode = 'cash'): AdvanceSplit => ({ id: advanceSplitIdSeq++, amount: '', mode, reference: '' });
+
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 5,
   fontSize: 13, height: 36, boxSizing: 'border-box'
@@ -41,9 +53,7 @@ const CustomInvoiceCreate: React.FC = () => {
   const [walkInMobile, setWalkInMobile] = useState('');
   const [items, setItems] = useState<LineItem[]>([emptyItem()]);
   const [discount, setDiscount] = useState(0);
-  const [advancePaid, setAdvancePaid] = useState(0);
-  const [advanceMethod, setAdvanceMethod] = useState('cash');
-  const [advanceReference, setAdvanceReference] = useState('');
+  const [advanceSplits, setAdvanceSplits] = useState<AdvanceSplit[]>([newAdvanceSplit()]);
   const [deliveryDate, setDeliveryDate] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -59,6 +69,19 @@ const CustomInvoiceCreate: React.FC = () => {
   const addItem = () => setItems(prev => [...prev, emptyItem()]);
   const removeItem = (index: number) => setItems(prev => prev.length > 1 ? prev.filter((_, i) => i !== index) : prev);
 
+  const updateAdvanceSplit = (id: number, patch: Partial<AdvanceSplit>) => {
+    setAdvanceSplits(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
+  };
+  const addAdvanceSplit = () => {
+    const lastMode = advanceSplits[advanceSplits.length - 1]?.mode;
+    const nextMode = PAYMENT_MODES.find(m => m.value !== lastMode)?.value || 'cash';
+    setAdvanceSplits(prev => [...prev, newAdvanceSplit(nextMode)]);
+  };
+  const removeAdvanceSplit = (id: number) => {
+    setAdvanceSplits(prev => (prev.length > 1 ? prev.filter(s => s.id !== id) : prev));
+  };
+
+  const advancePaid = advanceSplits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
   const subtotal = items.reduce((sum, it) => sum + (it.quantity || 0) * (it.rate || 0), 0);
   const total = Math.max(0, subtotal - (discount || 0));
   const balanceDue = Math.max(0, total - (advancePaid || 0));
@@ -87,8 +110,9 @@ const CustomInvoiceCreate: React.FC = () => {
         items: validItems,
         discount,
         advancePaid,
-        advanceMethod: advancePaid > 0 ? advanceMethod : undefined,
-        advanceReference: advancePaid > 0 ? (advanceReference.trim() || undefined) : undefined,
+        advancePayments: advanceSplits
+          .filter(s => Number(s.amount) > 0)
+          .map(s => ({ amount: Number(s.amount), method: s.mode, reference: s.reference.trim() || undefined })),
         deliveryDate: deliveryDate || undefined,
         notes: notes || undefined,
       });
@@ -170,8 +194,8 @@ const CustomInvoiceCreate: React.FC = () => {
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 70px 100px 100px 32px', gap: 8, marginBottom: 6, alignItems: 'center' }}>
               <input type="text" value={it.description} onChange={e => updateItem(i, 'description', e.target.value)} placeholder="e.g. Blazer alteration" style={inputStyle} />
               <input type="text" value={it.size} onChange={e => updateItem(i, 'size', e.target.value)} placeholder="e.g. M" style={inputStyle} />
-              <input type="number" min={1} value={it.quantity} onChange={e => updateItem(i, 'quantity', e.target.value)} style={inputStyle} />
-              <input type="number" min={0} value={it.rate} onChange={e => updateItem(i, 'rate', e.target.value)} style={inputStyle} />
+              <input type="number" min={1} value={it.quantity || ''} onChange={e => updateItem(i, 'quantity', e.target.value)} style={inputStyle} />
+              <input type="number" min={0} value={it.rate || ''} onChange={e => updateItem(i, 'rate', e.target.value)} style={inputStyle} />
               <div style={{ fontSize: 13, fontWeight: 500, textAlign: 'right', color: '#111827' }}>
                 {fmt((it.quantity || 0) * (it.rate || 0))}
               </div>
@@ -203,49 +227,79 @@ const CustomInvoiceCreate: React.FC = () => {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', fontSize: 13 }}>
             <span style={{ color: '#6b7280' }}>Discount</span>
-            <input type="number" min={0} value={discount} onChange={e => setDiscount(Number(e.target.value) || 0)} style={{ ...inputStyle, width: 120, height: 30 }} />
+            <input type="number" min={0} value={discount || ''} onChange={e => setDiscount(Number(e.target.value) || 0)} style={{ ...inputStyle, width: 120, height: 30 }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 15, fontWeight: 700, borderTop: '1px solid #e5e7eb', marginTop: 4 }}>
             <span>Total</span>
             <span>{fmt(total)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', fontSize: 13 }}>
-            <span style={{ color: '#16a34a' }}>Advance paid</span>
-            <input type="number" min={0} value={advancePaid} onChange={e => setAdvancePaid(Number(e.target.value) || 0)} style={{ ...inputStyle, width: 120, height: 30 }} />
-          </div>
-          {advancePaid > 0 && (
-            <div style={{ padding: '4px 0 8px' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end', marginBottom: 8 }}>
-                {PAYMENT_MODES.map(m => (
-                  <button
-                    key={m.value}
-                    type="button"
-                    onClick={() => setAdvanceMethod(m.value)}
-                    style={{
-                      padding: '4px 12px', borderRadius: 20, fontSize: 12, cursor: 'pointer', border: '1px solid',
-                      fontWeight: advanceMethod === m.value ? 600 : 400,
-                      background: advanceMethod === m.value ? '#c9900a' : '#fff',
-                      color: advanceMethod === m.value ? '#fff' : '#374151',
-                      borderColor: advanceMethod === m.value ? '#c9900a' : '#d1d5db',
-                    }}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-              {advanceMethod !== 'cash' && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ padding: '4px 0 8px' }}>
+            <div style={{ fontSize: 13, color: '#16a34a', marginBottom: 6 }}>Advance paid</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {advanceSplits.map((split, i) => (
+                <div key={split.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 10, background: '#fff' }}>
+                  {advanceSplits.length > 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#6b7280' }}>Payment {i + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeAdvanceSplit(split.id)}
+                        style={{ border: 'none', background: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 14, lineHeight: 1 }}
+                        title="Remove this payment"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
                   <input
-                    type="text"
-                    value={advanceReference}
-                    onChange={e => setAdvanceReference(e.target.value)}
-                    placeholder="Transaction ID / Reference"
-                    style={{ ...inputStyle, width: 220, height: 32 }}
+                    type="number" min={0} value={split.amount || ''}
+                    onChange={e => updateAdvanceSplit(split.id, { amount: e.target.value === '' ? '' : Number(e.target.value) || 0 })}
+                    placeholder="Amount (₹)"
+                    style={{ ...inputStyle, height: 32, marginBottom: 8 }}
                   />
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: split.mode !== 'cash' ? 8 : 0 }}>
+                    {PAYMENT_MODES.map(m => (
+                      <button
+                        key={m.value}
+                        type="button"
+                        onClick={() => updateAdvanceSplit(split.id, { mode: m.value })}
+                        style={{
+                          padding: '4px 12px', borderRadius: 20, fontSize: 12, cursor: 'pointer', border: '1px solid',
+                          fontWeight: split.mode === m.value ? 600 : 400,
+                          background: split.mode === m.value ? '#c9900a' : '#fff',
+                          color: split.mode === m.value ? '#fff' : '#374151',
+                          borderColor: split.mode === m.value ? '#c9900a' : '#d1d5db',
+                        }}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                  {split.mode !== 'cash' && (
+                    <input
+                      type="text"
+                      value={split.reference}
+                      onChange={e => updateAdvanceSplit(split.id, { reference: e.target.value })}
+                      placeholder="Transaction ID / Reference"
+                      style={{ ...inputStyle, height: 32 }}
+                    />
+                  )}
                 </div>
-              )}
+              ))}
             </div>
-          )}
+            <button
+              type="button"
+              onClick={addAdvanceSplit}
+              style={{ marginTop: 8, width: '100%', padding: '6px 12px', borderRadius: 6, border: '1px dashed #c9900a', background: '#fffbeb', color: '#92400e', fontSize: 12.5, cursor: 'pointer' }}
+            >
+              + Add another payment mode
+            </button>
+            {advancePaid > 0 && (
+              <div style={{ fontSize: 12, color: '#6b7280', textAlign: 'right', marginTop: 6 }}>
+                Total advance: {fmt(advancePaid)}
+              </div>
+            )}
+          </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontSize: 15, fontWeight: 700, borderTop: '1px solid #e5e7eb', marginTop: 4 }}>
             <span>Balance due</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

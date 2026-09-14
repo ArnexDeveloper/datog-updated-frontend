@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, ShoppingBag, User, Check, Calendar, DollarSign, Ruler } from 'lucide-react';
 import { apiService } from '../../services/api';
-import MeasurementGrid, { GridColumn, GridData } from './MeasurementGrid';
+import MeasurementGrid, { GridColumn, GridData, getGarmentBodyPart } from './MeasurementGrid';
 
 // ─── Static data ────────────────────────────────────────────────────────────
 
@@ -80,16 +80,18 @@ const MEASUREMENT_SCHEMA_TYPES = [
   'coat', 'waistcoat', 'dhoti', 'churidar', 'salwar', 'dupatta', 'other',
 ];
 
-// MeasurementGrid row key -> Measurement schema field (mirrors the mapping order.controller.js
-// applies to inline measurementData so profiles saved here line up with measurements saved via orders)
+// MeasurementGrid row field -> Measurement schema field. The grid's gender +
+// body-part field names already match the Measurement schema 1:1 (mirrors
+// the identity mapping order.controller.js applies to inline measurementData),
+// so profiles saved/loaded here line up with measurements saved via orders.
 const GRID_TO_SCHEMA_FIELD: Record<string, string> = {
-  chest: 'chest', shoulder: 'shoulder', sleeve: 'armLength', upperLength: 'shirtLength',
-  neck: 'neck', waist: 'waist', hip: 'hip', thigh: 'thigh', inseam: 'inseam',
-  lowerLength: 'outseam', bottomOpening: 'ankle', rise: 'rise', notes: 'notes',
+  length: 'length', chest: 'chest', shape: 'shape', tummy: 'tummy', hip: 'hip',
+  neck: 'neck', shoulder: 'shoulder', sleeves: 'sleeves', bicep: 'bicep', forearm: 'forearm',
+  mori: 'mori', armHole: 'armHole', upperBust: 'upperBust', midBust: 'midBust',
+  underBust: 'underBust', bustPoint: 'bustPoint', waist: 'waist', thigh: 'thigh',
+  knee: 'knee', calf: 'calf', bottom: 'bottom', flyU: 'flyU', notes: 'notes',
 };
-const SCHEMA_TO_GRID_FIELD: Record<string, string> = Object.fromEntries(
-  Object.entries(GRID_TO_SCHEMA_FIELD).map(([rowKey, field]) => [field, rowKey])
-);
+const SCHEMA_TO_GRID_FIELD: Record<string, string> = GRID_TO_SCHEMA_FIELD;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -135,6 +137,28 @@ const isValidDeliveryDate = (value: string): boolean => {
   return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
 };
 
+const PAYMENT_MODES = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'upi', label: 'UPI' },
+  { value: 'gpay', label: 'GPay' },
+  { value: 'phonepe', label: 'PhonePe' },
+  { value: 'bank_transfer', label: 'Bank Transfer' },
+  { value: 'card', label: 'Card' },
+];
+
+interface AdvanceSplit {
+  id: number;
+  amount: number | '';
+  mode: string;
+  reference: string;
+}
+
+let advanceSplitIdSeq = 0;
+// Advance can be split across multiple payment modes at checkout (e.g. part-cash
+// + part-UPI), matching the split-payment support already available when
+// recording a payment against an existing order later.
+const newAdvanceSplit = (mode = 'cash'): AdvanceSplit => ({ id: advanceSplitIdSeq++, amount: '', mode, reference: '' });
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 const EnhancedCreateOrder: React.FC = () => {
@@ -150,9 +174,20 @@ const EnhancedCreateOrder: React.FC = () => {
   const [deliveryDate, setDeliveryDate] = useState('');
   const [deliveryDateError, setDeliveryDateError] = useState('');
   const [trialDate, setTrialDate] = useState('');
-  const [advance, setAdvance] = useState(0);
-  const [advanceMethod, setAdvanceMethod] = useState('cash');
-  const [advanceReference, setAdvanceReference] = useState('');
+  const [advanceSplits, setAdvanceSplits] = useState<AdvanceSplit[]>([newAdvanceSplit()]);
+  const advance = advanceSplits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+
+  const updateAdvanceSplit = (id: number, patch: Partial<AdvanceSplit>) => {
+    setAdvanceSplits(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
+  };
+  const addAdvanceSplit = () => {
+    const lastMode = advanceSplits[advanceSplits.length - 1]?.mode;
+    const nextMode = PAYMENT_MODES.find(m => m.value !== lastMode)?.value || 'cash';
+    setAdvanceSplits(prev => [...prev, newAdvanceSplit(nextMode)]);
+  };
+  const removeAdvanceSplit = (id: number) => {
+    setAdvanceSplits(prev => (prev.length > 1 ? prev.filter(s => s.id !== id) : prev));
+  };
   const [priority, setPriority] = useState('medium');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -475,6 +510,8 @@ const EnhancedCreateOrder: React.FC = () => {
           customer: customer._id,
           garmentType,
           unit: measurementUnit === 'cm' ? 'cm' : 'inch',
+          ...(customer.gender && { gender: customer.gender }),
+          bodyPart: getGarmentBodyPart(col.garmentName),
         };
         let hasValue = false;
         Object.entries(gridMeas).forEach(([rowKey, value]) => {
@@ -559,7 +596,10 @@ const EnhancedCreateOrder: React.FC = () => {
             fabricSource: p.fabricSource, accessories: p.accessories || [],
             imageUrl: p.imageUrl || '',
             measurementData: hasMeas
-              ? { ...gridMeas, garmentType: mapToGarmentType(p.name), unit: measurementUnit === 'cm' ? 'cm' : 'inch' }
+              ? {
+                  ...gridMeas, garmentType: mapToGarmentType(p.name), unit: measurementUnit === 'cm' ? 'cm' : 'inch',
+                  gender: customer?.gender, bodyPart: getGarmentBodyPart(p.name),
+                }
               : undefined,
             ...(p.fabricSource === 'lounge' && { fabric: p.fabric, fabricUsed: p.fabricUsed }),
             ...(p.fabricSource === 'customer' && { customerFabricDetails: p.customerFabricDetails })
@@ -576,7 +616,10 @@ const EnhancedCreateOrder: React.FC = () => {
               fabricSource: g.fabricSource, accessories: g.accessories || [],
               notes: g.notes || '', imageUrl: g.imageUrl || '',
               measurementData: hasMeas
-                ? { ...gridMeas, garmentType: mapToGarmentType(g.productName), unit: measurementUnit === 'cm' ? 'cm' : 'inch' }
+                ? {
+                    ...gridMeas, garmentType: mapToGarmentType(g.productName), unit: measurementUnit === 'cm' ? 'cm' : 'inch',
+                    gender: customer?.gender, bodyPart: getGarmentBodyPart(g.productName),
+                  }
                 : undefined,
               ...(g.fabricSource === 'lounge' && { fabric: g.fabric, fabricUsed: g.fabricUsed }),
               ...(g.fabricSource === 'customer' && { customerFabricDetails: g.customerFabricDetails })
@@ -586,7 +629,13 @@ const EnhancedCreateOrder: React.FC = () => {
         deliveryDate, trialDate: trialDate || undefined, urgency: priority, notes,
         pointsRedeemed: pointsDiscount,
         creditRedeemed: creditDiscount,
-        payment: { total, advance, method: advanceMethod, reference: advanceReference.trim() || undefined }
+        payment: {
+          total,
+          advance,
+          payments: advanceSplits
+            .filter(s => Number(s.amount) > 0)
+            .map(s => ({ amount: Number(s.amount), method: s.mode, reference: s.reference.trim() || undefined }))
+        }
       };
       const r = await apiService.createOrder(payload);
       if (r.data.success) {
@@ -888,7 +937,7 @@ const EnhancedCreateOrder: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
-                        <input type="number" min="1" value={pickerQty}
+                        <input type="number" min="1" value={pickerQty || ''}
                           onChange={e => setPickerQty(parseInt(e.target.value) || 1)}
                           className="w-full h-9 px-3 border border-gray-300 rounded-md text-sm" />
                       </div>
@@ -979,7 +1028,7 @@ const EnhancedCreateOrder: React.FC = () => {
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-600 mb-1">Quantity</label>
-                          <input type="number" min="1" value={pkg.quantity}
+                          <input type="number" min="1" value={pkg.quantity || ''}
                             onChange={e => updatePackage(pkg.id, 'quantity', parseInt(e.target.value) || 1)}
                             className="w-full h-9 px-3 border border-gray-300 rounded-md text-sm" />
                         </div>
@@ -1133,7 +1182,7 @@ const EnhancedCreateOrder: React.FC = () => {
                             </div>
                             <div>
                               <label className="block text-xs font-semibold text-gray-700 mb-1">Quantity</label>
-                              <input type="number" min="1" value={product.quantity}
+                              <input type="number" min="1" value={product.quantity || ''}
                                 onChange={e => updateProduct(product.id, 'quantity', parseInt(e.target.value) || 1)}
                                 className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
                             </div>
@@ -1235,6 +1284,7 @@ const EnhancedCreateOrder: React.FC = () => {
                 grid={measurementGrid}
                 unit={measurementUnit}
                 customerName={customer?.name || ''}
+                gender={customer?.gender}
                 onGridChange={handleGridChange}
                 onUnitChange={setMeasurementUnit}
                 onLoadProfile={handleLoadProfile}
@@ -1447,51 +1497,63 @@ const EnhancedCreateOrder: React.FC = () => {
                 </div>
 
                 <div className="pt-2">
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Advance Payment (₹)</label>
-                  <input type="number" min="0" value={advance || ''}
-                    onChange={e => setAdvance(parseFloat(e.target.value) || 0)}
-                    placeholder="0.00"
-                    className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Advance Payment</label>
+                  <div className="space-y-2">
+                    {advanceSplits.map((split, i) => (
+                      <div key={split.id} className="border border-gray-200 rounded-lg p-2.5">
+                        {advanceSplits.length > 1 && (
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-semibold text-gray-500">Payment {i + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeAdvanceSplit(split.id)}
+                              className="text-gray-400 hover:text-red-600 text-sm leading-none"
+                              title="Remove this payment"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                        <input type="number" min="0" value={split.amount || ''}
+                          onChange={e => updateAdvanceSplit(split.id, { amount: e.target.value === '' ? '' : parseFloat(e.target.value) || 0 })}
+                          placeholder="Amount (₹)"
+                          className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none mb-1.5" />
+                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                          {PAYMENT_MODES.map(m => (
+                            <button
+                              key={m.value}
+                              type="button"
+                              onClick={() => updateAdvanceSplit(split.id, { mode: m.value })}
+                              className={`px-2.5 py-1 rounded-full text-xs border ${
+                                split.mode === m.value
+                                  ? 'bg-blue-700 text-white border-blue-700 font-semibold'
+                                  : 'bg-white text-gray-700 border-gray-300'
+                              }`}
+                            >
+                              {m.label}
+                            </button>
+                          ))}
+                        </div>
+                        {split.mode !== 'cash' && (
+                          <input type="text" value={split.reference}
+                            onChange={e => updateAdvanceSplit(split.id, { reference: e.target.value })}
+                            placeholder="Transaction ID / Reference"
+                            className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addAdvanceSplit}
+                    className="w-full mt-1.5 px-3 py-1.5 border border-dashed border-blue-300 rounded-lg text-xs font-medium text-blue-700 hover:bg-blue-50"
+                  >
+                    + Add another payment mode
+                  </button>
+                  {advance > 0 && (
+                    <div className="text-xs text-gray-500 text-right mt-1">Total advance: ₹{advance.toFixed(2)}</div>
+                  )}
                 </div>
-
-                {advance > 0 && (
-                  <div className="pt-2">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Payment mode</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[
-                        { value: 'cash', label: 'Cash' },
-                        { value: 'upi', label: 'UPI' },
-                        { value: 'gpay', label: 'GPay' },
-                        { value: 'phonepe', label: 'PhonePe' },
-                        { value: 'bank_transfer', label: 'Bank Transfer' },
-                        { value: 'card', label: 'Card' },
-                      ].map(m => (
-                        <button
-                          key={m.value}
-                          type="button"
-                          onClick={() => setAdvanceMethod(m.value)}
-                          className={`px-2.5 py-1 rounded-full text-xs border ${
-                            advanceMethod === m.value
-                              ? 'bg-blue-700 text-white border-blue-700 font-semibold'
-                              : 'bg-white text-gray-700 border-gray-300'
-                          }`}
-                        >
-                          {m.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {advance > 0 && advanceMethod !== 'cash' && (
-                  <div className="pt-2">
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Transaction ID / Reference</label>
-                    <input type="text" value={advanceReference}
-                      onChange={e => setAdvanceReference(e.target.value)}
-                      placeholder="e.g. UPI ref 123456789"
-                      className="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none" />
-                  </div>
-                )}
 
                 {/* Checklist */}
                 <div className="mt-3 pt-3 border-t space-y-1.5">

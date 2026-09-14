@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import RecordPaymentModal from './RecordPaymentModal';
 import OrderActionsDropdown, { DropdownAction } from './OrderActionsDropdown';
+import OrderStatusPill, { ORDER_STATUS_META, ORDER_STATUS_KEYS } from './OrderStatusPill';
 
 const OrdersNew = () => {
   const navigate = useNavigate();
@@ -30,16 +31,19 @@ const OrdersNew = () => {
     });
   };
 
-  const STATUS_META: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border border-yellow-200' },
-    in_progress: { label: 'In Progress', color: 'bg-purple-100 text-purple-800 border border-purple-200' },
-    trial_pending: { label: 'Trial Pending', color: 'bg-orange-100 text-orange-800 border border-orange-200' },
-    ready: { label: 'Ready', color: 'bg-blue-100 text-blue-800 border border-blue-200' },
-    delivered: { label: 'Delivered', color: 'bg-gray-100 text-gray-800 border border-gray-200' },
-    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border border-red-200' }
-  };
-  const ORDER_STATUSES = Object.keys(STATUS_META);
+  const ORDER_STATUSES = ORDER_STATUS_KEYS;
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [openStatusDropdownId, setOpenStatusDropdownId] = useState<string | null>(null);
+
+  const fetchStatusCounts = async () => {
+    try {
+      const response = await apiService.getOrderStatusCounts();
+      setStatusCounts(response.data?.counts || {});
+    } catch (err) {
+      // Non-critical — pills just render without a count badge.
+    }
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -57,6 +61,10 @@ const OrdersNew = () => {
   useEffect(() => {
     fetchOrders();
   }, [filters]);
+
+  useEffect(() => {
+    fetchStatusCounts();
+  }, []);
 
   const handleSearch = () => {
     setFilters(prev => ({ ...prev, search: searchInput, page: 1 }));
@@ -85,6 +93,11 @@ const OrdersNew = () => {
     const prevStatus = order.status;
     if (newStatus === prevStatus) return;
     setOrders(prev => prev.map(o => (o._id === order._id ? { ...o, status: newStatus } : o)));
+    setStatusCounts(prev => ({
+      ...prev,
+      [prevStatus]: Math.max(0, (prev[prevStatus] || 0) - 1),
+      [newStatus]: (prev[newStatus] || 0) + 1
+    }));
     setStatusUpdatingId(order._id);
     try {
       const response = await apiService.updateOrderStatus(order._id, newStatus);
@@ -93,6 +106,11 @@ const OrdersNew = () => {
       }
     } catch (err: any) {
       setOrders(prev => prev.map(o => (o._id === order._id ? { ...o, status: prevStatus } : o)));
+      setStatusCounts(prev => ({
+        ...prev,
+        [prevStatus]: (prev[prevStatus] || 0) + 1,
+        [newStatus]: Math.max(0, (prev[newStatus] || 0) - 1)
+      }));
       alert(err.response?.data?.message || err.message || 'Failed to update order status');
     } finally {
       setStatusUpdatingId(null);
@@ -224,7 +242,7 @@ const OrdersNew = () => {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {STATUS_META[status].label}
+                  {ORDER_STATUS_META[status].label}
                 </button>
               ))}
             </div>
@@ -290,20 +308,16 @@ const OrdersNew = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={order.status}
+                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <OrderStatusPill
+                        status={order.status}
+                        count={statusCounts[order.status]}
                         disabled={statusUpdatingId === order._id}
-                        onChange={(e) => handleStatusChange(order, e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        className={`text-xs font-semibold rounded-full px-2 py-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 ${
-                          STATUS_META[order.status]?.color || 'bg-gray-100 text-gray-800 border border-gray-200'
-                        }`}
-                      >
-                        {ORDER_STATUSES.map((status) => (
-                          <option key={status} value={status}>{STATUS_META[status].label}</option>
-                        ))}
-                      </select>
+                        isOpen={openStatusDropdownId === order._id}
+                        onOpen={() => setOpenStatusDropdownId(order._id)}
+                        onClose={() => setOpenStatusDropdownId(prev => (prev === order._id ? null : prev))}
+                        onChange={(newStatus) => handleStatusChange(order, newStatus)}
+                      />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(order.payment?.total || 0)}
@@ -369,6 +383,8 @@ const OrdersNew = () => {
         <RecordPaymentModal
           orderId={paymentModalOrder._id}
           orderNumber={paymentModalOrder.orderNumber}
+          customerName={paymentModalOrder.customer?.name}
+          totalAmount={paymentModalOrder.payment?.total}
           currentBalance={paymentModalOrder.payment?.balance || 0}
           onClose={() => setPaymentModalOrder(null)}
           onSaved={(payment: any) => {
