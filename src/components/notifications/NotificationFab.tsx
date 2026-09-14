@@ -18,16 +18,17 @@ interface TypeMeta {
   bg: string;
   tagColor: string;
   label: string;
+  stripColor: string;
 }
 
 const TYPE_META: Record<string, TypeMeta> = {
-  delivery_overdue:  { bucket: 'orders',    emoji: '⏳', bg: '#fef3c7', tagColor: '#92400e', label: 'Order overdue' },
-  payment_pending:   { bucket: 'payments',  emoji: '💰', bg: '#fee2e2', tagColor: '#991b1b', label: 'Payment pending' },
-  birthday_wish:     { bucket: 'reminders', emoji: '🎂', bg: '#fce7f3', tagColor: '#9d174d', label: 'Birthday' },
-  anniversary_wish:  { bucket: 'reminders', emoji: '💍', bg: '#f0fdf4', tagColor: '#065f46', label: 'Anniversary' },
-  trial_reminder:    { bucket: 'orders',    emoji: '📅', bg: '#ede9fe', tagColor: '#5b21b6', label: 'Trial scheduled' },
-  order_ready:       { bucket: 'orders',    emoji: '✅', bg: '#f0fdf4', tagColor: '#15803d', label: 'Order ready' },
-  payment_received:  { bucket: 'payments',  emoji: '💳', bg: '#f0fdf4', tagColor: '#15803d', label: 'Payment received' },
+  delivery_overdue:  { bucket: 'orders',    emoji: '⏳', bg: '#fef3c7', tagColor: '#92400e', label: 'Order overdue',    stripColor: '#f59e0b' },
+  payment_pending:   { bucket: 'payments',  emoji: '💰', bg: '#fee2e2', tagColor: '#991b1b', label: 'Payment pending',  stripColor: '#ef4444' },
+  birthday_wish:     { bucket: 'reminders', emoji: '🎂', bg: '#fce7f3', tagColor: '#9d174d', label: 'Birthday',         stripColor: '#ec4899' },
+  anniversary_wish:  { bucket: 'reminders', emoji: '💍', bg: '#f0fdf4', tagColor: '#065f46', label: 'Anniversary',      stripColor: '#14b8a6' },
+  trial_reminder:    { bucket: 'orders',    emoji: '📅', bg: '#ede9fe', tagColor: '#5b21b6', label: 'Trial scheduled',  stripColor: '#a855f7' },
+  order_ready:       { bucket: 'orders',    emoji: '✅', bg: '#f0fdf4', tagColor: '#15803d', label: 'Order ready',      stripColor: '#22c55e' },
+  payment_received:  { bucket: 'payments',  emoji: '💳', bg: '#f0fdf4', tagColor: '#15803d', label: 'Payment received', stripColor: '#3b82f6' },
 };
 
 const STATUS_OPTIONS = [
@@ -72,8 +73,13 @@ const NotificationFab: React.FC = () => {
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [paymentModalOrder, setPaymentModalOrder] = useState<any>(null);
+  const [toasterNotif, setToasterNotif] = useState<any>(null);
+  const [toasterVisible, setToasterVisible] = useState(false);
+  const [bellShake, setBellShake] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toasterDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toasterScheduleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const unread = counts?.totalUnread || 0;
 
@@ -99,6 +105,55 @@ const NotificationFab: React.FC = () => {
   const relevant = (notifications || []).filter((n: any) => TYPE_META[n.type]);
   const filtered = tab === 'all' ? relevant : relevant.filter((n: any) => TYPE_META[n.type]?.bucket === tab);
 
+  // Latest-value mirror so the self-rescheduling toaster timer (set up once
+  // on mount) always reads current state instead of a stale closure.
+  const latestRef = useRef({ open, toasterNotif, unread, relevant });
+  useEffect(() => {
+    latestRef.current = { open, toasterNotif, unread, relevant };
+  });
+
+  const triggerBellShake = () => {
+    setBellShake(false);
+    // restart the CSS animation even if it's mid-shake from a previous fire
+    requestAnimationFrame(() => setBellShake(true));
+  };
+
+  const dismissToaster = () => {
+    if (toasterDismissTimerRef.current) clearTimeout(toasterDismissTimerRef.current);
+    setToasterVisible(false);
+    setTimeout(() => setToasterNotif(null), 200);
+  };
+
+  const showToaster = () => {
+    const { open: isOpen, toasterNotif: current, unread: unreadNow, relevant: relevantNow } = latestRef.current;
+    if (isOpen || current || unreadNow <= 0) return;
+    const unreadOnes = relevantNow.filter((n: any) => !n.isRead);
+    if (unreadOnes.length === 0) return;
+    const mostRecent = [...unreadOnes].sort(
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
+    setToasterNotif(mostRecent);
+    requestAnimationFrame(() => setToasterVisible(true));
+    triggerBellShake();
+    toasterDismissTimerRef.current = setTimeout(dismissToaster, 6000);
+  };
+
+  // Every 30 seconds, check whether an auto-toaster should fire. Uses a
+  // self-rescheduling setTimeout (not setInterval) so "next toaster" always
+  // counts from the last check, not a fixed wall-clock grid.
+  useEffect(() => {
+    const TOASTER_INTERVAL = 30 * 1000;
+    const tick = () => {
+      showToaster();
+      toasterScheduleTimerRef.current = setTimeout(tick, TOASTER_INTERVAL);
+    };
+    toasterScheduleTimerRef.current = setTimeout(tick, TOASTER_INTERVAL);
+    return () => {
+      if (toasterScheduleTimerRef.current) clearTimeout(toasterScheduleTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const closeAfterNavigate = (path: string) => {
     setTimeout(() => setOpen(false), 300);
     navigate(path);
@@ -111,28 +166,30 @@ const NotificationFab: React.FC = () => {
     else setOpen(false);
   };
 
-  const handleUpdateStatus = async (n: any, status: string) => {
+  const handleUpdateStatus = async (n: any, status: string, onAfter?: () => void) => {
     try {
       await apiService.updateOrderStatus(n.referenceId, status);
       await actions.markAsRead([n._id]);
       setStatusDropdownId(null);
       showToast('Status updated ✓');
+      onAfter?.();
     } catch (err) {
       showToast('Failed to update status');
     }
   };
 
-  const handleConfirmTrial = async (n: any) => {
+  const handleConfirmTrial = async (n: any, onAfter?: () => void) => {
     try {
       await apiService.updateOrderStatus(n.referenceId, 'trial_pending');
       await actions.markAsRead([n._id]);
       showToast('Trial confirmed ✓');
+      onAfter?.();
     } catch (err) {
       showToast('Failed to confirm trial');
     }
   };
 
-  const handleRecordPayment = async (n: any) => {
+  const handleRecordPayment = async (n: any, onAfter?: () => void) => {
     try {
       const res = await apiService.getOrder(n.referenceId);
       const order = res.data?.data;
@@ -144,23 +201,27 @@ const NotificationFab: React.FC = () => {
         payment: order.payment,
         notificationId: n._id,
       });
+      onAfter?.();
     } catch (err) {
       showToast('Failed to open order');
     }
   };
 
-  const handleWhatsApp = (n: any, text: string) => {
+  const handleWhatsApp = (n: any, text: string, onAfter?: () => void) => {
     window.open(waLink(n.customerPhone, text), '_blank');
     if (!n.isRead) actions.markAsRead([n._id]);
+    showToast('WhatsApp opened ✓');
+    onAfter?.();
   };
 
-  const handleViewOrder = (n: any) => {
+  const handleViewOrder = (n: any, onAfter?: () => void) => {
     if (!n.isRead) actions.markAsRead([n._id]);
     setOpen(false);
+    onAfter?.();
     navigate(`/orders/${n.referenceId}`);
   };
 
-  const renderQuickAction = (n: any) => {
+  const renderQuickAction = (n: any, onAfter?: () => void) => {
     const meta = TYPE_META[n.type];
     const baseStyle = (border: string, color: string, bg: string, hoverBg: string): React.CSSProperties & Record<string, any> => ({
       display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5, padding: '3px 10px',
@@ -189,7 +250,7 @@ const NotificationFab: React.FC = () => {
                 {STATUS_OPTIONS.map(opt => (
                   <div
                     key={opt.value}
-                    onClick={() => handleUpdateStatus(n, opt.value)}
+                    onClick={() => handleUpdateStatus(n, opt.value, onAfter)}
                     style={{ padding: '7px 12px', fontSize: 11.5, color: '#374151', cursor: 'pointer' }}
                     onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
@@ -206,7 +267,7 @@ const NotificationFab: React.FC = () => {
           <button
             type="button"
             style={baseStyle('#22c55e', '#15803d', '#f0fdf4', '#dcfce7')}
-            onClick={(e) => { e.stopPropagation(); handleRecordPayment(n); }}
+            onClick={(e) => { e.stopPropagation(); handleRecordPayment(n, onAfter); }}
             onMouseEnter={e => (e.currentTarget.style.background = '#dcfce7')}
             onMouseLeave={e => (e.currentTarget.style.background = '#f0fdf4')}
           >
@@ -220,7 +281,7 @@ const NotificationFab: React.FC = () => {
             style={baseStyle('#ec4899', '#9d174d', '#fdf2f8', '#fce7f3')}
             onClick={(e) => {
               e.stopPropagation();
-              handleWhatsApp(n, `Happy Birthday ${n.customerName || ''}! 🎂 Wishing you a wonderful day. — Da Tog's Designer Lounge`);
+              handleWhatsApp(n, `Happy Birthday ${n.customerName || ''}! 🎂 Wishing you a wonderful day. — Da Tog's Designer Lounge`, onAfter);
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#fce7f3')}
             onMouseLeave={e => (e.currentTarget.style.background = '#fdf2f8')}
@@ -235,7 +296,7 @@ const NotificationFab: React.FC = () => {
             style={baseStyle('#14b8a6', '#065f46', '#f0fdf4', '#ccfbf1')}
             onClick={(e) => {
               e.stopPropagation();
-              handleWhatsApp(n, `Happy Anniversary ${n.customerName || ''}! 💍 Wishing you both a beautiful day. — Da Tog's Designer Lounge`);
+              handleWhatsApp(n, `Happy Anniversary ${n.customerName || ''}! 💍 Wishing you both a beautiful day. — Da Tog's Designer Lounge`, onAfter);
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#ccfbf1')}
             onMouseLeave={e => (e.currentTarget.style.background = '#f0fdf4')}
@@ -248,7 +309,7 @@ const NotificationFab: React.FC = () => {
           <button
             type="button"
             style={baseStyle('#a855f7', '#5b21b6', '#faf5ff', '#ede9fe')}
-            onClick={(e) => { e.stopPropagation(); handleConfirmTrial(n); }}
+            onClick={(e) => { e.stopPropagation(); handleConfirmTrial(n, onAfter); }}
             onMouseEnter={e => (e.currentTarget.style.background = '#ede9fe')}
             onMouseLeave={e => (e.currentTarget.style.background = '#faf5ff')}
           >
@@ -262,7 +323,7 @@ const NotificationFab: React.FC = () => {
             style={baseStyle('#25d366', '#065f46', '#f0fdf4', '#dcfce7')}
             onClick={(e) => {
               e.stopPropagation();
-              handleWhatsApp(n, `Hi ${n.customerName || ''}, your order is ready for pickup! Please visit Da Tog's Designer Lounge at your convenience. 📦`);
+              handleWhatsApp(n, `Hi ${n.customerName || ''}, your order is ready for pickup! Please visit Da Tog's Designer Lounge at your convenience. 📦`, onAfter);
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#dcfce7')}
             onMouseLeave={e => (e.currentTarget.style.background = '#f0fdf4')}
@@ -275,7 +336,7 @@ const NotificationFab: React.FC = () => {
           <button
             type="button"
             style={baseStyle('#3b82f6', '#1e40af', '#eff6ff', '#dbeafe')}
-            onClick={(e) => { e.stopPropagation(); handleViewOrder(n); }}
+            onClick={(e) => { e.stopPropagation(); handleViewOrder(n, onAfter); }}
             onMouseEnter={e => (e.currentTarget.style.background = '#dbeafe')}
             onMouseLeave={e => (e.currentTarget.style.background = '#eff6ff')}
           >
@@ -427,7 +488,13 @@ const NotificationFab: React.FC = () => {
         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.07)')}
         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        <Bell size={22} color="#fff" />
+        <span
+          className={bellShake ? 'notif-bell-shake' : ''}
+          style={{ display: 'flex' }}
+          onAnimationEnd={() => setBellShake(false)}
+        >
+          <Bell size={22} color="#fff" />
+        </span>
         {unread > 0 && (
           <span style={{
             position: 'absolute', top: -2, right: -2, width: 20, height: 20, borderRadius: '50%',
@@ -438,6 +505,54 @@ const NotificationFab: React.FC = () => {
           </span>
         )}
       </button>
+
+      {/* Auto toaster */}
+      {toasterNotif && (() => {
+        const meta = TYPE_META[toasterNotif.type];
+        return (
+          <div
+            style={{
+              position: 'fixed', bottom: 88, right: 24, width: 320, background: '#fff',
+              borderRadius: 14, boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
+              zIndex: 998,
+              transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s',
+              transform: toasterVisible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.94)',
+              opacity: toasterVisible ? 1 : 0,
+            }}
+            className="notif-fab-toaster"
+          >
+            <div style={{ height: 3, width: '100%', background: meta.stripColor, borderRadius: '14px 14px 0 0' }} />
+            <div
+              onClick={() => { dismissToaster(); setOpen(true); }}
+              style={{ padding: '12px 14px', display: 'flex', gap: 10, position: 'relative', cursor: 'pointer' }}
+            >
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); dismissToaster(); }}
+                style={{ position: 'absolute', top: 8, right: 8, width: 20, height: 20, border: 'none', background: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: 13, lineHeight: 1 }}
+              >
+                ✕
+              </button>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>
+                {meta.emoji}
+              </div>
+              <div style={{ minWidth: 0, flex: 1, paddingRight: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#111' }}>{toasterNotif.title}</div>
+                <div style={{ fontSize: 11, color: '#6b7280', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {toasterNotif.message}
+                </div>
+                {renderQuickAction(toasterNotif, dismissToaster)}
+              </div>
+            </div>
+            <div style={{ background: '#fafafa', borderTop: '1px solid #f3f4f6', padding: '6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '0 0 14px 14px' }}>
+              <span style={{ fontSize: 9, color: '#9ca3af' }}>Tap to view all notifications</span>
+              <span style={{ width: 80, height: 2, background: '#e5e7eb', display: 'block' }}>
+                <span key={toasterNotif._id} className="notif-fab-drain" style={{ height: '100%', background: '#c9900a', display: 'block' }} />
+              </span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Toast */}
       {toast && (
@@ -466,6 +581,7 @@ const NotificationFab: React.FC = () => {
               await actions.markAsRead([paymentModalOrder.notificationId]);
               await actions.fetchNotificationCounts();
               setPaymentModalOrder(null);
+              showToast('Payment recorded ✓');
             }}
           />
         </div>
@@ -473,16 +589,28 @@ const NotificationFab: React.FC = () => {
 
       <style>{`
         @keyframes notifFabPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(201,144,10,0.5); }
-          50% { box-shadow: 0 0 0 10px rgba(201,144,10,0); }
+          0%, 100% { box-shadow: 0 4px 16px rgba(201,144,10,0.4), 0 0 0 0 rgba(201,144,10,0.5); }
+          50%       { box-shadow: 0 4px 16px rgba(201,144,10,0.4), 0 0 0 10px rgba(201,144,10,0); }
         }
         .notif-fab-pulse { animation: notifFabPulse 2s infinite; }
+        @keyframes notifBellShake {
+          0%,100% { transform: rotate(0); }
+          15%     { transform: rotate(15deg); }
+          30%     { transform: rotate(-12deg); }
+          45%     { transform: rotate(10deg); }
+          60%     { transform: rotate(-8deg); }
+          75%     { transform: rotate(5deg); }
+        }
+        .notif-bell-shake { animation: notifBellShake 0.6s ease; transform-origin: 50% 20%; }
         .notif-fab-list { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
         @keyframes notifFabToastIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .notif-fab-toast { animation: notifFabToastIn 0.2s ease-out; }
+        @keyframes notifFabDrain { from { width: 100%; } to { width: 0%; } }
+        .notif-fab-drain { width: 100%; animation: notifFabDrain 6s linear forwards; }
         @media (max-width: 640px) {
           .notif-fab-panel { right: 8px !important; left: 8px !important; width: auto !important; bottom: 80px !important; }
           .notif-fab-btn { bottom: 16px !important; right: 16px !important; }
+          .notif-fab-toaster { right: 8px !important; left: 8px !important; width: auto !important; }
         }
       `}</style>
     </div>
