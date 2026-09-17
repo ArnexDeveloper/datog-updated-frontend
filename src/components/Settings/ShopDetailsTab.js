@@ -48,7 +48,7 @@ const ShopDetailsTab = ({ settings, onSaveSettings, loading, isAdmin }) => {
               name="shopName"
               value={formData.shopName}
               onChange={handleChange}
-              placeholder="Elite Designer Lounge"
+              placeholder="Your Shop Name"
               maxLength={100}
               disabled={loading || !isAdmin}
             />
@@ -62,7 +62,7 @@ const ShopDetailsTab = ({ settings, onSaveSettings, loading, isAdmin }) => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="info@elitedesignerlounge.com"
+              placeholder="info@yourshop.com"
               disabled={loading || !isAdmin}
             />
           </div>

@@ -48,10 +48,10 @@ If you want to deploy directly from the frontend folder:
    ```
 
 2. **Push to a new repository** (GitHub/GitLab):
-   - Create a new repository on GitHub called `da-tog-frontend`
+   - Create a new repository on GitHub called `mastertailor-frontend`
    - Push your code:
      ```bash
-     git remote add origin https://github.com/yourusername/da-tog-frontend.git
+     git remote add origin https://github.com/yourusername/mastertailor-frontend.git
      git push -u origin main
      ```
 
@@ -60,7 +60,7 @@ If you want to deploy directly from the frontend folder:
 ## Configuration Details
 
 ### Environment Variables
-- **Production API URL**: `https://da-tog-updated-backend.onrender.com/api`
+- **Production API URL**: `https://your-mastertailor-backend-url.onrender.com/api`
 - **Build settings**: Optimized for production with source maps disabled
 
 ### Files Created/Modified:
@@ -70,8 +70,8 @@ If you want to deploy directly from the frontend folder:
 
 ### API Integration
 The frontend is configured to automatically use your deployed backend:
-- **Backend URL**: `https://da-tog-updated-backend.onrender.com`
-- **Swagger Docs**: `https://da-tog-updated-backend.onrender.com/api-docs`
+- **Backend URL**: `https://your-mastertailor-backend-url.onrender.com`
+- **Swagger Docs**: `https://your-mastertailor-backend-url.onrender.com/api-docs`
 
 ## Testing the Deployment
 
@@ -99,5 +99,5 @@ The production build has been tested and is ready for deployment:
 
 If you encounter any issues:
 - Check the Vercel deployment logs
-- Ensure your backend is running at `https://da-tog-updated-backend.onrender.com`
+- Ensure your backend is running at your MasterTailor backend URL
 - Verify the API endpoints are accessible

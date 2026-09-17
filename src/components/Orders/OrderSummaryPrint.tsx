@@ -99,8 +99,7 @@ const OrderSummaryPrint: React.FC<OrderSummaryPrintProps> = ({ orderData }) => {
               <p className="text-sm font-bold">No. <span className="text-xl ml-2">{orderData.orderNumber}</span></p>
             </div>
             <div className="text-center flex-1">
-              <h1 className="text-4xl font-bold tracking-wider">DA TOG'S</h1>
-              <p className="text-sm tracking-widest">DESIGNER LOUNGE</p>
+              <h1 className="text-2xl font-bold tracking-wider">YOUR SHOP NAME</h1>
             </div>
             <div className="w-20"></div>
           </div>

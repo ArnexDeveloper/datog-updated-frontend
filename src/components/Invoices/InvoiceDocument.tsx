@@ -96,6 +96,10 @@ interface ShopDetails {
   address?: string;
   phone?: string;
   email?: string;
+  gstin?: string;
+  upiId?: string;
+  bankDetailsLabel?: string;
+  bankDetailsValue?: string;
 }
 
 interface InvoiceDocumentProps {
@@ -210,13 +214,12 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
       {/* HEADER */}
       <div style={{ background: COLORS.gold, padding: '13px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div style={{ fontSize: 21, fontWeight: 700, color: '#fff' }}>Da Tog's</div>
-          <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Designer Lounge</div>
+          <div style={{ fontSize: 21, fontWeight: 700, color: '#fff' }}>{shopDetails?.shopName || 'Your Shop Name'}</div>
           <div style={{ fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
-            {shopDetails?.address || 'Bhopal, Madhya Pradesh · India'}
+            {shopDetails?.address || 'Add your address in Settings'}
           </div>
           <div style={{ fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)' }}>
-            {shopDetails?.phone || '+91 82238 31963'} · {shopDetails?.email || 'datog@gmail.com'} · GSTIN: 23XXXXX1234Z1X
+            {[shopDetails?.phone, shopDetails?.email, shopDetails?.gstin ? `GSTIN: ${shopDetails.gstin}` : null].filter(Boolean).join(' · ') || 'Add phone/email/GSTIN in Settings'}
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -323,9 +326,9 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
           <div style={{ background: COLORS.paperWarm, border: `1px solid ${COLORS.paperBorder}`, borderLeft: `3px solid ${COLORS.gold}`, borderRadius: 2, padding: '7px 10px', marginTop: 10 }}>
             <div style={metaLabel}>Payment Methods Accepted</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 4 }}>
-              <PaymentMethod label="UPI ID" value="datog@upi" />
-              <PaymentMethod label="GPay/PhonePe" value={shopDetails?.phone || '+91 82238 31963'} />
-              <PaymentMethod label="Bank (SBI)" value="XXXX XXXX XX21" />
+              <PaymentMethod label="UPI ID" value={shopDetails?.upiId || 'Not configured'} />
+              <PaymentMethod label="GPay/PhonePe" value={shopDetails?.phone || 'Not configured'} />
+              <PaymentMethod label={shopDetails?.bankDetailsLabel || 'Bank'} value={shopDetails?.bankDetailsValue || 'Not configured'} />
               <PaymentMethod label="Cash" value="Accepted in store" />
             </div>
           </div>
@@ -388,7 +391,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
 
       {/* FOOTER */}
       <div style={{ background: COLORS.darkBg, padding: '7px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Da Tog's Designer Lounge</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{shopDetails?.shopName || 'Your Shop Name'}</span>
         <span style={{ fontSize: 9, fontWeight: 600, color: '#888' }}>Computer-generated invoice · No physical stamp required</span>
         <span style={{ fontSize: 9, fontWeight: 600, color: '#777' }}>Page 1 of 1</span>
       </div>

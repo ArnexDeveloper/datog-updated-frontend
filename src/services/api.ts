@@ -2,8 +2,13 @@ import axios from 'axios';
 
 // Determine API base URL based on environment
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? (process.env.REACT_APP_API_URL || 'https://da-tog-updated-backend.onrender.com/api')
+  ? process.env.REACT_APP_API_URL
   : 'http://localhost:5000/api';
+
+if (process.env.NODE_ENV === 'production' && !API_BASE_URL) {
+  // eslint-disable-next-line no-console
+  console.error('REACT_APP_API_URL is not set — API calls will fail. Set it in your production environment.');
+}
 
 // Create axios instance
 const api = axios.create({

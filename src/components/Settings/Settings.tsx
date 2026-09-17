@@ -70,7 +70,7 @@ const Settings = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Manage your Elite Designer Lounge system configuration and preferences
+            Manage your shop's system configuration and preferences
           </p>
           <div className="mt-4 flex items-center text-sm text-gray-500">
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

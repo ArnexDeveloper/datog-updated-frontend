@@ -11,10 +11,11 @@ interface InvoiceActionsProps {
   balanceDue?: number;
   orderNumber?: string;
   customerPhone?: string;
+  shopName?: string;
   onPaymentRecorded?: (payment: any) => void;
 }
 
-const InvoiceActions: React.FC<InvoiceActionsProps> = ({ contentRef, invoiceId, invoiceNumber, subtotal, balanceDue, orderNumber, customerPhone, onPaymentRecorded }) => {
+const InvoiceActions: React.FC<InvoiceActionsProps> = ({ contentRef, invoiceId, invoiceNumber, subtotal, balanceDue, orderNumber, customerPhone, shopName, onPaymentRecorded }) => {
   const [sendStatus, setSendStatus] = useState<{ state: 'idle' | 'sending' | 'success' | 'error'; message?: string }>({ state: 'idle' });
   const [waConnected, setWaConnected] = useState<boolean | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -44,7 +45,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ contentRef, invoiceId, 
   };
 
   const handleWhatsApp = () => {
-    const msg = `Invoice ${invoiceNumber || ''} from Da Tog's Designer Lounge\n` +
+    const msg = `Invoice ${invoiceNumber || ''} from ${shopName || 'Your Shop Name'}\n` +
       `Amount: ₹${Number(subtotal || 0).toLocaleString('en-IN')}\n` +
       `Balance due: ₹${Number(balanceDue || 0).toLocaleString('en-IN')}\n` +
       `Order: ${orderNumber || ''}`;
@@ -54,7 +55,7 @@ const InvoiceActions: React.FC<InvoiceActionsProps> = ({ contentRef, invoiceId, 
   };
 
   const handleEmail = () => {
-    const subject = `Invoice ${invoiceNumber || ''} - Da Tog's Designer Lounge`;
+    const subject = `Invoice ${invoiceNumber || ''} - ${shopName || 'Your Shop Name'}`;
     const body = `Amount: ₹${Number(subtotal || 0).toLocaleString('en-IN')}\nBalance due: ₹${Number(balanceDue || 0).toLocaleString('en-IN')}\nOrder: ${orderNumber || ''}`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
   };
