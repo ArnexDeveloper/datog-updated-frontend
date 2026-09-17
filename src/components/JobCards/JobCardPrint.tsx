@@ -22,7 +22,7 @@ type Lang = 'en' | 'hi';
 
 const T = {
   en: {
-    shopName:     "YOUR SHOP NAME",
+    shopName:     "DA TOG'S DESIGNER LOUNGE",
     jobCard:      '*** JOB CARD ***',
     jobNo:        'Job #',
     garment:      'Garment',
@@ -45,7 +45,7 @@ const T = {
     } as Record<string, string>,
   },
   hi: {
-    shopName:     'आपकी दुकान का नाम',
+    shopName:     'दा टोग्स डिज़ाइनर लाउंज',
     jobCard:      '*** जॉब कार्ड ***',
     jobNo:        'जॉब नं.',
     garment:      'कपड़ा',

@@ -281,7 +281,7 @@ const NotificationFab: React.FC = () => {
             style={baseStyle('#ec4899', '#9d174d', '#fdf2f8', '#fce7f3')}
             onClick={(e) => {
               e.stopPropagation();
-              handleWhatsApp(n, `Happy Birthday ${n.customerName || ''}! 🎂 Wishing you a wonderful day.`, onAfter);
+              handleWhatsApp(n, `Happy Birthday ${n.customerName || ''}! 🎂 Wishing you a wonderful day. — Da Tog's Designer Lounge`, onAfter);
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#fce7f3')}
             onMouseLeave={e => (e.currentTarget.style.background = '#fdf2f8')}
@@ -296,7 +296,7 @@ const NotificationFab: React.FC = () => {
             style={baseStyle('#14b8a6', '#065f46', '#f0fdf4', '#ccfbf1')}
             onClick={(e) => {
               e.stopPropagation();
-              handleWhatsApp(n, `Happy Anniversary ${n.customerName || ''}! 💍 Wishing you both a beautiful day.`, onAfter);
+              handleWhatsApp(n, `Happy Anniversary ${n.customerName || ''}! 💍 Wishing you both a beautiful day. — Da Tog's Designer Lounge`, onAfter);
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#ccfbf1')}
             onMouseLeave={e => (e.currentTarget.style.background = '#f0fdf4')}
@@ -323,7 +323,7 @@ const NotificationFab: React.FC = () => {
             style={baseStyle('#25d366', '#065f46', '#f0fdf4', '#dcfce7')}
             onClick={(e) => {
               e.stopPropagation();
-              handleWhatsApp(n, `Hi ${n.customerName || ''}, your order is ready for pickup! Please visit us at your convenience. 📦`, onAfter);
+              handleWhatsApp(n, `Hi ${n.customerName || ''}, your order is ready for pickup! Please visit Da Tog's Designer Lounge at your convenience. 📦`, onAfter);
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#dcfce7')}
             onMouseLeave={e => (e.currentTarget.style.background = '#f0fdf4')}

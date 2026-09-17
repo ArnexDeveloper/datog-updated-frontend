@@ -102,7 +102,7 @@ const AnalyticsSection: React.FC = () => {
       <div className="analytics-topbar">
         <div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary, #0f172a)' }}>Analytics Dashboard</div>
-          <div style={{ fontSize: 10, color: '#94a3b8' }}>MasterTailor</div>
+          <div style={{ fontSize: 10, color: '#94a3b8' }}>Datog Designer Lounge · Bhopal</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
           <div className="analytics-period-toggle">

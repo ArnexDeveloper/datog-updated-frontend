@@ -222,7 +222,7 @@ const Header = ({ user, onLogout }) => {
       <div className="flex items-center justify-between gap-4" style={{ overflow: 'visible' }}>
         {/* Left: Logo/Title */}
         <div className="flex items-center space-x-4 flex-shrink-0">
-          <h1 className="text-xl font-semibold text-gray-900">MasterTailor</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Datog Designer Lounge</h1>
         </div>
 
         {/* Center: Search */}
@@ -479,7 +479,7 @@ const Header = ({ user, onLogout }) => {
                     </div>
                     <div>
                       <div className="font-medium text-gray-900">{user?.name || 'Admin User'}</div>
-                      <div className="text-sm text-gray-500">{user?.email || 'admin@mastertailor.demo'}</div>
+                      <div className="text-sm text-gray-500">{user?.email || 'admin@designerlounge.com'}</div>
                     </div>
                   </div>
                 </div>
