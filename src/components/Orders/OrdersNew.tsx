@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import RecordPaymentModal from './RecordPaymentModal';
+import GenerateJobCardsModal from './GenerateJobCardsModal';
 import OrderActionsDropdown, { DropdownAction } from './OrderActionsDropdown';
 import OrderStatusPill, { ORDER_STATUS_META, ORDER_STATUS_KEYS } from './OrderStatusPill';
 
@@ -20,6 +21,7 @@ const OrdersNew = () => {
   });
   const [searchInput, setSearchInput] = useState('');
   const [paymentModalOrder, setPaymentModalOrder] = useState<any>(null);
+  const [jobCardsModalOrder, setJobCardsModalOrder] = useState<any>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const clearShortcutFilter = () => {
@@ -117,24 +119,10 @@ const OrdersNew = () => {
     }
   };
 
-  const handleGenerateJobCards = async (orderId: string) => {
-    try {
-      setLoading(true);
-      const response = await apiService.generateJobCardsFromOrder(orderId, {
-        priority: 'medium',
-        notes: 'Generated from order'
-      });
-
-      if (response.data.success) {
-        alert(`${response.data.data.length} job card(s) created successfully!`);
-        // Optionally navigate to job cards view
-        navigate('/job-cards');
-      }
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to generate job cards');
-    } finally {
-      setLoading(false);
-    }
+  const handleJobCardsGenerated = (count: number) => {
+    setJobCardsModalOrder(null);
+    alert(`${count} job card(s) created successfully!`);
+    navigate('/job-cards');
   };
 
   if (loading) {
@@ -330,7 +318,7 @@ const OrdersNew = () => {
                         const actions: DropdownAction[] = [
                           { key: 'view', label: 'View Order', icon: '👁️', onClick: () => navigate(`/orders/${order._id}`) },
                           { key: 'edit', label: 'Edit Order', icon: '✏️', onClick: () => navigate(`/orders/${order._id}/edit`) },
-                          { key: 'jobcards', label: 'Generate Job Cards', icon: '🧵', onClick: () => handleGenerateJobCards(order._id) },
+                          { key: 'jobcards', label: 'Generate Job Cards', icon: '🧵', onClick: () => setJobCardsModalOrder(order) },
                         ];
                         if (order.payment?.balance > 0) {
                           actions.push({ key: 'payment', label: 'Record Payment', icon: '💵', onClick: () => setPaymentModalOrder(order) });
@@ -391,6 +379,15 @@ const OrdersNew = () => {
             setOrders(prev => prev.map(o => o._id === paymentModalOrder._id ? { ...o, payment } : o));
             setPaymentModalOrder(null);
           }}
+        />
+      )}
+
+      {jobCardsModalOrder && (
+        <GenerateJobCardsModal
+          orderId={jobCardsModalOrder._id}
+          orderNumber={jobCardsModalOrder.orderNumber}
+          onClose={() => setJobCardsModalOrder(null)}
+          onGenerated={handleJobCardsGenerated}
         />
       )}
     </div>

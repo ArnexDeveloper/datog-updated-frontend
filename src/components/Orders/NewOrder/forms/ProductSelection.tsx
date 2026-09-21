@@ -506,21 +506,26 @@ export default function ProductSelection({ formData, fabrics = [], onProductsCha
             <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-3">
               🖱️ Select garments to add to this package
             </div>
-            <div className="grid grid-cols-5 gap-2 mb-4">
-              {PRODUCTS.filter(p => p.cat !== 'Accessories').map(p => (
-                <button key={p.id} type="button"
-                  onClick={() => setPickerSelected(prev =>
-                    prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id]
-                  )}
-                  className={`border rounded-lg p-2 text-center cursor-pointer transition-all ${sel.includes(p.id)
-                    ? 'border-green-400 bg-green-50 border-2'
-                    : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'}`}>
-                  <div className="text-xl mb-1">{p.ico}</div>
-                  <div className="text-xs text-gray-600 font-medium leading-tight">{p.name}</div>
-                  {sel.includes(p.id) && <div className="text-xs text-green-700 font-medium mt-1">✓ Added</div>}
-                </button>
-              ))}
-            </div>
+            {(['Bottoms', 'Uppers', 'Westcoats', 'Blazers', 'Accessories'] as const).map(cat => (
+              <div key={cat} className="mb-4">
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{cat}</div>
+                <div className="grid grid-cols-5 gap-2">
+                  {PRODUCTS.filter(p => p.cat === cat).map(p => (
+                    <button key={p.id} type="button"
+                      onClick={() => setPickerSelected(prev =>
+                        prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id]
+                      )}
+                      className={`border rounded-lg p-2 text-center cursor-pointer transition-all ${sel.includes(p.id)
+                        ? 'border-green-400 bg-green-50 border-2'
+                        : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'}`}>
+                      <div className="text-xl mb-1">{p.ico}</div>
+                      <div className="text-xs text-gray-600 font-medium leading-tight">{p.name}</div>
+                      {sel.includes(p.id) && <div className="text-xs text-green-700 font-medium mt-1">✓ Added</div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
             <div className="text-xs font-medium text-gray-500 mb-2">Garments in this package</div>
             <div className="flex flex-wrap gap-2 mb-4 min-h-8 items-center">
               {sel.length === 0

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
+import { getMeasurementFields, GARMENT_TYPE_GROUPS, ALL_GARMENT_TYPE_VALUES, resolveGarmentType } from '../../utils/garmentTypes';
 
 interface MeasurementData {
   _id?: string;
@@ -32,6 +33,7 @@ interface Customer {
   name: string;
   phone: string;
   email: string;
+  gender?: string;
 }
 
 interface Order {
@@ -62,72 +64,6 @@ interface Order {
   };
 }
 
-// Returns measurement fields relevant to a garment type
-const getMeasurementFields = (type: string): { key: string; label: string; placeholder: string }[] => {
-  const t = type.toLowerCase();
-  if (['shirt', 'kurta', 'kurti', 'kamize', 'pathni', 'jubba', 'blouse'].includes(t))
-    return [
-      { key: 'chest', label: 'Chest/Bust', placeholder: '40' },
-      { key: 'waist', label: 'Waist', placeholder: '34' },
-      { key: 'shoulder', label: 'Shoulder', placeholder: '18' },
-      { key: 'armLength', label: 'Sleeve', placeholder: '24' },
-      { key: 'shirtLength', label: 'Length', placeholder: '30' },
-      { key: 'neck', label: 'Neck', placeholder: '16' },
-    ];
-  if (['trousers', 'pant', 'pajamas', 'shalwars', 'dhoti'].includes(t))
-    return [
-      { key: 'waist', label: 'Waist', placeholder: '32' },
-      { key: 'hip', label: 'Hip', placeholder: '38' },
-      { key: 'outseam', label: 'Length', placeholder: '42' },
-      { key: 'inseam', label: 'Inseam', placeholder: '32' },
-      { key: 'thigh', label: 'Thigh', placeholder: '24' },
-    ];
-  if (['blazer', 'jacket', 'west-coat', 'sherwani', 'over-coat', 'trench-coat'].includes(t))
-    return [
-      { key: 'chest', label: 'Chest', placeholder: '42' },
-      { key: 'waist', label: 'Waist', placeholder: '36' },
-      { key: 'shoulder', label: 'Shoulder', placeholder: '19' },
-      { key: 'armLength', label: 'Sleeve', placeholder: '25' },
-      { key: 'shirtLength', label: 'Length', placeholder: '28' },
-    ];
-  if (['gowne', 'one-pec', 'kaftan', 'dress'].includes(t))
-    return [
-      { key: 'bust', label: 'Bust', placeholder: '36' },
-      { key: 'waist', label: 'Waist', placeholder: '28' },
-      { key: 'hip', label: 'Hip', placeholder: '38' },
-      { key: 'shoulder', label: 'Shoulder', placeholder: '16' },
-      { key: 'dressLength', label: 'Dress Length', placeholder: '42' },
-    ];
-  if (['skirts', 'garara', 'sharara', 'skirt'].includes(t))
-    return [
-      { key: 'waist', label: 'Waist', placeholder: '28' },
-      { key: 'hip', label: 'Hip', placeholder: '38' },
-      { key: 'skirtLength', label: 'Length', placeholder: '40' },
-    ];
-  return [
-    { key: 'chest', label: 'Chest/Bust', placeholder: '40' },
-    { key: 'waist', label: 'Waist', placeholder: '34' },
-    { key: 'shoulder', label: 'Shoulder', placeholder: '18' },
-    { key: 'shirtLength', label: 'Length', placeholder: '30' },
-  ];
-};
-
-const VALID_GARMENT_TYPES = [
-  'shirt','pant','suit','blazer','kurta','pajama','sherwani',
-  'lehenga','saree_blouse','dress','skirt','top','jacket',
-  'coat','waistcoat','dhoti','churidar','salwar','dupatta'
-];
-
-const resolveGarmentType = (type: string): string => {
-  const t = type.toLowerCase();
-  if (VALID_GARMENT_TYPES.includes(t)) return t;
-  if (['trousers', 'pajamas', 'shalwars'].includes(t)) return 'pant';
-  if (['kurti', 'kamize', 'pathni', 'jubba'].includes(t)) return 'kurta';
-  if (['west-coat'].includes(t)) return 'waistcoat';
-  if (['gowne', 'one-pec', 'kaftan'].includes(t)) return 'dress';
-  if (['skirts', 'garara', 'sharara'].includes(t)) return 'skirt';
-  return 'other';
-};
 
 const OrderEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -486,7 +422,7 @@ const OrderEdit: React.FC = () => {
 
             <div className="space-y-4">
               {formData.garments.map((garment, index) => {
-                const measFields = getMeasurementFields(garment.type);
+                const measFields = getMeasurementFields(garment.type, order?.customer?.gender);
                 const mData: MeasurementData = garment.measurements || {};
                 const hasSavedMeasurements = !!mData._id;
                 const isExpanded = !!expandedMeasurements[index];
@@ -507,13 +443,21 @@ const OrderEdit: React.FC = () => {
                           <select value={garment.type}
                             onChange={(e) => handleGarmentChange(index, 'type', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-                            <option value="shirt">Shirt</option>
-                            <option value="kurta">Kurta</option>
-                            <option value="trousers">Trousers</option>
-                            <option value="blazer">Blazer</option>
-                            <option value="jacket">Jacket</option>
-                            <option value="west-coat">West Coat</option>
-                            <option value="sherwani">Sherwani</option>
+                            {/* Guards against silently mis-selecting (and on
+                                save, silently overwriting) a garment's real
+                                type whenever it isn't one of the options
+                                below — always keep the actual saved value
+                                selectable even if it's unrecognized. */}
+                            {!ALL_GARMENT_TYPE_VALUES.has(garment.type) && (
+                              <option value={garment.type}>{garment.type} (unrecognized)</option>
+                            )}
+                            {GARMENT_TYPE_GROUPS.map(({ group, options }) => (
+                              <optgroup key={group} label={group}>
+                                {options.map(o => (
+                                  <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
+                              </optgroup>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -580,8 +524,10 @@ const OrderEdit: React.FC = () => {
                         placeholder="Any special notes..." />
                     </div>
 
-                    {/* Measurements section */}
-                    {garment.category !== 'accessory' && (
+                    {/* Measurements section — shown whenever this type has
+                        any measurable spec, garment or accessory alike
+                        (e.g. shoe size, belt waist), not just non-accessories */}
+                    {measFields.length > 0 && (
                       <div className="mt-3 border border-amber-200 rounded-lg overflow-hidden">
                         <button
                           type="button"
@@ -619,7 +565,7 @@ const OrderEdit: React.FC = () => {
                                       onChange={(e) => handleMeasurementChange(index, field.key, e.target.value)}
                                       className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md text-sm focus:ring-amber-500 focus:border-amber-500"
                                     />
-                                    <span className="absolute right-2 top-2 text-xs text-gray-400">in</span>
+                                    <span className="absolute right-2 top-2 text-xs text-gray-400">{field.unit ?? 'in'}</span>
                                   </div>
                                 </div>
                               ))}

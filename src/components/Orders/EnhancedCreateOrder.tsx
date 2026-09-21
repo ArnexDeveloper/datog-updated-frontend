@@ -34,24 +34,69 @@ const PRODUCT_CATEGORIES = {
   }
 };
 
-// Products available for package garments (non-accessories)
+// Products available for package garments. Mirrors PRODUCT_CATEGORIES above
+// item-for-item (including Accessories, per request) — this used to be a
+// much shorter hand-picked subset, which meant the Complete Package picker
+// silently offered far fewer products than the regular product picker did.
 const PACKAGE_GARMENT_OPTIONS = [
+  // Bottoms
   { name: 'Trousers', ico: '👖', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Thigh', 'Inseam', 'Length'], accs: ['Two Pocket', 'One Pocket', 'Belt Loops', 'Side Pocket', 'Back Pocket'] },
   { name: 'Pajamas', ico: '👘', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Length'], accs: ['Elastic Waist', 'Drawstring', 'Side Pocket'] },
   { name: 'Shalwars', ico: '👗', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Length'], accs: ['Elastic Waist', 'Drawstring'] },
+  { name: 'Dhoti', ico: '🧣', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Length'], accs: ['Drawstring'] },
+  { name: 'Arhems', ico: '👗', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Length'], accs: ['Elastic Waist', 'Side Pocket'] },
+  { name: 'Petticoats', ico: '🩱', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Length'], accs: ['Elastic Waist', 'Drawstring'] },
   { name: 'Skirts', ico: '👗', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Length'], accs: ['A-Line', 'Pencil', 'Pleated', 'Side Zip'] },
+  { name: 'Garara', ico: '👗', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Length'], accs: ['Elastic Waist', 'Embroidery'] },
+  { name: 'Sharara', ico: '👗', cat: 'Bottoms', meas: ['Waist', 'Hip', 'Length'], accs: ['Elastic Waist', 'Embroidery'] },
+  // Uppers
   { name: 'Shirt', ico: '👔', cat: 'Uppers', meas: ['Chest', 'Waist', 'Shoulder', 'Length', 'Sleeve'], accs: ['Full Sleeve', 'Half Sleeve', 'Collar Style', 'Button Type', 'Pocket'] },
   { name: 'Kurta and Kurti', ico: '🧥', cat: 'Uppers', meas: ['Chest', 'Waist', 'Shoulder', 'Length', 'Sleeve'], accs: ['Full Sleeve', 'Half Sleeve', 'Collar Style', 'Side Slits'] },
   { name: 'Kamize', ico: '👗', cat: 'Uppers', meas: ['Chest', 'Waist', 'Length', 'Sleeve'], accs: ['Full Sleeve', 'Half Sleeve', 'Collar Style'] },
+  { name: 'Pathni', ico: '👗', cat: 'Uppers', meas: ['Chest', 'Waist', 'Length', 'Sleeve'], accs: ['Full Sleeve', 'Half Sleeve'] },
+  { name: 'Jubba', ico: '🧥', cat: 'Uppers', meas: ['Chest', 'Waist', 'Shoulder', 'Length', 'Sleeve'], accs: ['Full Sleeve', 'Collar Style'] },
   { name: 'Blouse', ico: '👚', cat: 'Uppers', meas: ['Chest', 'Waist', 'Shoulder', 'Length'], accs: ['Sleeveless', 'Short Sleeve', 'Back Design', 'Neckline Style'] },
+  { name: 'Shrags', ico: '🧥', cat: 'Uppers', meas: ['Chest', 'Shoulder', 'Length', 'Sleeve'], accs: ['Open Front', 'Belted'] },
   { name: 'Gown', ico: '👗', cat: 'Uppers', meas: ['Chest', 'Waist', 'Hip', 'Shoulder', 'Length'], accs: ['Sleeveless', 'Embroidery', 'Train'] },
+  { name: 'Kaftan', ico: '🧥', cat: 'Uppers', meas: ['Chest', 'Waist', 'Length', 'Sleeve'], accs: ['Full Sleeve', 'Embroidery', 'Side Slits'] },
+  { name: 'Jacket', ico: '🧥', cat: 'Uppers', meas: ['Chest', 'Waist', 'Shoulder', 'Length', 'Sleeve'], accs: ['Single Breasted', 'Double Breasted', 'Zip Front', 'Button Front'] },
+  { name: 'Froog', ico: '🧥', cat: 'Uppers', meas: ['Chest', 'Waist', 'Shoulder', 'Length'], accs: ['Full Sleeve', 'Collar Style'] },
+  { name: 'One Piece', ico: '👗', cat: 'Uppers', meas: ['Chest', 'Waist', 'Hip', 'Length', 'Sleeve'], accs: ['Sleeveless', 'Short Sleeve', 'Belt'] },
+  // Westcoats & Nehru Jackets
   { name: 'West Coat', ico: '🎩', cat: 'Westcoats', meas: ['Chest', 'Shoulder', 'Length'], accs: ['V-Neck', 'High Neck', 'Button Style'] },
   { name: 'Nehru', ico: '🎩', cat: 'Westcoats', meas: ['Chest', 'Shoulder', 'Length'], accs: ['Pocket', 'Buttons', 'Collar'] },
+  { name: 'Shrug', ico: '🧣', cat: 'Westcoats', meas: ['Chest', 'Shoulder', 'Length'], accs: ['Open Front', 'Belted'] },
+  // Blazers, Sherwani & Jackets
   { name: 'Blazer', ico: '🥼', cat: 'Blazers', meas: ['Chest', 'Shoulder', 'Sleeve', 'Length', 'Neck'], accs: ['One Button', 'Two Button', 'Three Button', 'Peak Lapel', 'Notch Lapel'] },
   { name: 'Jothpuri', ico: '🥼', cat: 'Blazers', meas: ['Chest', 'Shoulder', 'Sleeve', 'Length'], accs: ['One Button', 'Two Button', 'Pocket'] },
   { name: 'Sherwani', ico: '🧣', cat: 'Blazers', meas: ['Chest', 'Shoulder', 'Sleeve', 'Length', 'Neck'], accs: ['High Neck', 'Band Collar', 'Button Style', 'Churidar Bottom'] },
   { name: 'Over Coat', ico: '🧥', cat: 'Blazers', meas: ['Chest', 'Shoulder', 'Sleeve', 'Length'], accs: ['Single Breasted', 'Double Breasted', 'Pocket'] },
+  { name: 'Trench Coats', ico: '🧥', cat: 'Blazers', meas: ['Chest', 'Shoulder', 'Sleeve', 'Length'], accs: ['Double Breasted', 'Belt', 'Pocket'] },
   { name: 'Jackets', ico: '🥼', cat: 'Blazers', meas: ['Chest', 'Shoulder', 'Sleeve', 'Length'], accs: ['Single Breasted', 'Double Breasted', 'Zip Front', 'Button Front'] },
+  // Accessories — most have nothing to measure; footwear needs a size and
+  // belts need a waist, same as the standalone product/measurement flows.
+  { name: 'Dupatta', ico: '🧣', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Shawl', ico: '🧣', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Tuxedo Belt', ico: '🎽', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Shoes/Sleepers/Sandals/Jutis', ico: '👞', cat: 'Accessories', meas: ['Size'], accs: [] },
+  { name: 'Safa', ico: '🎩', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Katar and Knife', ico: '🗡️', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Perfume and Attr', ico: '🌸', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Broches', ico: '💍', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Tie', ico: '👔', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Bow', ico: '🎀', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Muffler', ico: '🧣', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Scook', ico: '🧣', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Watch', ico: '⌚', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Buttons', ico: '🔘', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Cufflings', ico: '💎', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Mala', ico: '📿', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Belts', ico: '🎽', cat: 'Accessories', meas: ['Waist'], accs: [] },
+  { name: 'Wallets/Bags/Clutches/Purses', ico: '👜', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Rings', ico: '💍', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Ear Rings', ico: '💎', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Necklace', ico: '📿', cat: 'Accessories', meas: [], accs: [] },
+  { name: 'Bangles', ico: '🔮', cat: 'Accessories', meas: [], accs: [] },
 ];
 
 const PRODUCT_ACCESSORIES: Record<string, string[]> = {
@@ -253,9 +298,9 @@ const EnhancedCreateOrder: React.FC = () => {
   };
 
   const filteredCustomers = customers.filter(c =>
-    c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    c.phone.includes(customerSearch) ||
-    c.email.toLowerCase().includes(customerSearch.toLowerCase())
+    (c.name || '').toLowerCase().includes(customerSearch.toLowerCase()) ||
+    (c.phone || '').includes(customerSearch) ||
+    (c.email || '').toLowerCase().includes(customerSearch.toLowerCase())
   );
 
   const getAllProducts = () => {
@@ -945,19 +990,26 @@ const EnhancedCreateOrder: React.FC = () => {
                     {/* Garment picker grid */}
                     <div className="p-4">
                       <p className="text-xs font-medium text-gray-500 mb-3">🖱️ Select garments to add to this package</p>
-                      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 mb-4 max-h-60 overflow-y-auto">
-                        {PACKAGE_GARMENT_OPTIONS.map(p => {
-                          const sel = pickerSelected.includes(p.name);
-                          return (
-                            <button key={p.name} type="button"
-                              onClick={() => setPickerSelected(prev => sel ? prev.filter(x => x !== p.name) : [...prev, p.name])}
-                              className={`border rounded-lg p-2 text-center cursor-pointer transition-all ${sel ? 'border-green-400 bg-green-50 border-2' : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'}`}>
-                              <div className="text-xl mb-1">{p.ico}</div>
-                              <div className="text-xs text-gray-700 font-medium leading-tight">{p.name}</div>
-                              {sel && <div className="text-xs text-green-700 font-medium mt-1">✓</div>}
-                            </button>
-                          );
-                        })}
+                      <div className="mb-4 max-h-72 overflow-y-auto pr-1">
+                        {(['Bottoms', 'Uppers', 'Westcoats', 'Blazers', 'Accessories'] as const).map(cat => (
+                          <div key={cat} className="mb-3">
+                            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{cat}</div>
+                            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                              {PACKAGE_GARMENT_OPTIONS.filter(p => p.cat === cat).map(p => {
+                                const sel = pickerSelected.includes(p.name);
+                                return (
+                                  <button key={p.name} type="button"
+                                    onClick={() => setPickerSelected(prev => sel ? prev.filter(x => x !== p.name) : [...prev, p.name])}
+                                    className={`border rounded-lg p-2 text-center cursor-pointer transition-all ${sel ? 'border-green-400 bg-green-50 border-2' : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'}`}>
+                                    <div className="text-xl mb-1">{p.ico}</div>
+                                    <div className="text-xs text-gray-700 font-medium leading-tight">{p.name}</div>
+                                    {sel && <div className="text-xs text-green-700 font-medium mt-1">✓</div>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                       {/* Selected chips */}
                       <p className="text-xs font-medium text-gray-500 mb-2">Garments in this package</p>
