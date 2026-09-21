@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import OrderSummaryPrint from './OrderSummaryPrint';
-import JobCardPrint from '../JobCards/JobCardPrint';
+import { JobCardPrintPanel } from '../JobCards/PrintableJobCard';
 
 interface Order {
   _id: string;
@@ -103,14 +103,18 @@ const OrderDocuments: React.FC = () => {
 
   // Transform data for Job Card (for selected garment)
   const selectedGarment = order.garments?.[selectedGarmentIndex];
-  const jobCardData = {
-    serialNumber: `${order.orderNumber || 'N/A'}-${selectedGarmentIndex + 1}`,
-    garmentTypes: [selectedGarment?.name || 'N/A', selectedGarment?.type || 'N/A'],
-    bookingDate: order.orderDate || new Date().toISOString(),
-    deliveryDate: order.deliveryDate || new Date().toISOString(),
-    measurements: selectedGarment?.measurements || {},
-    description: selectedGarment?.specialInstructions || '',
-    accessories: selectedGarment?.accessories
+  const job = {
+    jobNumber: `${selectedGarmentIndex + 1}`,
+    order: { orderNumber: order.orderNumber },
+    garment: {
+      name: selectedGarment?.name || 'N/A',
+      type: selectedGarment?.type || 'N/A',
+      quantity: selectedGarment?.quantity,
+      fit: selectedGarment?.fit,
+      accessories: selectedGarment?.accessories,
+      specialInstructions: selectedGarment?.specialInstructions || '',
+      measurements: selectedGarment?.measurements || {},
+    },
   };
 
   return (
@@ -176,7 +180,7 @@ const OrderDocuments: React.FC = () => {
         )}
 
         <div className="bg-gray-50 p-4 rounded-lg">
-          <JobCardPrint jobCardData={jobCardData} />
+          <JobCardPrintPanel job={job} />
         </div>
 
         {order.garments && order.garments.length > 1 && (
@@ -204,18 +208,6 @@ const OrderDocuments: React.FC = () => {
         >
           Print Order Summary
         </button>
-        <button
-          onClick={() => {
-            const jobCardEl = document.querySelector('.job-card-print');
-            if (jobCardEl) {
-              // Trigger print for job card
-              window.print();
-            }
-          }}
-          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-        >
-          Print Current Job Card
-        </button>
       </div>
 
       {/* Instructions */}
@@ -223,8 +215,8 @@ const OrderDocuments: React.FC = () => {
         <h3 className="font-semibold mb-2">Printing Instructions:</h3>
         <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
           <li><strong>Order Summary:</strong> Use A4 paper (portrait orientation) for store tracking</li>
-          <li><strong>Job Card:</strong> Use A5 paper (landscape orientation) for production floor</li>
-          <li>Each garment in the order gets its own separate job card</li>
+          <li><strong>Job Card:</strong> Use the 🖨 Print Job Card button above the card for production floor</li>
+          <li>Each garment in the order gets its own separate job card — use the dropdown to switch</li>
           <li>Print multiple copies of job cards if needed for different production stages</li>
         </ul>
       </div>

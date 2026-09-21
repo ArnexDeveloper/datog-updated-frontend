@@ -9,7 +9,7 @@ const COLORS = {
   cuttingBorder: '#c0b8b0',
   cuttingLine: '#ece6de',
   cuttingHead: '#f5f0e8',
-  cuttingLabel: '#7a6b54',
+  cuttingLabel: '#5c4e38',
   statusPartial: { bg: '#fffbeb', text: '#92400e', border: '#f59e0b' },
   statusPaid: { bg: '#f0fdf4', text: '#15803d', border: '#22c55e' },
   statusUnpaid: { bg: '#fff1f2', text: '#dc2626', border: '#fca5a5' },
@@ -211,20 +211,20 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
       <div style={{ background: COLORS.gold, padding: '13px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ fontSize: 21, fontWeight: 700, color: '#fff' }}>Da Tog's</div>
-          <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Designer Lounge</div>
-          <div style={{ fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: '#000' }}>Designer Lounge</div>
+          <div style={{ fontSize: 9.5, fontWeight: 700, color: '#000', marginTop: 4 }}>
             {shopDetails?.address || 'Bhopal, Madhya Pradesh · India'}
           </div>
-          <div style={{ fontSize: 9.5, fontWeight: 600, color: 'rgba(255,255,255,0.65)' }}>
+          <div style={{ fontSize: 9.5, fontWeight: 700, color: '#000' }}>
             {shopDetails?.phone || '+91 82238 31963'} · {shopDetails?.email || 'datog@gmail.com'} · GSTIN: 23XXXXX1234Z1X
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.7)' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#000' }}>
             Tax Invoice
           </div>
           <div style={{ fontSize: 19, fontWeight: 700, color: '#fff' }}>#{invoice.invoiceNumber || '—'}</div>
-          <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#000' }}>
             {isCustom ? 'Custom Invoice' : `Order: ${order.orderNumber || '—'}`}
           </div>
           <span style={{
@@ -264,7 +264,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
         {/* LEFT COLUMN */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <SectionTitle title="Order Items" />
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5, fontWeight: 500 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11.5, fontWeight: 500 }}>
             <thead>
               <tr style={{ background: COLORS.paperWarm, borderTop: `2px solid ${COLORS.gold}`, borderBottom: '1px solid #e0d8cc' }}>
                 <th style={{ ...th, width: '36%', textAlign: 'left' }}>Item</th>
@@ -296,7 +296,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
                       </div>
                     ) : null}
                   </td>
-                  <td style={{ ...td, textAlign: 'left', color: '#666', fontSize: 9.5, fontWeight: 600 }}>
+                  <td style={{ ...td, textAlign: 'left', color: '#3a3a3a', fontSize: 10.5, fontWeight: 600 }}>
                     <div>{row.fabric}</div>
                     <div>{row.fabricSource}{row.fit ? ` · ${row.fit}` : ''}</div>
                     {row.details && <div>{row.details}</div>}
@@ -337,7 +337,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
               <div style={{ width: 100, height: 1, background: '#aaa' }} />
               <div style={sigLabel}>Customer Signature</div>
             </div>
-            <div style={{ maxWidth: 160, textAlign: 'center', fontSize: 9, fontWeight: 600, color: '#777' }}>
+            <div style={{ maxWidth: 160, textAlign: 'center', fontSize: 10, fontWeight: 600, color: '#444' }}>
               Alterations free within 7 days of delivery. All garments subject to final fitting.
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -359,7 +359,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: COLORS.cuttingHead, borderBottom: `1px solid #c8bfb0` }}>
               {['Piece', 'Length', 'Width'].map((h, i) => (
                 <div key={h} style={{
-                  fontSize: 8, fontWeight: 700, color: COLORS.cuttingLabel, textTransform: 'uppercase',
+                  fontSize: 9, fontWeight: 700, color: COLORS.cuttingLabel, textTransform: 'uppercase',
                   textAlign: 'center', padding: '4px 0', borderRight: i < 2 ? '1px solid #c8bfb0' : 'none'
                 }}>
                   {h}
@@ -377,7 +377,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
               </div>
             ))}
             <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr', borderTop: '1px solid #c8bfb0' }}>
-              <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', color: COLORS.cuttingLabel, background: COLORS.cuttingHead, borderRight: '1px solid #c8bfb0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: COLORS.cuttingLabel, background: COLORS.cuttingHead, borderRight: '1px solid #c8bfb0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 Notes
               </div>
               <div style={{ minHeight: 28, background: '#fff' }} />
@@ -407,14 +407,14 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
 
 const SectionTitle: React.FC<{ title: string }> = ({ title }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-    <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: '#8a7a5f', whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>{title}</span>
+    <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: '#6b5d42', whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>{title}</span>
     <span style={{ flex: 1, height: 1, background: '#e8e0d0' }} />
   </div>
 );
 
 const SummaryRow: React.FC<{ label: string; value: string; valueColor?: string; labelColor?: string }> = ({ label, value, valueColor, labelColor }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 7px', fontSize: 11, fontWeight: 600 }}>
-    <span style={{ color: labelColor || '#444' }}>{label}</span>
+  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 7px', fontSize: 12, fontWeight: 600 }}>
+    <span style={{ color: labelColor || '#222' }}>{label}</span>
     <span style={{ color: valueColor || '#1a1a1a', fontWeight: 700 }}>{value}</span>
   </div>
 );
@@ -422,16 +422,16 @@ const SummaryRow: React.FC<{ label: string; value: string; valueColor?: string; 
 const PaymentMethod: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div>
     <div style={metaLabel}>{label}</div>
-    <div style={{ fontSize: 10.5, fontWeight: 700, color: '#1a1a1a' }}>{value}</div>
+    <div style={{ fontSize: 11.5, fontWeight: 700, color: '#1a1a1a' }}>{value}</div>
   </div>
 );
 
-const metaLabel: React.CSSProperties = { fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: '#8a7a5f', letterSpacing: '0.05em' };
-const metaValue: React.CSSProperties = { fontSize: 12, fontWeight: 700, color: '#1a1a1a' };
-const metaSub: React.CSSProperties = { fontSize: 9.5, fontWeight: 600, color: '#666' };
-const sigLabel: React.CSSProperties = { fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: '#8a7a5f', letterSpacing: '0.07em', marginTop: 4 };
-const th: React.CSSProperties = { fontSize: 8.5, textTransform: 'uppercase', color: '#8a7a5f', padding: '5px 7px', fontWeight: 700 };
-const td: React.CSSProperties = { padding: '6px 7px', verticalAlign: 'top' };
-const tag: React.CSSProperties = { fontSize: 8, fontWeight: 700, background: '#f0ece6', border: '1px solid #e0d8cc', borderRadius: 3, padding: '1px 5px', color: '#555' };
+const metaLabel: React.CSSProperties = { fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: '#6b5d42', letterSpacing: '0.05em' };
+const metaValue: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: '#1a1a1a' };
+const metaSub: React.CSSProperties = { fontSize: 10.5, fontWeight: 600, color: '#3a3a3a' };
+const sigLabel: React.CSSProperties = { fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: '#6b5d42', letterSpacing: '0.07em', marginTop: 4 };
+const th: React.CSSProperties = { fontSize: 9.5, textTransform: 'uppercase', color: '#6b5d42', padding: '5px 7px', fontWeight: 700 };
+const td: React.CSSProperties = { padding: '6px 7px', verticalAlign: 'top', color: '#1a1a1a' };
+const tag: React.CSSProperties = { fontSize: 9, fontWeight: 700, background: '#f0ece6', border: '1px solid #e0d8cc', borderRadius: 3, padding: '1px 5px', color: '#333' };
 
 export default InvoiceDocument;

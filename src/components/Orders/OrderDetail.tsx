@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
-import JobCardPrint from '../JobCards/JobCardPrint';
+import { JobCardPrintPanel } from '../JobCards/PrintableJobCard';
 import RecordPaymentModal from './RecordPaymentModal';
 import { getOrderedFields } from './MeasurementGrid';
 
@@ -261,19 +261,19 @@ const OrderDetail: React.FC = () => {
   // order.garments at all, so that alone was leaving "Print Job Card" with
   // nothing to show.
   const printableGarments: Array<{
-    name: string; type: string; fit?: string;
+    name: string; type: string; fit?: string; quantity?: number;
     specialInstructions?: string; notes?: string;
     measurements?: Record<string, any>; fromPackage?: boolean;
     accessories?: string[];
   }> = [
     ...order.garments.map(g => ({
-      name: g.name, type: g.type, fit: g.fit,
+      name: g.name, type: g.type, fit: g.fit, quantity: g.quantity,
       specialInstructions: g.specialInstructions, measurements: g.measurements,
       accessories: g.accessories,
     })),
     ...(order.packages || []).flatMap(pkg =>
       pkg.garments.map(g => ({
-        name: g.name, type: g.type, notes: g.notes,
+        name: g.name, type: g.type, notes: g.notes, quantity: pkg.quantity,
         measurements: g.measurements, fromPackage: true,
         accessories: g.accessories,
       }))
@@ -795,19 +795,22 @@ const OrderDetail: React.FC = () => {
               {(() => {
                 const g = printableGarments[selectedGarmentIndex];
                 if (!g) return <p className="text-sm text-gray-500">No garment found.</p>;
-                const jobCardData = {
-                  serialNumber: `${order.orderNumber}-${selectedGarmentIndex + 1}`,
-                  garmentTypes: [g.name, g.type],
-                  bookingDate: order.orderDate,
-                  deliveryDate: order.deliveryDate,
-                  trialDate: order.trialDate,
-                  measurements: g.measurements || {},
-                  description: g.specialInstructions || g.notes || '',
-                  fit: g.fit,
-                  accessories: g.accessories,
-                  tailor: order.assignedTo?.name,
+                const job = {
+                  jobNumber: `${selectedGarmentIndex + 1}`,
+                  order: { orderNumber: order.orderNumber },
+                  garment: {
+                    name: g.name,
+                    type: g.type,
+                    quantity: g.quantity,
+                    fit: g.fit,
+                    accessories: g.accessories,
+                    specialInstructions: g.specialInstructions,
+                    measurements: g.measurements || {},
+                  },
+                  assignedTo: order.assignedTo ? { name: order.assignedTo.name } : undefined,
+                  notes: g.notes,
                 };
-                return <JobCardPrint jobCardData={jobCardData} />;
+                return <JobCardPrintPanel job={job} />;
               })()}
             </div>
           </div>
