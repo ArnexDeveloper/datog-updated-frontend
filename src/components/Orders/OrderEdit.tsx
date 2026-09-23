@@ -36,6 +36,28 @@ interface Customer {
   gender?: string;
 }
 
+interface PackageGarment {
+  _id?: string;
+  type: string;
+  name: string;
+  fabricSource?: string;
+  fabric?: any;
+  fabricName?: string;
+  fabricUsed?: number;
+  accessories?: string[];
+  measurements?: MeasurementData;
+  notes?: string;
+  status?: string;
+}
+
+interface OrderPackage {
+  _id?: string;
+  packageId?: string;
+  packagePrice: number;
+  quantity: number;
+  garments: PackageGarment[];
+}
+
 interface Order {
   _id: string;
   orderNumber: string;
@@ -54,6 +76,7 @@ interface Order {
     imageUrl?: string;
     measurements?: MeasurementData;
   }>;
+  packages?: OrderPackage[];
   deliveryDate: string;
   urgency: string;
   status: string;
@@ -74,6 +97,7 @@ const OrderEdit: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [expandedMeasurements, setExpandedMeasurements] = useState<{ [key: number]: boolean }>({});
+  const [expandedPackageMeasurements, setExpandedPackageMeasurements] = useState<{ [key: string]: boolean }>({});
 
   const [formData, setFormData] = useState({
     status: '',
@@ -81,7 +105,8 @@ const OrderEdit: React.FC = () => {
     deliveryDate: '',
     notes: '',
     advance: 0,
-    garments: [] as any[]
+    garments: [] as any[],
+    packages: [] as any[]
   });
 
   useEffect(() => {
@@ -107,6 +132,15 @@ const OrderEdit: React.FC = () => {
           measurements: typeof g.measurements === 'object' && g.measurements !== null
             ? { ...g.measurements }
             : undefined
+        })),
+        packages: (orderData.packages || []).map((pkg: any) => ({
+          ...pkg,
+          garments: (pkg.garments || []).map((g: any) => ({
+            ...g,
+            measurements: typeof g.measurements === 'object' && g.measurements !== null
+              ? { ...g.measurements }
+              : undefined
+          }))
         }))
       });
     } catch (err: any) {
@@ -154,6 +188,58 @@ const OrderEdit: React.FC = () => {
     setExpandedMeasurements(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
+  const handlePackageChange = (pkgIndex: number, field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.map((pkg, i) =>
+        i === pkgIndex ? { ...pkg, [field]: value } : pkg
+      )
+    }));
+  };
+
+  const handlePackageGarmentChange = (pkgIndex: number, garmentIndex: number, field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.map((pkg, i) => {
+        if (i !== pkgIndex) return pkg;
+        return {
+          ...pkg,
+          garments: pkg.garments.map((g: any, gi: number) =>
+            gi === garmentIndex ? { ...g, [field]: value } : g
+          )
+        };
+      })
+    }));
+  };
+
+  const handlePackageMeasurementChange = (pkgIndex: number, garmentIndex: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      packages: prev.packages.map((pkg, i) => {
+        if (i !== pkgIndex) return pkg;
+        return {
+          ...pkg,
+          garments: pkg.garments.map((g: any, gi: number) => {
+            if (gi !== garmentIndex) return g;
+            const existing = g.measurements || {};
+            return {
+              ...g,
+              measurements: {
+                ...existing,
+                [field]: value === '' ? undefined : parseFloat(value)
+              }
+            };
+          })
+        };
+      })
+    }));
+  };
+
+  const togglePackageMeasurements = (pkgIndex: number, garmentIndex: number) => {
+    const key = `${pkgIndex}-${garmentIndex}`;
+    setExpandedPackageMeasurements(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!order) return;
@@ -163,49 +249,64 @@ const OrderEdit: React.FC = () => {
     setSuccess('');
 
     try {
-      // Save/update measurements for each garment first
+      // Saves/creates the Measurement doc backing a single garment (standalone
+      // or inside a package) and returns the garment with a resolved
+      // measurements reference — shared so both edit sections stay in sync.
+      const saveGarmentMeasurements = async (g: any) => {
+        const mData: MeasurementData = g.measurements || {};
+        const measurementId: string | undefined = mData._id;
+
+        // Pull out all numeric measurement values (skip _id, notes if empty)
+        const numericFields: Record<string, number> = {};
+        const SKIP = ['_id', 'customer', 'order', 'garmentType', 'unit', 'takenBy', 'isActive', 'version', 'createdAt', 'updatedAt', '__v', 'customMeasurements'];
+        for (const [k, v] of Object.entries(mData)) {
+          if (SKIP.includes(k)) continue;
+          if (k === 'notes') continue;
+          const num = parseFloat(v as string);
+          if (!isNaN(num) && num > 0) numericFields[k] = num;
+        }
+
+        const hasValues = Object.keys(numericFields).length > 0;
+
+        if (!hasValues) {
+          // No measurement data — keep existing reference or skip
+          return { ...g, measurements: measurementId || undefined };
+        }
+
+        if (measurementId) {
+          // Update existing measurement document
+          const payload = { ...numericFields, notes: mData.notes || undefined };
+          await apiService.updateMeasurement(measurementId, payload);
+          return { ...g, measurements: measurementId };
+        } else {
+          // Create new measurement document
+          const resolvedType = resolveGarmentType(g.type);
+          const payload = {
+            customer: order.customer._id,
+            garmentType: resolvedType,
+            unit: 'inch',
+            ...numericFields,
+            notes: mData.notes || undefined
+          };
+          const res = await apiService.createMeasurement(payload);
+          const newId = res.data?.data?._id;
+          return { ...g, measurements: newId || undefined };
+        }
+      };
+
+      // Save/update measurements for each standalone garment first
       const garmentsWithUpdatedMeasurements = await Promise.all(
-        formData.garments.map(async (g) => {
-          const mData: MeasurementData = g.measurements || {};
-          const measurementId: string | undefined = mData._id;
+        formData.garments.map(saveGarmentMeasurements)
+      );
 
-          // Pull out all numeric measurement values (skip _id, notes if empty)
-          const numericFields: Record<string, number> = {};
-          const SKIP = ['_id', 'customer', 'order', 'garmentType', 'unit', 'takenBy', 'isActive', 'version', 'createdAt', 'updatedAt', '__v', 'customMeasurements'];
-          for (const [k, v] of Object.entries(mData)) {
-            if (SKIP.includes(k)) continue;
-            if (k === 'notes') continue;
-            const num = parseFloat(v as string);
-            if (!isNaN(num) && num > 0) numericFields[k] = num;
-          }
-
-          const hasValues = Object.keys(numericFields).length > 0;
-
-          if (!hasValues) {
-            // No measurement data — keep existing reference or skip
-            return { ...g, measurements: measurementId || undefined };
-          }
-
-          if (measurementId) {
-            // Update existing measurement document
-            const payload = { ...numericFields, notes: mData.notes || undefined };
-            await apiService.updateMeasurement(measurementId, payload);
-            return { ...g, measurements: measurementId };
-          } else {
-            // Create new measurement document
-            const resolvedType = resolveGarmentType(g.type);
-            const payload = {
-              customer: order.customer._id,
-              garmentType: resolvedType,
-              unit: 'inch',
-              ...numericFields,
-              notes: mData.notes || undefined
-            };
-            const res = await apiService.createMeasurement(payload);
-            const newId = res.data?.data?._id;
-            return { ...g, measurements: newId || undefined };
-          }
-        })
+      // ...and for every garment inside a Complete Package — package orders
+      // have no entries in formData.garments at all, so without this their
+      // measurements/notes edits were silently dropped on save.
+      const packagesWithUpdatedMeasurements = await Promise.all(
+        formData.packages.map(async (pkg) => ({
+          ...pkg,
+          garments: await Promise.all((pkg.garments || []).map(saveGarmentMeasurements))
+        }))
       );
 
       const updateData = {
@@ -217,6 +318,7 @@ const OrderEdit: React.FC = () => {
           ...order.payment,
           advance: formData.advance,
           total: garmentsWithUpdatedMeasurements.reduce((sum, g) => sum + (g.price * g.quantity), 0)
+            + packagesWithUpdatedMeasurements.reduce((sum, p) => sum + (p.packagePrice * p.quantity), 0)
         },
         customer: order.customer._id,
         garments: garmentsWithUpdatedMeasurements.map(g => ({
@@ -231,6 +333,25 @@ const OrderEdit: React.FC = () => {
           style: g.style || '',
           imageUrl: g.imageUrl || '',
           measurements: g.measurements || undefined
+        })),
+        packages: packagesWithUpdatedMeasurements.map(pkg => ({
+          packageId: pkg.packageId,
+          packagePrice: pkg.packagePrice,
+          quantity: pkg.quantity,
+          garments: pkg.garments.map((g: any) => ({
+            type: g.type,
+            name: g.name,
+            fabricSource: g.fabricSource,
+            fabric: g.fabric?._id || g.fabric || undefined,
+            fabricName: g.fabricName || '',
+            fabricUsed: g.fabricUsed,
+            customerFabricDetails: g.customerFabricDetails,
+            accessories: g.accessories || [],
+            notes: g.notes || '',
+            imageUrl: g.imageUrl || '',
+            status: g.status,
+            measurements: g.measurements || undefined
+          }))
         }))
       };
 
@@ -593,7 +714,7 @@ const OrderEdit: React.FC = () => {
                 );
               })}
 
-              {formData.garments.length === 0 && (
+              {formData.garments.length === 0 && formData.packages.length === 0 && (
                 <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
                   <p className="text-gray-500">No products added. Click "Add Product" to add items to this order.</p>
                 </div>
@@ -601,10 +722,147 @@ const OrderEdit: React.FC = () => {
 
               <div className="flex justify-between items-center p-4 bg-blue-50 rounded font-semibold text-lg">
                 <span>Total:</span>
-                <span>{formatCurrency(formData.garments.reduce((sum, g) => sum + (g.price * g.quantity), 0))}</span>
+                <span>
+                  {formatCurrency(
+                    formData.garments.reduce((sum, g) => sum + (g.price * g.quantity), 0)
+                    + formData.packages.reduce((sum, p) => sum + (p.packagePrice * p.quantity), 0)
+                  )}
+                </span>
               </div>
             </div>
           </div>
+
+          {/* Complete Packages — a package-only order has no entries in
+              formData.garments at all, so without this section it had no
+              editing fields whatsoever. */}
+          {formData.packages.length > 0 && (
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Complete Packages</h3>
+              <div className="space-y-4">
+                {formData.packages.map((pkg, pkgIndex) => (
+                  <div key={pkg._id || pkgIndex} className="rounded-lg border-2 overflow-hidden" style={{ borderColor: '#f59e0b' }}>
+                    <div className="flex justify-between items-center px-4 py-3" style={{ background: '#fffbeb' }}>
+                      <div className="flex items-center gap-2">
+                        <span>📦</span>
+                        <span className="font-semibold text-sm" style={{ color: '#92400e' }}>
+                          {pkg.garments.map((g: any) => g.name).join(' + ')}
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ background: '#f59e0b', color: '#1a0f00' }}>
+                          COMPLETE PACKAGE
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="px-4 py-3 bg-white grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
+                        <input type="number" value={pkg.quantity || ''}
+                          onChange={(e) => handlePackageChange(pkgIndex, 'quantity', parseInt(e.target.value) || 1)}
+                          min="1" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Package Price (₹)</label>
+                        <input type="number" value={pkg.packagePrice || ''}
+                          onChange={(e) => handlePackageChange(pkgIndex, 'packagePrice', parseFloat(e.target.value) || 0)}
+                          min="0" step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Subtotal</label>
+                        <input type="text" readOnly value={formatCurrency((pkg.quantity || 0) * (pkg.packagePrice || 0))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-50" />
+                      </div>
+                    </div>
+
+                    <div className="divide-y divide-amber-100">
+                      {pkg.garments.map((g: any, gi: number) => {
+                        const measFields = getMeasurementFields(g.type, order?.customer?.gender);
+                        const mData: MeasurementData = g.measurements || {};
+                        const hasSavedMeasurements = !!mData._id;
+                        const key = `${pkgIndex}-${gi}`;
+                        const isExpanded = !!expandedPackageMeasurements[key];
+
+                        return (
+                          <div key={g._id || gi} className="px-4 py-3 bg-white">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-xs font-bold text-amber-700 bg-amber-100 rounded px-1.5 py-0.5">{gi + 1}</span>
+                              <span className="font-medium text-sm text-gray-900">{g.name}</span>
+                              <span className="text-xs text-gray-500 capitalize">{g.type}</span>
+                            </div>
+
+                            <div className="mb-2">
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+                              <input type="text" value={g.notes || ''}
+                                onChange={(e) => handlePackageGarmentChange(pkgIndex, gi, 'notes', e.target.value)}
+                                placeholder="Any special notes..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
+                            </div>
+
+                            {measFields.length > 0 && (
+                              <div className="border border-amber-200 rounded-lg overflow-hidden">
+                                <button
+                                  type="button"
+                                  onClick={() => togglePackageMeasurements(pkgIndex, gi)}
+                                  className="w-full flex justify-between items-center px-4 py-2.5 bg-amber-50 hover:bg-amber-100 transition-colors text-left"
+                                >
+                                  <span className="text-sm font-medium text-amber-800 flex items-center gap-2">
+                                    📏 Measurements
+                                    {hasSavedMeasurements && (
+                                      <span className="text-xs px-2 py-0.5 bg-amber-200 text-amber-800 rounded-full">Saved</span>
+                                    )}
+                                  </span>
+                                  <svg
+                                    className={`w-4 h-4 text-amber-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                </button>
+
+                                {isExpanded && (
+                                  <div className="p-4 bg-white">
+                                    <p className="text-xs text-gray-500 mb-3">All measurements in inches</p>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                      {measFields.map(field => (
+                                        <div key={field.key}>
+                                          <label className="block text-xs font-medium text-gray-700 mb-1">{field.label}</label>
+                                          <div className="relative">
+                                            <input
+                                              type="number"
+                                              step="0.1"
+                                              min="0"
+                                              placeholder={field.placeholder}
+                                              value={mData[field.key] ?? ''}
+                                              onChange={(e) => handlePackageMeasurementChange(pkgIndex, gi, field.key, e.target.value)}
+                                              className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md text-sm focus:ring-amber-500 focus:border-amber-500"
+                                            />
+                                            <span className="absolute right-2 top-2 text-xs text-gray-400">{field.unit ?? 'in'}</span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="mt-3">
+                                      <label className="block text-xs font-medium text-gray-700 mb-1">Measurement Notes</label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. prefers loose fit"
+                                        value={mData.notes ?? ''}
+                                        onChange={(e) => handlePackageMeasurementChange(pkgIndex, gi, 'notes', e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-amber-500 focus:border-amber-500"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Submit */}
           <div className="border-t pt-6 flex justify-end space-x-3">
