@@ -192,6 +192,14 @@ const buildRowsFromItems = (items?: InvoiceItem[]): Row[] =>
     amount: item.totalPrice ?? ((item.unitPrice || 0) * (item.quantity || 1)),
   }));
 
+// Fixed shop contact/payment details — keep in sync with SHOP in backend/services/invoiceService.js (the WhatsApp PDF).
+const SHOP = {
+  address: '27, IQBAL HEIGHTS KAPTAN SAHAB KI BAGIYA GINNORI ROAD BHOPAL (M.P.) 462001',
+  phone: '+918889488801',
+  email: 'datogs00@gmail.com',
+  upi: 'datog@upi',
+};
+
 const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>(({ invoice, shopDetails }, ref) => {
   const order = invoice.order || {};
   const customer = invoice.customer || {};
@@ -213,10 +221,10 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
           <div style={{ fontSize: 21, fontWeight: 700, color: '#fff' }}>Da Tog's</div>
           <div style={{ fontSize: 10.5, fontWeight: 700, color: '#000' }}>Designer Lounge</div>
           <div style={{ fontSize: 9.5, fontWeight: 700, color: '#000', marginTop: 4 }}>
-            {shopDetails?.address || 'Bhopal, Madhya Pradesh · India'}
+            {SHOP.address}
           </div>
           <div style={{ fontSize: 9.5, fontWeight: 700, color: '#000' }}>
-            {shopDetails?.phone || '+91 82238 31963'} · {shopDetails?.email || 'datog@gmail.com'} · GSTIN: 23XXXXX1234Z1X
+            {SHOP.phone} · {SHOP.email} · GSTIN: 23XXXXX1234Z1X
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -225,7 +233,7 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
           </div>
           <div style={{ fontSize: 19, fontWeight: 700, color: '#fff' }}>#{invoice.invoiceNumber || '—'}</div>
           <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#000' }}>
-            {isCustom ? 'Custom Invoice' : `Order: ${order.orderNumber || '—'}`}
+            {isCustom ? 'Custom Invoice' : `Order: ${String(order.orderNumber || '—').replace(/^ORD/i, '')}`}
           </div>
           <span style={{
             display: 'inline-block', marginTop: 4, borderRadius: 20, fontSize: 9, fontWeight: 700,
@@ -323,8 +331,8 @@ const InvoiceDocument = React.forwardRef<HTMLDivElement, InvoiceDocumentProps>((
           <div style={{ background: COLORS.paperWarm, border: `1px solid ${COLORS.paperBorder}`, borderLeft: `3px solid ${COLORS.gold}`, borderRadius: 2, padding: '7px 10px', marginTop: 10 }}>
             <div style={metaLabel}>Payment Methods Accepted</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 4 }}>
-              <PaymentMethod label="UPI ID" value="datog@upi" />
-              <PaymentMethod label="GPay/PhonePe" value={shopDetails?.phone || '+91 82238 31963'} />
+              <PaymentMethod label="UPI ID" value={SHOP.upi} />
+              <PaymentMethod label="GPay/PhonePe" value={SHOP.phone} />
               <PaymentMethod label="Bank (SBI)" value="XXXX XXXX XX21" />
               <PaymentMethod label="Cash" value="Accepted in store" />
             </div>
